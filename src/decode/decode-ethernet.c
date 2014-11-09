@@ -2,4 +2,6 @@
 
 #include "decode-ethernet.h"
 
-
+int DecodeEthernet()
+{
+}

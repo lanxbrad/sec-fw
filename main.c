@@ -49,17 +49,10 @@
 #include <unistd.h>
 #endif
 
-#include "cvmx.h"
-#include "cvmx-fpa.h"
-#include "cvmx-pko.h"
-#include "cvmx-pow.h"
-#include "cvmx-pip.h"
-#include "cvmx-ipd.h"
-#include "cvmx-sysinfo.h"
-#include "cvmx-coremask.h"
-#include "cvmx-helper.h"
-#include "cvmx-helper-cfg.h"
-#include "cvmx-app-config.h"
+#include <sec-decode.h>
+
+#include <oct-common.h>
+
 
 /* This define is the POW group packet destine to the Linux kernel should
     use. This must match the ethernet driver's pow_receive_group parameter */
@@ -299,3 +292,41 @@ int main(int argc, char *argv[])
 
     return 0;
 }
+
+extern void *oct_rx_process_work(cvmx_wqe_t *wq);
+extern void Decode(PacketInfo *pi);
+
+void 
+mainloop()
+{
+	PacketInfo * pktinfo;
+	int grp;
+	while(1){
+		
+		cvmx_wqe_t *work = cvmx_pow_work_request_sync(CVMX_POW_NO_WAIT);
+		
+		if (NULL != work){
+			grp = cvmx_wqe_get_grp(work);
+			if ( FROM_INPUT_PORT_GROUP == grp){
+				pktinfo = oct_rx_process_work(work);
+				if (NULL == pktinfo){
+					continue;
+				}
+				Decode(pktinfo);
+			}else if( FROM_LINUX_GROUP == grp){
+				printf("receive packet from linux!\n");
+			}else{
+				printf("work group error %d\n", grp);
+			}
+		}
+		else
+			continue;
+
+	}
+}
+
+
+
+
+
+

@@ -9,4 +9,19 @@
 #include <errno.h>
 #include <unistd.h>
 
+
+
+
+
+
+#define SEC_MAGIC_NUM 0xdeadbeef
+
+
+
+
+
+
+
+
+
 #endif

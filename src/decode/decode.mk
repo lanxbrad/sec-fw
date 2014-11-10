@@ -11,6 +11,7 @@ LIBRARY_DECODE := $(OBJ_DIR)/libdecode.a
 
 
 LIBDECODE_OBJ_$(d)  :=  \
+	$(OBJ_DIR)/decode.o \
 	$(OBJ_DIR)/decode-ethernet.o \
 	$(OBJ_DIR)/decode-vlan.o \
 	$(OBJ_DIR)/decode-ipv4.o \
@@ -18,10 +19,13 @@ LIBDECODE_OBJ_$(d)  :=  \
 	$(OBJ_DIR)/decode-udp.o
 	
 
+INCLUDE_DIR := \
+	-I$(d) \
+	-I$(d)/../include
 
 	
 
-$(LIBDECODE_OBJ_$(d)):  CFLAGS_LOCAL := -I$(d) -I$(d)/../include -O2 -g -W -Wall -Wno-unused-parameter -Wundef -G0
+$(LIBDECODE_OBJ_$(d)):  CFLAGS_LOCAL := -O2 -g -W -Wall -Wno-unused-parameter -Wundef -G0 $(INCLUDE_DIR)
 $(LIBDECODE_OBJ_$(d)):  CFLAGS_GLOBAL := $(filter-out -fprofile-%,$(CFLAGS_GLOBAL))	
 
 

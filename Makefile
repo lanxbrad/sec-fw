@@ -61,6 +61,9 @@ include $(OCTEON_ROOT)/common.mk
 dir := $(OCTEON_ROOT)/sec-fw/src/decode
 include $(dir)/decode.mk
 
+dir := $(OCTEON_ROOT)/sec-fw/src/platform
+include $(dir)/oct.mk
+
 dir := $(OCTEON_ROOT)/executive
 include $(dir)/cvmx.mk
 
@@ -71,9 +74,15 @@ include $(dir)/cvmx.mk
 TARGET := secd$(PREFIX)
 
 OBJS = $(OBJ_DIR)/main.o
+
+INCLUDE_DIR := \
+	-I$(OCTEON_ROOT)/sec-fw/src/include \
+	-I$(OCTEON_ROOT)/sec-fw/src/decode/
 		
 
-CFLAGS_LOCAL = -g -O2 -W -Wall -Wno-unused-parameter
+CFLAGS_LOCAL = -g -O2 -W -Wall -Wno-unused-parameter $(INCLUDE_DIR)
+
+
 
 include $(OCTEON_ROOT)/application.mk
 

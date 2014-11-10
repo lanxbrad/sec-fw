@@ -1,19 +1,19 @@
 #include "oct-rxtx.h"
 
-#include <sec-decode.h>
+#include <mbuf.h>
 
 
 
 extern CVMX_SHARED int wqe_pool;
 
 /*
- *  get packetinfo and packet pointer
+ *  get mbuf and packet pointer
  *  if work is error , return NULL
  */
 void *
 oct_rx_process_work(cvmx_wqe_t *wq)
 {
-	PacketInfo *pi = NULL;
+	m_buf *m = NULL;
 	
 	if (wq->word2.s.rcv_error){
 		/* Work has error, so drop */
@@ -29,12 +29,12 @@ oct_rx_process_work(cvmx_wqe_t *wq)
     cvmx_helper_dump_packet(wq);
 #endif
 
-	pi = (PacketInfo *)wq->packet_data;
-	pi->magic_flag = SEC_MAGIC_NUM;
-	pi->pktlen = cvmx_wqe_get_len(wq);
-	pi->pktptr = (void *) cvmx_phys_to_ptr(wq->packet_ptr.s.addr);	
+	m = (m_buf *)wq->packet_data;
+	m->magic_flag = SEC_MAGIC_NUM;
+	m->pktlen = cvmx_wqe_get_len(wq);
+	m->pktptr = (void *) cvmx_phys_to_ptr(wq->packet_ptr.s.addr);	
 	
-	return (void *)pi;
+	return (void *)m;
 
 }
 

@@ -1,12 +1,13 @@
-#include "decode.h"
+#include <sec-common.h>
+#include <mbuf.h>
 
-extern int DecodeEthernet(PacketInfo *p, uint8_t *pkt, uint16_t len);
+extern int DecodeEthernet(m_buf *mbuf, uint8_t *pkt, uint16_t len);
 
 
 void
-Decode(PacketInfo *pi)
+Decode(m_buf *m)
 {
-	if( DECODE_OK != DecodeEthernet(pi, GET_PKT_DATA(pi), GET_PKT_LEN(pi))){
+	if( DECODE_OK != DecodeEthernet(m, GET_PKT_DATA(m), GET_PKT_LEN(m))){
 		
 	}
 

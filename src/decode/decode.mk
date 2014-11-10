@@ -16,12 +16,13 @@ LIBDECODE_OBJ_$(d)  :=  \
 	$(OBJ_DIR)/decode-vlan.o \
 	$(OBJ_DIR)/decode-ipv4.o \
 	$(OBJ_DIR)/decode-tcp.o \
-	$(OBJ_DIR)/decode-udp.o
+	$(OBJ_DIR)/decode-udp.o \
+	$(OBJ_DIR)/decode-defrag.o
 	
 
 INCLUDE_DIR := \
 	-I$(d) \
-	-I$(d)/../include
+	-I$(OCTEON_ROOT)/sec-fw/src/include
 
 	
 

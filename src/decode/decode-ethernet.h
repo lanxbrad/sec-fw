@@ -1,5 +1,7 @@
 #ifndef __DECODE_ETHERNET_H__
 #define __DECODE_ETHERNET_H__
+#include <sec-common.h>
+
 
 #define ETHERNET_HEADER_LEN           14
 

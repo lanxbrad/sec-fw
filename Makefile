@@ -61,8 +61,12 @@ include $(OCTEON_ROOT)/common.mk
 dir := $(OCTEON_ROOT)/sec-fw/src/decode
 include $(dir)/decode.mk
 
+dir := $(OCTEON_ROOT)/sec-fw/src/flow
+include $(dir)/flow.mk
+
 dir := $(OCTEON_ROOT)/sec-fw/src/platform
 include $(dir)/oct.mk
+
 
 dir := $(OCTEON_ROOT)/executive
 include $(dir)/cvmx.mk

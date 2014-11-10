@@ -49,7 +49,7 @@
 #include <unistd.h>
 #endif
 
-#include <sec-decode.h>
+#include <mbuf.h>
 
 #include <oct-common.h>
 
@@ -294,12 +294,12 @@ int main(int argc, char *argv[])
 }
 
 extern void *oct_rx_process_work(cvmx_wqe_t *wq);
-extern void Decode(PacketInfo *pi);
+extern void Decode(m_buf *mbuf);
 
 void 
 mainloop()
 {
-	PacketInfo * pktinfo;
+	m_buf *mb;
 	int grp;
 	while(1){
 		
@@ -308,11 +308,11 @@ mainloop()
 		if (NULL != work){
 			grp = cvmx_wqe_get_grp(work);
 			if ( FROM_INPUT_PORT_GROUP == grp){
-				pktinfo = oct_rx_process_work(work);
-				if (NULL == pktinfo){
+				mb = oct_rx_process_work(work);
+				if (NULL == mb){
 					continue;
 				}
-				Decode(pktinfo);
+				Decode(mb);
 			}else if( FROM_LINUX_GROUP == grp){
 				printf("receive packet from linux!\n");
 			}else{

@@ -1,8 +1,9 @@
 #include "decode-vlan.h"
+#include "mbuf.h"
 
 
 
-int DecodeVLAN(PacketInfo *p, uint8_t *pkt, uint16_t len)
+int DecodeVLAN(m_buf *mb, uint8_t *pkt, uint16_t len)
 {
 	return DECODE_OK;
 }

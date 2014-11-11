@@ -58,6 +58,10 @@ include $(OCTEON_ROOT)/common.mk
 
 #  include needed component Makefile fragments
 
+
+dir := $(OCTEON_ROOT)/sec-fw/src/common
+include $(dir)/com.mk
+
 dir := $(OCTEON_ROOT)/sec-fw/src/decode
 include $(dir)/decode.mk
 

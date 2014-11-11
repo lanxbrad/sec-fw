@@ -17,6 +17,9 @@ typedef struct m_buf_
 {
 	uint32_t magic_flag;
 	uint32_t pktlen;
+
+	struct m_buf_ *next;
+	struct m_buf_ *prev;
 	
 	void *pktptr;  /*pointer to begin of packet*/
 	
@@ -37,7 +40,11 @@ typedef struct m_buf_
 	uint16_t vlan_id;
   
     uint8_t *payload; /* ptr to the payload of the packet  with it's length. */
-    
+
+	uint32_t offset;
+	uint32_t ip_fraglen;
+
+	uint32_t flags;
 	
 }m_buf;
 

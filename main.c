@@ -305,19 +305,28 @@ mainloop()
 		
 		cvmx_wqe_t *work = cvmx_pow_work_request_sync(CVMX_POW_NO_WAIT);
 		
-		if (NULL != work){
+		if (NULL != work)
+		{
 			grp = cvmx_wqe_get_grp(work);
-			if ( FROM_INPUT_PORT_GROUP == grp){
-				mb = oct_rx_process_work(work);
-				if (NULL == mb){
+
+			if ( FROM_INPUT_PORT_GROUP == grp)
+			{
+				mb = (m_buf *)oct_rx_process_work(work);
+				if (NULL == mb)
+				{
 					continue;
 				}
 				Decode(mb);
-			}else if( FROM_LINUX_GROUP == grp){
+			}
+			else if( FROM_LINUX_GROUP == grp)
+			{
 				printf("receive packet from linux!\n");
-			}else{
+			}
+			else
+			{
 				printf("work group error %d\n", grp);
 			}
+			
 		}
 		else
 			continue;

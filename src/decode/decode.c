@@ -8,7 +8,7 @@ void
 Decode(m_buf *m)
 {
 	if( DECODE_OK != DecodeEthernet(m, GET_PKT_DATA(m), GET_PKT_LEN(m))){
-		
+		packet_destroy(m);
 	}
 
 	return;

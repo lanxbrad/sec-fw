@@ -14,7 +14,6 @@
 
 
 
-#define SEC_MAGIC_NUM 0xdeadbeef
 
 
 

@@ -5,18 +5,18 @@
 
 #define INETFRAGS_HASHSZ		64
 
-struct inet_frag_queue {
-	struct hlist_node	list;
-	cvmx_spinlock_t		lock;
-	struct m_buf    *fragments; /* list of received fragments */
-	int             len;
-	int             meat;
-	uint8_t			last_in;    /* first/last segment arrived? */
-	uint64_t       cycle;
 
 #define INET_FRAG_COMPLETE	4
 #define INET_FRAG_FIRST_IN	2
 #define INET_FRAG_LAST_IN	1
+
+struct inet_frag_queue {
+	struct hlist_node	list;
+	struct m_buf    *fragments; /* list of received fragments */
+	cvmx_spinlock_t		lock;
+	int             len;
+	int             meat;
+	uint8_t			last_in;    /* first/last segment arrived? */
 };
 
 

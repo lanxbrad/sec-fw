@@ -40,6 +40,7 @@ static int DecodeIPV4Packet(m_buf *mbuf, uint8_t *pkt, uint16_t len)
 
 int DecodeIPV4(m_buf *mbuf, uint8_t *pkt, uint16_t len)
 {
+	m_buf *m_defrag;
 	if (unlikely(DECODE_OK != DecodeIPV4Packet (mbuf, pkt, len))) {
 		return DECODE_DROP;
 	}
@@ -48,7 +49,12 @@ int DecodeIPV4(m_buf *mbuf, uint8_t *pkt, uint16_t len)
 
 	/* If a fragment, pass off for re-assembly. */
 	if (unlikely(IPV4_GET_IPOFFSET(mbuf) > 0 || IPV4_GET_MF(mbuf) == 1)) {
-		Defrag(mbuf);
+		m_defrag = Defrag(mbuf);
+		if(NULL != m_defrag)
+		{
+			return DecodeIPV4(m_defrag, m_defrag->ip4h, 
+				m_defrag->pktlen - ETHERNET_HEADER_LEN - m_defrag->vlan_idx * VLAN_HEADER_LEN);
+		}
 		return DECODE_OK;
 	}
 

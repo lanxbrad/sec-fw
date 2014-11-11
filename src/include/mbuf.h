@@ -1,6 +1,7 @@
 #ifndef __MBUF_H__
 #define __MBUF_H__
 
+#include <oct-common.h>
 #include <decode-ethernet.h>
 #include <decode-ipv4.h>
 #include <decode-vlan.h>
@@ -16,7 +17,9 @@
 typedef struct m_buf_
 {
 	uint32_t magic_flag;
-	uint32_t pktlen;
+	uint32_t pktlen;             /*pkt total len*/
+
+	cvmx_buf_ptr_t packet_ptr;
 
 	struct m_buf_ *next;
 	struct m_buf_ *prev;
@@ -49,6 +52,12 @@ typedef struct m_buf_
 }m_buf;
 
 
+#define MBUF_MAGIC_NUM 0xab00ab00
+
+
+/*TODO REPLACE FPA POOL*/
+#define mbuf_alloc()
+#define mbuf_free()
 
 
 

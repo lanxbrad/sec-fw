@@ -16,8 +16,11 @@ oct_rx_process_work(cvmx_wqe_t *wq)
 {
 	m_buf *m = NULL;
 	
-	if (wq->word2.s.rcv_error){
-		/* Work has error, so drop */
+	if (wq->word2.s.rcv_error || cvmx_wqe_get_bufs(wq) > 1){
+		/* 
+		  *  Work has error, so drop
+		  *  and now do not support jumbo packet
+		  */
 		oct_packet_free(wq, wqe_pool);
 	#if 0
 		cvmx_helper_free_packet_data(wq);

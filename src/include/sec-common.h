@@ -13,7 +13,8 @@
 
 
 
-
+#define SEC_OK  0
+#define SEC_NO  1
 
 
 

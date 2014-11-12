@@ -48,6 +48,10 @@ typedef struct m_buf_
 	uint32_t ip_fraglen;         /*len of ip fragment packet*/
 
 	uint32_t flags;              /*features of packet*/
+
+	uint32_t flow_hash;
+	void    *flow;
+	
 }m_buf;
 
 
@@ -57,6 +61,9 @@ typedef struct m_buf_
 /*TODO REPLACE FPA POOL*/
 #define mbuf_alloc(size)   malloc(size)
 #define mbuf_free(m)        free(m)
+
+
+extern void packet_destroy(m_buf *m);
 
 
 

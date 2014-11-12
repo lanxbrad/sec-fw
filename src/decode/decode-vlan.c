@@ -1,10 +1,14 @@
 #include "decode-vlan.h"
 #include "mbuf.h"
 
+extern int DecodeIPV4(m_buf *mbuf, uint8_t *pkt, uint16_t len);
+
+
+
+
 /*
  * current support  one layer vlan
  */
-
 int DecodeVLAN(m_buf *mb, uint8_t *pkt, uint16_t len)
 {
 	uint32_t proto;

@@ -10,6 +10,8 @@
 
 
 
+#define PKT_HAS_FLOW                    (1<<8)
+
 
 
 

@@ -12,6 +12,7 @@
 #include "cvmx-helper.h"
 #include "cvmx-helper-cfg.h"
 #include "cvmx-app-config.h"
+#include "cvmx-spinlock.h"
 
 
 #endif

@@ -14,7 +14,7 @@
 #endif
 
 
-#define prefetch 
+#define prefetch(address) CVMX_PREFETCH(address, 0)
 
 
 #ifndef offsetof

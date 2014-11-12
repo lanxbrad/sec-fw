@@ -7,8 +7,9 @@
 extern CVMX_SHARED int wqe_pool;
 
 /*
- *  get mbuf and packet pointer
+ *  alloc a mbuf which can be used to describe the packet
  *  if work is error , return NULL
+ *  then free wqe, reurn mbuf
  */
 void *
 oct_rx_process_work(cvmx_wqe_t *wq)
@@ -31,7 +32,7 @@ oct_rx_process_work(cvmx_wqe_t *wq)
     cvmx_helper_dump_packet(wq);
 #endif
 
-	m = (m_buf *)mbuf_alloc();
+	m = (m_buf *)mbuf_alloc(sizeof(m_buf));
 
 	memset((void *)m, 0, sizeof(m_buf));
 

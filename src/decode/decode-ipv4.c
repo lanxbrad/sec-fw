@@ -2,6 +2,11 @@
 #include <mbuf.h>
 #include "decode-ipv4.h"
 
+m_buf *Defrag(m_buf *mbuf)
+{
+	return NULL;
+}
+
 
 
 static int DecodeIPV4Packet(m_buf *mbuf, uint8_t *pkt, uint16_t len)
@@ -15,7 +20,7 @@ static int DecodeIPV4Packet(m_buf *mbuf, uint8_t *pkt, uint16_t len)
         return DECODE_DROP;
     }
 
-	mbuf->ip4h = (IPV4Hdr *)pkt;
+	mbuf->network_header = (void *)pkt;
 
 	if (unlikely(IPV4_GET_HLEN(mbuf) < IPV4_HEADER_LEN)) {
         return DECODE_DROP;
@@ -52,7 +57,7 @@ int DecodeIPV4(m_buf *mbuf, uint8_t *pkt, uint16_t len)
 		m_defrag = Defrag(mbuf);
 		if(NULL != m_defrag)
 		{
-			return DecodeIPV4(m_defrag, m_defrag->ip4h, 
+			return DecodeIPV4(m_defrag, m_defrag->network_header, 
 				m_defrag->pktlen - ETHERNET_HEADER_LEN - m_defrag->vlan_idx * VLAN_HEADER_LEN);
 		}
 		return DECODE_OK;

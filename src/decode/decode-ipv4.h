@@ -51,22 +51,22 @@ typedef struct IPV4Hdr_
  * 2. p->ip4h is valid (len is correct)
  */
 #define IPV4_GET_VER(p) \
-    IPV4_GET_RAW_VER((p)->ip4h)
+    IPV4_GET_RAW_VER((IPV4Hdr *)((p)->network_header))
 #define IPV4_GET_HLEN(p) \
-    (IPV4_GET_RAW_HLEN((p)->ip4h) << 2)
+    (IPV4_GET_RAW_HLEN((IPV4Hdr *)((p)->network_header)) << 2)
 #define IPV4_GET_IPTOS(p) \
-    IPV4_GET_RAW_IPTOS((p)->ip4h)
+    IPV4_GET_RAW_IPTOS((IPV4Hdr *)((p)->network_header))
 #define IPV4_GET_IPLEN(p) \
-    IPV4_GET_RAW_IPLEN((p)->ip4h)
+    IPV4_GET_RAW_IPLEN((IPV4Hdr *)((p)->network_header))
 #define IPV4_GET_IPSRC(p) \
-	(IPV4_GET_RAW_IPSRC((p)->ip4h))
+	(IPV4_GET_RAW_IPSRC((IPV4Hdr *)((p)->network_header)))
 #define IPV4_GET_IPDST(p) \
-	(IPV4_GET_RAW_IPDST((p)->ip4h))
+	(IPV4_GET_RAW_IPDST((IPV4Hdr *)((p)->network_header)))
 #define IPV4_GET_IPID(p) \
-   (IPV4_GET_RAW_IPID((p)->ip4h))
+   (IPV4_GET_RAW_IPID((IPV4Hdr *)((p)->network_header)))
 /* _IPV4_GET_IPOFFSET: get the content of the offset header field in host order */
 #define _IPV4_GET_IPOFFSET(p) \
-    IPV4_GET_RAW_IPOFFSET((p)->ip4h)
+    IPV4_GET_RAW_IPOFFSET((IPV4Hdr *)((p)->network_header))
 /* IPV4_GET_IPOFFSET: get the final offset */
 #define IPV4_GET_IPOFFSET(p) \
     (_IPV4_GET_IPOFFSET(p) & 0x1fff)
@@ -80,9 +80,9 @@ typedef struct IPV4Hdr_
 #define IPV4_GET_MF(p) \
     (uint8_t)((_IPV4_GET_IPOFFSET((p)) & 0x2000) >> 13)
 #define IPV4_GET_IPTTL(p) \
-     IPV4_GET_RAW_IPTTL(p->ip4h)
+     IPV4_GET_RAW_IPTTL((IPV4Hdr *)(p->network_header))
 #define IPV4_GET_IPPROTO(p) \
-    IPV4_GET_RAW_IPPROTO((p)->ip4h)
+    IPV4_GET_RAW_IPPROTO((IPV4Hdr *)((p)->network_header))
 
 
 

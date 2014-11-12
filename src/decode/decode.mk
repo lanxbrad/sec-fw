@@ -16,8 +16,7 @@ LIBDECODE_OBJ_$(d)  :=  \
 	$(OBJ_DIR)/decode-vlan.o \
 	$(OBJ_DIR)/decode-ipv4.o \
 	$(OBJ_DIR)/decode-tcp.o \
-	$(OBJ_DIR)/decode-udp.o \
-	$(OBJ_DIR)/decode-defrag.o
+	$(OBJ_DIR)/decode-udp.o
 	
 
 INCLUDE_DIR := \

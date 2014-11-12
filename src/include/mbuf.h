@@ -16,39 +16,38 @@
  */
 typedef struct m_buf_
 {
-	uint32_t magic_flag;
+	uint32_t magic_flag;         /* mbuf memory magic num*/
 	uint32_t pktlen;             /*pkt total len*/
 
-	cvmx_buf_ptr_t packet_ptr;
+	cvmx_buf_ptr_t packet_ptr;   /*copy from wqe packet_ptr*/
 
-	struct m_buf_ *next;
+	struct m_buf_ *next;         /*for cache chain*/
 	struct m_buf_ *prev;
 	
-	void *pktptr;  /*pointer to begin of packet*/
+	void *pktptr;                /*pointer to begin of packet from wqe packet_ptr*/
 	
-	EthernetHdr *ethh;
+	EthernetHdr *ethh;           /*l2 layer header*/
 	VLANHdr *vlanh;
-	IPV4Hdr *ip4h;
-	void *transport_header;
+	void *network_header;        /*network layer header*/
+	void *transport_header;      /*transport layer header*/
 
-	ipv4_tuple_t ipv4;
+	ipv4_tuple_t ipv4;           /*sip + dip*/
 
-	uint16_t  sport;
+	uint16_t  sport;             /*sport + dport*/
    	uint16_t  dport;
 
-	uint8_t proto;
-	uint8_t vlan_idx;
-	uint16_t payload_len;
+	uint8_t proto;               /*protocol , now only support TCP + UDP */
+	uint8_t vlan_idx;            /*if vlan exist, set vlan_idx = 1*/
+	uint16_t payload_len;        /*L7 payload_len */
 
-	uint16_t vlan_id;
+	uint16_t vlan_id;            /*if vlan_idx support, vlan_id*/
   
-    uint8_t *payload; /* ptr to the payload of the packet  with it's length. */
+    uint8_t *payload;            /*L7 payload pointer*/
 
-	uint32_t offset;
-	uint32_t ip_fraglen;
+	uint32_t offset;             /*offset of ip fragment packet*/
+	uint32_t ip_fraglen;         /*len of ip fragment packet*/
 
-	uint32_t flags;
-	
+	uint32_t flags;              /*features of packet*/
 }m_buf;
 
 
@@ -56,8 +55,8 @@ typedef struct m_buf_
 
 
 /*TODO REPLACE FPA POOL*/
-#define mbuf_alloc()
-#define mbuf_free()
+#define mbuf_alloc(size)   malloc(size)
+#define mbuf_free(m)        free(m)
 
 
 

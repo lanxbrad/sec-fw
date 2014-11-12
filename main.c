@@ -294,24 +294,23 @@ int main(int argc, char *argv[])
 }
 
 extern void *oct_rx_process_work(cvmx_wqe_t *wq);
-extern void Decode(m_buf *mbuf);
+extern void Decode(mbuf_t *mbuf);
 
 void 
 mainloop()
 {
-	m_buf *mb;
+	mbuf_t *mb;
 	int grp;
 	while(1){
 		
 		cvmx_wqe_t *work = cvmx_pow_work_request_sync(CVMX_POW_NO_WAIT);
-		
 		if (NULL != work)
 		{
 			grp = cvmx_wqe_get_grp(work);
 
 			if ( FROM_INPUT_PORT_GROUP == grp)
 			{
-				mb = (m_buf *)oct_rx_process_work(work);
+				mb = (mbuf_t *)oct_rx_process_work(work);
 				if (NULL == mb)
 				{
 					continue;

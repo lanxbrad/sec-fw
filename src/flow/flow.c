@@ -2,7 +2,7 @@
 #include "flow.h"
 #include "tluhash.h"
 
-extern void l7_deliver(m_buf *m);
+extern void l7_deliver(mbuf_t *m);
 
 
 
@@ -34,7 +34,7 @@ unsigned int flowhashfn(uint32_t saddr, uint32_t daddr, uint16_t sport, uint16_t
 	return flow_hashfn(prot, saddr, daddr, sport, dport) & FLOW_BUCKET_MASK;
 }
 
-static int flow_match(flow_item_t *f, m_buf *mbuf)
+static int flow_match(flow_item_t *f, mbuf_t *mbuf)
 {
 	return ((f->ipv4.sip == mbuf->ipv4.sip
 		&& f->ipv4.dip == mbuf->ipv4.dip
@@ -49,7 +49,7 @@ static int flow_match(flow_item_t *f, m_buf *mbuf)
 }
 
 
-flow_item_t *flow_find(flow_bucket_t *base, m_buf *mbuf, unsigned int hash)
+flow_item_t *flow_find(flow_bucket_t *base, mbuf_t *mbuf, unsigned int hash)
 {
 	flow_item_t *f;
 	struct hlist_node *n;
@@ -65,7 +65,7 @@ flow_item_t *flow_find(flow_bucket_t *base, m_buf *mbuf, unsigned int hash)
 	return NULL;
 }
 
-flow_item_t *flow_add(flow_bucket_t *base, unsigned int hash, m_buf *mbuf)
+flow_item_t *flow_add(flow_bucket_t *base, unsigned int hash, mbuf_t *mbuf)
 {
 	flow_item_t *newf = flow_item_alloc();
 	if(NULL == newf)
@@ -89,7 +89,7 @@ flow_item_t *flow_add(flow_bucket_t *base, unsigned int hash, m_buf *mbuf)
 
 
 
-flow_item_t *FlowGetFlowFromHash(m_buf *mbuf)
+flow_item_t *FlowGetFlowFromHash(mbuf_t *mbuf)
 {
 	unsigned int hash;
 	flow_item_t * flow;
@@ -119,7 +119,7 @@ flow_item_t *FlowGetFlowFromHash(m_buf *mbuf)
 
 
 
-void FlowHandlePacket(m_buf *m)
+void FlowHandlePacket(mbuf_t *m)
 {
 	flow_item_t *f;
 

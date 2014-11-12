@@ -14,7 +14,7 @@ extern CVMX_SHARED int wqe_pool;
 void *
 oct_rx_process_work(cvmx_wqe_t *wq)
 {
-	m_buf *m = NULL;
+	mbuf_t *m = NULL;
 	
 	if (wq->word2.s.rcv_error || cvmx_wqe_get_bufs(wq) > 1){
 		/* 
@@ -35,9 +35,9 @@ oct_rx_process_work(cvmx_wqe_t *wq)
     cvmx_helper_dump_packet(wq);
 #endif
 
-	m = (m_buf *)mbuf_alloc(sizeof(m_buf));
+	m = (mbuf_t *)mbuf_alloc(sizeof(mbuf_t));
 
-	memset((void *)m, 0, sizeof(m_buf));
+	memset((void *)m, 0, sizeof(mbuf_t));
 
 	m->magic_flag = MBUF_MAGIC_NUM;
 	m->packet_ptr.u64 = wq->packet_ptr.u64;

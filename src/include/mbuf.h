@@ -52,7 +52,7 @@ typedef struct m_buf_
 	uint32_t flow_hash;
 	void    *flow;
 	
-}m_buf;
+}mbuf_t;
 
 
 #define MBUF_MAGIC_NUM 0xab00ab00
@@ -63,7 +63,7 @@ typedef struct m_buf_
 #define mbuf_free(m)        free(m)
 
 
-extern void packet_destroy(m_buf *m);
+extern void packet_destroy(mbuf_t *m);
 
 
 

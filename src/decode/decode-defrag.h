@@ -12,7 +12,7 @@
 
 struct inet_frag_queue {
 	struct hlist_node	list;
-	struct m_buf    *fragments; /* list of received fragments */
+	struct mbuf_t    *fragments; /* list of received fragments */
 	cvmx_spinlock_t		lock;
 	int             len;
 	int             meat;

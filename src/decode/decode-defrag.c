@@ -44,7 +44,7 @@ static struct inet_frag_queue *inet_frag_intern(struct inet_frag_queue *qp_in, s
 	return qp_in;
 }
 
-static struct inet_frag_queue *inet_frag_alloc(struct inet_frags *f, struct m_buf *mbuf)
+static struct inet_frag_queue *inet_frag_alloc(struct inet_frags *f, struct mbuf_t *mbuf)
 {
 	struct inet_frag_queue *q;
 	struct ipq *qp;
@@ -72,7 +72,7 @@ static struct inet_frag_queue *inet_frag_alloc(struct inet_frags *f, struct m_bu
 
 
 
-static struct inet_frag_queue *inet_frag_create(struct inet_frags *f, struct m_buf *mbuf, unsigned int hash)
+static struct inet_frag_queue *inet_frag_create(struct inet_frags *f, struct mbuf_t *mbuf, unsigned int hash)
 {
 	struct inet_frag_queue *q;
 
@@ -96,7 +96,7 @@ static struct inet_frag_queue *inet_frag_create(struct inet_frags *f, struct m_b
 struct inet_frag_queue *inet_frag_find(struct inet_frags *f, 
 											unsigned int hash, 
 											IPV4Hdr *iph, 
-											struct m_buf *mbuf)
+											struct mbuf_t *mbuf)
 {
 	struct inet_frag_queue *q;
 	struct hlist_node *n;
@@ -121,7 +121,7 @@ struct inet_frag_queue *inet_frag_find(struct inet_frags *f,
 
 
 static inline struct ipq *ip_find(IPV4Hdr *iph, 
-	                                 struct m_buf *mbuf, 
+	                                 struct mbuf_t *mbuf, 
 	                                 unsigned int hash)
 {
 	struct inet_frag_queue *q;
@@ -163,9 +163,9 @@ static int ip_frag_reasm(struct ipq *qp)
 
 
 static uint32_t ip_frag_queue(struct ipq *qp, 
-									m_buf *mbuf)
+									mbuf_t *mbuf)
 {
-	m_buf *prev, *next;
+	mbuf_t *prev, *next;
 	int flags, offset;
 	int ihl, end;
 
@@ -262,7 +262,7 @@ err:
  *   if drop, packet_destroy internal and return NULL
  *   if frag reassemble success ,return defrag_mbuf which point to the whole packet.
  */
-m_buf *Defrag(m_buf *mbuf)
+mbuf_t *Defrag(mbuf_t *mbuf)
 {
 	unsigned int hash;
 

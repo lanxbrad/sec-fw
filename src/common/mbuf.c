@@ -3,7 +3,7 @@
 
 void mbuf_init(void)
 {
-	BUILD_BUG_ON((sizeof(m_buf)) > 256);
+	BUILD_BUG_ON((sizeof(mbuf_t)) > 256);
 
 	return;
 }
@@ -14,7 +14,7 @@ void mbuf_init(void)
  *   first: free packet
  *   secode: free mbuf
  */
-void packet_destroy(m_buf *mbuf)
+void packet_destroy(mbuf_t *mbuf)
 {
 	cvmx_buf_ptr_t buffer_ptr;
 	uint64_t start_of_buffer;

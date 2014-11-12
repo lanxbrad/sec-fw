@@ -1,7 +1,7 @@
 #include <mbuf.h>
 #include "decode-tcp.h"
 
-static int DecodeTCPPacket(m_buf *mbuf, uint8_t *pkt, uint16_t len)
+static int DecodeTCPPacket(mbuf_t *mbuf, uint8_t *pkt, uint16_t len)
 {
 	if (unlikely(len < TCP_HEADER_LEN)) {
         return DECODE_DROP;
@@ -33,7 +33,7 @@ static int DecodeTCPPacket(m_buf *mbuf, uint8_t *pkt, uint16_t len)
 
 
 
-int DecodeTCP(m_buf *mbuf, uint8_t *pkt, uint16_t len)
+int DecodeTCP(mbuf_t *mbuf, uint8_t *pkt, uint16_t len)
 {
 
 	if (unlikely(DecodeTCPPacket(mbuf, pkt, len) != DECODE_OK)) {

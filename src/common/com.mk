@@ -11,7 +11,8 @@ LIBRARY_COMMON := $(OBJ_DIR)/libcommon.a
 
 
 LIBCOMMON_OBJ_$(d)  :=  \
-	$(OBJ_DIR)/mbuf.o
+	$(OBJ_DIR)/mbuf.o \
+	$(OBJ_DIR)/watchdog.o
 	
 
 INCLUDE_DIR := \

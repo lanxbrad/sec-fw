@@ -7,11 +7,11 @@
 #include "decode-ethernet.h"
 #include "decode-vlan.h"
 
-extern int DecodeIPV4(m_buf *mbuf, uint8_t *pkt, uint16_t len);
-extern int DecodeVLAN(m_buf *mbuf, uint8_t *pkt, uint16_t len);
+extern int DecodeIPV4(mbuf_t *mbuf, uint8_t *pkt, uint16_t len);
+extern int DecodeVLAN(mbuf_t *mbuf, uint8_t *pkt, uint16_t len);
 
 
-int DecodeEthernet(m_buf *mbuf, uint8_t *pkt, uint16_t len)
+int DecodeEthernet(mbuf_t *mbuf, uint8_t *pkt, uint16_t len)
 {
 	if (unlikely(len < ETHERNET_HEADER_LEN))
 		return DECODE_DROP;

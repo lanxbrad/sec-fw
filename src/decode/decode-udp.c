@@ -2,9 +2,9 @@
 #include <sec-util.h>
 #include "decode-udp.h"
 
-extern void FlowHandlePacket(m_buf *m);
+extern void FlowHandlePacket(mbuf_t *m);
 
-static int DecodeUDPPacket(m_buf *mbuf, uint8_t *pkt, uint16_t len)
+static int DecodeUDPPacket(mbuf_t *mbuf, uint8_t *pkt, uint16_t len)
 {
 	if (unlikely(len < UDP_HEADER_LEN)) {
         return DECODE_DROP;
@@ -31,7 +31,7 @@ static int DecodeUDPPacket(m_buf *mbuf, uint8_t *pkt, uint16_t len)
 
 
 
-int DecodeUDP(m_buf *mbuf, uint8_t *pkt, uint16_t len)
+int DecodeUDP(mbuf_t *mbuf, uint8_t *pkt, uint16_t len)
 {
 	if (unlikely(DECODE_OK != DecodeUDPPacket(mbuf, pkt, len))) {
 		return DECODE_DROP;

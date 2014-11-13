@@ -11,6 +11,41 @@ CVMX_SHARED Mem_Pool_Cfg mem_pool[MEM_POOL_ID_MAX];
 
 
 
+void *mem_pool_alloc(int pool_id)
+{
+	int index;
+	Mem_Pool_Cfg *mp = &mem_pool[pool_id];
+	struct list_head *l;
+	Mem_Slice_Ctrl_B *mscb;
+
+	if(pool_id >= MEM_POOL_ID_SMALL_BUFFER)
+	{
+		index = cvmx_atomic_fetch_and_add32_nosync(&mp->mpc.global_index, 1);
+
+		cvmx_spinlock_lock(&mp->mpc.msc[index].chain_lock);
+		if(list_empty(&mp->mpc.msc[index].head))
+		{
+			cvmx_spinlock_unlock(&mp->mpc.msc[index].chain_lock);
+			return NULL;
+		}
+		l = mp->mpc.msc[index].head.next;
+		list_del(l);
+		cvmx_spinlock_unlock(&mp->mpc.msc[index].chain_lock);
+		
+		mscb = container_of(l, Mem_Slice_Ctrl_B, list);
+
+		return (void *)((uint8_t *)mscb + sizeof(Mem_Slice_Ctrl_B));
+	}
+}
+
+
+
+
+
+
+
+
+
 
 int mem_pool_sw_slice_inject(int pool_id)
 {

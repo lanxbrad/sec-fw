@@ -10,7 +10,6 @@ CVMX_SHARED Mem_Pool_Cfg mem_pool[MEM_POOL_ID_MAX];
 
 
 
-
 void *mem_pool_alloc(int pool_id)
 {
 	int index;
@@ -18,7 +17,7 @@ void *mem_pool_alloc(int pool_id)
 	struct list_head *l;
 	Mem_Slice_Ctrl_B *mscb;
 
-	if(pool_id >= MEM_POOL_ID_SMALL_BUFFER)
+	if(MEM_POOL_ID_SMALL_BUFFER == pool_id || MEM_POOL_ID_LARGE_BUFFER == pool_id)
 	{
 		index = cvmx_atomic_fetch_and_add32_nosync(&mp->mpc.global_index, 1);
 
@@ -36,9 +35,51 @@ void *mem_pool_alloc(int pool_id)
 
 		return (void *)((uint8_t *)mscb + sizeof(Mem_Slice_Ctrl_B));
 	}
+	else if(MEM_POOL_ID_HOST_MBUF == pool_id || MEM_POOL_ID_FLOW_NODE == pool_id)
+	{
+		
+	}
+	else
+	{
+		printf("invalid request pool id!\n");
+	}
 }
 
+void mem_pool_free(void *buf)
+{
+	int pool_id;
+	int subpool_id;
+	Mem_Slice_Ctrl_B *mscb;
+	Mem_Pool_Cfg *mp;
 
+	mscb = (Mem_Slice_Ctrl_B *)((uint8_t *)buf - sizeof(Mem_Slice_Ctrl_B));
+
+	if(mscb->magic != MEM_POOL_MAGIC_NUM)
+	{
+		printf("buf has been destroyed!\n");
+		return;
+	}
+
+	pool_id = mscb->pool_id;
+	if(pool_id >= MEM_POOL_ID_MAX)
+	{
+		printf("buf has been destroyed!\n");
+	}
+
+	subpool_id = mscb->subpool_id;
+	if(subpool_id >= MEM_POOL_INTERNAL_NUM)
+	{
+		printf("buf has been destroyed!\n");
+	}
+
+	mp = &mem_pool[pool_id];
+
+	cvmx_spinlock_lock(&mp->mpc.msc[subpool_id].chain_lock);
+	list_add(&mscb->list, &mp->mpc.msc[subpool_id].head);
+	cvmx_spinlock_unlock(&mp->mpc.msc[subpool_id].chain_lock);
+
+	return;
+}
 
 
 

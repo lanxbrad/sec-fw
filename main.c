@@ -107,8 +107,8 @@ int main(int argc, char *argv[])
     /* Have one core do the hardware initialization */
     if (cvmx_is_init_core())
     {
-	if (argc > 1)
-	    port_override = strtol(argv[1], NULL, 0);
+		if (argc > 1)
+	    	port_override = strtol(argv[1], NULL, 0);
 
         printf("\n\nLoad the Linux ethernet driver with:\n"
                "\t $ modprobe octeon-ethernet\n"
@@ -144,45 +144,45 @@ int main(int argc, char *argv[])
             }
         }
 
-	/* Their is no interface 0 on nic_xle_4g card, use interface 1. */
-	if (cvmx_sysinfo_get()->board_type == CVMX_BOARD_TYPE_NIC_XLE_4G)
-	    intercept_port = 16;
+		/* Their is no interface 0 on nic_xle_4g card, use interface 1. */
+		if (cvmx_sysinfo_get()->board_type == CVMX_BOARD_TYPE_NIC_XLE_4G)
+	    	intercept_port = 16;
 
-	if (port_override > 0)
-	    intercept_port = port_override;
+		if (port_override > 0)
+	    	intercept_port = port_override;
 
-	__cvmx_helper_init_port_valid();
+		__cvmx_helper_init_port_valid();
 
-	__cvmx_import_app_config_from_named_block(CVMX_APP_CONFIG);
+		__cvmx_import_app_config_from_named_block(CVMX_APP_CONFIG);
 
-	__cvmx_helper_init_port_config_data_local();
+		__cvmx_helper_init_port_config_data_local();
 
-	wqe_pool = cvmx_fpa_get_wqe_pool();
+		wqe_pool = cvmx_fpa_get_wqe_pool();
 
-	if (octeon_has_feature(OCTEON_FEATURE_PKND)) {
-	    cvmx_pip_prt_tagx_t tag_config;
-	    cvmx_gmxx_prtx_cfg_t prt_cfg;
-	    int pkind;
-	    int iface = (intercept_port >> 8) - 8;
-	    int iport = (intercept_port >> 4) & 0xf;
-	    
-	    if (iface < 0)
-		iface = 0;
+		if (octeon_has_feature(OCTEON_FEATURE_PKND)) {
+		    cvmx_pip_prt_tagx_t tag_config;
+		    cvmx_gmxx_prtx_cfg_t prt_cfg;
+		    int pkind;
+		    int iface = (intercept_port >> 8) - 8;
+		    int iport = (intercept_port >> 4) & 0xf;
+		    
+		    if (iface < 0)
+			iface = 0;
 
-	    prt_cfg.u64 = cvmx_read_csr(CVMX_GMXX_PRTX_CFG(iport, iface));
-	    pkind = prt_cfg.s.pknd;
+		    prt_cfg.u64 = cvmx_read_csr(CVMX_GMXX_PRTX_CFG(iport, iface));
+		    pkind = prt_cfg.s.pknd;
 
-	    tag_config.u64 = cvmx_read_csr(CVMX_PIP_PRT_TAGX(pkind));
-	    tag_config.s.grp = FROM_INPUT_PORT_GROUP & 0xf;
-	    tag_config.s.grp_msb = (FROM_INPUT_PORT_GROUP >> 4) & 3;
-	    cvmx_write_csr(CVMX_PIP_PRT_TAGX(pkind), tag_config.u64);
-	} else {
-	    /* Change the group for only the port we're interested in */
-	    cvmx_pip_port_tag_cfg_t tag_config;
-	    tag_config.u64 = cvmx_read_csr(CVMX_PIP_PRT_TAGX(intercept_port));
-	    tag_config.s.grp = FROM_INPUT_PORT_GROUP;
-	    cvmx_write_csr(CVMX_PIP_PRT_TAGX(intercept_port), tag_config.u64);
-	}
+		    tag_config.u64 = cvmx_read_csr(CVMX_PIP_PRT_TAGX(pkind));
+		    tag_config.s.grp = FROM_INPUT_PORT_GROUP & 0xf;
+		    tag_config.s.grp_msb = (FROM_INPUT_PORT_GROUP >> 4) & 3;
+		    cvmx_write_csr(CVMX_PIP_PRT_TAGX(pkind), tag_config.u64);
+		} else {
+		    /* Change the group for only the port we're interested in */
+		    cvmx_pip_port_tag_cfg_t tag_config;
+		    tag_config.u64 = cvmx_read_csr(CVMX_PIP_PRT_TAGX(intercept_port));
+		    tag_config.s.grp = FROM_INPUT_PORT_GROUP;
+		    cvmx_write_csr(CVMX_PIP_PRT_TAGX(intercept_port), tag_config.u64);
+		}
         /* We need to call cvmx_cmd_queue_initialize() to get the pointer to
             the named block. The queues are already setup by the ethernet
             driver, so we don't actually need to setup a queue. Pass some
@@ -334,6 +334,21 @@ mainloop()
 }
 
 
+int Sec_LowLevel_Init()
+{
+	if(SEC_OK != mem_pool_init())
+	{
+		return SEC_NO;
+	}
+	
+	return SEC_OK;
+}
+
+int Sec_HighLevel_Init()
+{
+	
+	return SEC_NO;
+}
 
 
 

@@ -124,7 +124,8 @@ int mem_pool_sw_slice_inject(int pool_id)
 
 int mem_pool_fpa_slice_inject(int pool_id)
 {
-	
+	int i, fpa_pool_id;
+	uint64_t start_address;
 	int totalsize = mem_pool[pool_id].slicesize * mem_pool[pool_id].slicenum;
 	mem_pool[pool_id].start = (void *)malloc(totalsize);
 	if(NULL == mem_pool[pool_id].start)
@@ -133,6 +134,27 @@ int mem_pool_fpa_slice_inject(int pool_id)
 	}
 	mem_pool[pool_id].totalsize = totalsize;
 
+	if(MEM_POOL_ID_HOST_MBUF == pool_id)
+	{
+		fpa_pool_id = FPA_POOL_ID_HOST_MBUF;
+	}
+	else if(MEM_POOL_ID_FLOW_NODE == pool_id)
+	{
+		fpa_pool_id = FPA_POOL_ID_FLOW_NODE;
+	}
+	else
+	{
+		printf("invalid pool id\n");
+		return SEC_NO;
+	}
+
+	start_address = (uint64_t)mem_pool[pool_id].start;
+	for (i = 0; i < mem_pool[pool_id].slicenum; i++)
+	{
+		cvmx_fpa_free((void *)start_address, fpa_pool_id, 0);
+		start_address += mem_pool[pool_id].slicesize;
+	}
+	
 	return SEC_OK;
 }
 

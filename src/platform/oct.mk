@@ -11,7 +11,6 @@ LIBRARY_PLATFORM := $(OBJ_DIR)/libplatform.a
 
 
 LIBPLATFORM_OBJ_$(d)  :=  \
-	$(OBJ_DIR)/oct-init.o \
 	$(OBJ_DIR)/oct-rxtx.o \
 	$(OBJ_DIR)/mem_pool.o
 
@@ -19,7 +18,7 @@ LIBPLATFORM_OBJ_$(d)  :=  \
 INCLUDE_DIR := \
 	-I$(d) \
 	-I$(OCTEON_ROOT)/sec-fw/src/include \
-	-I$(OCTEON_ROOT)/sec-fw/src/decode/
+	-I$(OCTEON_ROOT)/sec-fw/src/decode
 
 	
 

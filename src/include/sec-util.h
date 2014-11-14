@@ -1,6 +1,10 @@
 #ifndef __SEC_UTIL_H__
 #define __SEC_UTIL_H__
 
+
+#define CACHE_LINE_SIZE 128
+#define CACHE_LINE_MASK (CACHE_LINE_SIZE-1) /**< Cache line mask. */
+
 #ifndef likely
 #define likely(expr) __builtin_expect(!!(expr), 1)
 #endif
@@ -33,6 +37,12 @@
 #define container_of(ptr, type, member) ({			\
 	const typeof( ((type *)0)->member ) *__mptr = (ptr);	\
 	(type *)( (char *)__mptr - offsetof(type,member) );})
+
+
+
+
+#define CACHE_ALIGNED __attribute__((__aligned__(CACHE_LINE_SIZE)))
+
 
 
 #endif

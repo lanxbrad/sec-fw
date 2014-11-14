@@ -14,5 +14,6 @@
 #include "cvmx-app-config.h"
 #include "cvmx-spinlock.h"
 #include "cvmx-atomic.h"
+#include "cvmx-bootmem.h"
 
 #endif

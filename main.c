@@ -333,15 +333,31 @@ mainloop()
 	}
 }
 
+extern int Mem_Pool_Init(void);
+extern int Mem_Pool_Get(void);
 
 int Sec_LowLevel_Init()
 {
-	if(SEC_OK != mem_pool_init())
+	if (cvmx_is_init_core())
 	{
-		return SEC_NO;
-	}
+		if(SEC_OK != Mem_Pool_Init())
+		{
+			return SEC_NO;
+		}
 	
-	return SEC_OK;
+		return SEC_OK;
+	}
+	else
+	{
+		if(SEC_OK != Mem_Pool_Get())
+		{
+			return SEC_NO;
+		}
+
+		return SEC_OK;
+	}
+
+
 }
 
 int Sec_HighLevel_Init()

@@ -3,31 +3,13 @@
 
 #include <list.h>
 #include <oct-common.h>
+#include <sec-util.h>
+#include <oct-fpa.h>
 
 #define MEM_POOL_MAGIC_NUM  0xab01ab01
 
 
 
-
-#define MEM_POOL_ID_HOST_MBUF     0     /*by fpa 7    256 bytes used for mbuf + fcb*/
-#define MEM_POOL_ID_FLOW_NODE     1     /*by fpa 8    256 bytes used for flowitem*/
-#define MEM_POOL_ID_SMALL_BUFFER  2     /* 2048 bytes*/
-#define MEM_POOL_ID_LARGE_BUFFER  3     /* 8192 bytes*/
-#define MEM_POOL_ID_MAX           4
-
-
-
-#define MEM_POOL_HOST_MBUF_SIZE       256
-#define MEM_POOL_FLOW_NODE_SIZE       256
-#define MEM_POOL_SMALL_BUFFER_SIZE    2048
-#define MEM_POOL_LARGE_BUFFER_SIZE    8192
-
-
-
-#define MEM_POOL_HOST_MBUF_NUM     3000
-#define MEM_POOL_FLOW_NODE_NUM     100000
-#define MEM_POOL_SMALL_BUFFER_NUM  1000
-#define MEM_POOL_LARGE_BUFFER_NUM  256
 
 
 
@@ -52,7 +34,7 @@ typedef struct MEM_SLICE_CHAIN_TAG_S
 
 typedef struct MEM_POOL_CTRL_TAG_S
 {
-	uint32_t global_index;
+	int32_t global_index;
 	Mem_Slice_Chain msc[MEM_POOL_INTERNAL_NUM];
 }Mem_Pool_Ctrl;
 
@@ -65,11 +47,44 @@ typedef struct MEM_POOL_CFG_TAG_S
 	uint32_t slicesize;
 	uint32_t slicenum;
 	Mem_Pool_Ctrl mpc;
-}Mem_Pool_Cfg;
+}CACHE_ALIGNED Mem_Pool_Cfg;
 
 
 
+#define MEM_POOL_CFG_SIZE  sizeof(Mem_Pool_Cfg)
 
+
+#define MEM_POOL_HOST_MBUF_SIZE       256
+#define MEM_POOL_FLOW_NODE_SIZE       256
+#define MEM_POOL_SMALL_BUFFER_SIZE    2048
+#define MEM_POOL_LARGE_BUFFER_SIZE    8192
+
+
+
+#define MEM_POOL_HOST_MBUF_NUM     3000
+#define MEM_POOL_FLOW_NODE_NUM     100000
+#define MEM_POOL_SMALL_BUFFER_NUM  1000
+#define MEM_POOL_LARGE_BUFFER_NUM  256
+
+
+#define MEM_POOL_ID_HOST_MBUF     0     /*by fpa 7    256 bytes used for mbuf + fcb*/
+#define MEM_POOL_NAME_HOST_MBUF "HOST_MBUF_POOL"
+#define MEM_POOL_TOTAL_HOST_MBUF MEM_POOL_HOST_MBUF_NUM * MEM_POOL_HOST_MBUF_SIZE + MEM_POOL_CFG_SIZE
+
+
+#define MEM_POOL_ID_FLOW_NODE     1     /*by fpa 8    256 bytes used for flowitem*/
+#define MEM_POOL_NAME_FLOW_NODE "FLOW_NODE_POOL"
+#define MEM_POOL_TOTAL_FLOW_NODE MEM_POOL_FLOW_NODE_NUM * MEM_POOL_FLOW_NODE_SIZE + MEM_POOL_CFG_SIZE
+
+#define MEM_POOL_ID_SMALL_BUFFER  2     /* 2048 bytes*/
+#define MEM_POOL_NAME_SMALL_BUFFER "SMALL_BUF_POOL"
+#define MEM_POOL_TOTAL_SMALL_BUFFER MEM_POOL_SMALL_BUFFER_NUM * MEM_POOL_SMALL_BUFFER_SIZE + MEM_POOL_CFG_SIZE
+
+#define MEM_POOL_ID_LARGE_BUFFER  3     /* 8192 bytes*/
+#define MEM_POOL_NAME_LARGE_BUFFER "LARGE_BUF_POOL"
+#define MEM_POOL_TOTAL_LARGE_BUFFER MEM_POOL_LARGE_BUFFER_NUM * MEM_POOL_LARGE_BUFFER_SIZE + MEM_POOL_CFG_SIZE
+
+#define MEM_POOL_ID_MAX           4
 
 
 

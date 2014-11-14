@@ -1,6 +1,8 @@
 #include <mbuf.h>
+#include <mem_pool.h>
 #include "flow.h"
 #include "tluhash.h"
+
 
 extern void l7_deliver(mbuf_t *m);
 
@@ -12,11 +14,26 @@ flow_table_info_t flow_table;
 
 flow_item_t *flow_item_alloc()
 {
-	return NULL;
+	void *buf = mem_pool_fpa_slice_alloc(MEM_POOL_ID_FLOW_NODE);
+
+	return (flow_item_t *)((uint8_t *)buf + sizeof(Mem_Slice_Ctrl_B));
+	
 }
 
-void session_item_free(flow_item_t *f)
+void flow_item_free(flow_item_t *f)
 {
+	Mem_Slice_Ctrl_B *mscb = (Mem_Slice_Ctrl_B *)((uint8_t *)f - sizeof(Mem_Slice_Ctrl_B));
+	if(MEM_POOL_MAGIC_NUM != mscb->magic)
+	{
+		return;
+	}
+	if(MEM_POOL_ID_FLOW_NODE != mscb->pool_id)
+	{
+		return;
+	}
+
+	mem_pool_fpa_slice_free((void *)mscb, mscb->pool_id);
+
 	return;
 }
 
@@ -190,7 +207,7 @@ static void flow_age_timeout_cb()
 			hlist_del(&tf->list);
 			/*TODO: session ageing do something*/
 			
-			session_item_free(tf);
+			flow_item_free(tf);
 		}
 		
 	}

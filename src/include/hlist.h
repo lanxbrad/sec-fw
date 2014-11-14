@@ -4,10 +4,12 @@
 
 
 
-
-#define LIST_POISON1 0xabcd
-#define LIST_POISON2 0xabcd
-
+#ifndef LIST_POISON1
+#define LIST_POISON1 0xdeadbeaf
+#endif
+#ifndef LIST_POISON2
+#define LIST_POISON2 0xdeadbeaf
+#endif
 
 /*
  * Double linked lists with a single pointer list head.

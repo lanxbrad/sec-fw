@@ -90,6 +90,30 @@ typedef struct MEM_POOL_CFG_TAG_S
 
 
 
+static inline void *mem_pool_fpa_slice_alloc(int pool_id)
+{
+	return cvmx_fpa_alloc(pool_id);
+}
+
+
+static inline void mem_pool_fpa_slice_free(void *buf, int pool_id)
+{
+	cvmx_fpa_free(buf, pool_id, 0);
+}
+
+
+
+
+#define MEM_2K_ALLOC()   mem_pool_alloc(MEM_POOL_ID_SMALL_BUFFER)
+#define MEM_2K_FREE(b)   mem_pool_free(b)
+
+#define MEM_8K_ALLOC()  mem_pool_alloc(MEM_POOL_ID_LARGE_BUFFER)
+#define MEM_8K_FREE(b)    mem_pool_free(b)
+
+
+
+
+
 
 
 

@@ -18,7 +18,8 @@ LIBCOMMON_OBJ_$(d)  :=  \
 INCLUDE_DIR := \
 	-I$(d) \
 	-I$(OCTEON_ROOT)/sec-fw/src/include \
-	-I$(OCTEON_ROOT)/sec-fw/src/decode
+	-I$(OCTEON_ROOT)/sec-fw/src/decode \
+	-I$(OCTEON_ROOT)/sec-fw/src/platform
 	
 
 

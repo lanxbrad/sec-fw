@@ -35,7 +35,7 @@ oct_rx_process_work(cvmx_wqe_t *wq)
     cvmx_helper_dump_packet(wq);
 #endif
 
-	m = (mbuf_t *)mbuf_alloc(sizeof(mbuf_t));
+	m = (mbuf_t *)MBUF_ALLOC();
 
 	memset((void *)m, 0, sizeof(mbuf_t));
 

@@ -1,5 +1,5 @@
 #include <mbuf.h>
-
+#include <mem_pool.h>
 
 void mbuf_init(void)
 {
@@ -7,6 +7,33 @@ void mbuf_init(void)
 
 	return;
 }
+
+
+mbuf_t *mbuf_alloc()
+{
+	void *buf = mem_pool_fpa_slice_alloc(MEM_POOL_ID_HOST_MBUF);
+
+	return (mbuf_t *)((uint8_t *)buf + sizeof(Mem_Slice_Ctrl_B));
+}
+
+
+void mbuf_free(mbuf_t *mb)
+{
+	Mem_Slice_Ctrl_B *mscb = (Mem_Slice_Ctrl_B *)((uint8_t *)mb - sizeof(Mem_Slice_Ctrl_B));
+	if(MEM_POOL_MAGIC_NUM != mscb->magic)
+	{
+		return;
+	}
+	if(MEM_POOL_ID_HOST_MBUF != mscb->pool_id)
+	{
+		return;
+	}
+
+	mem_pool_fpa_slice_free((void *)mscb, mscb->pool_id);
+
+	return;
+}
+
 
 
 
@@ -25,7 +52,7 @@ void packet_destroy(mbuf_t *mbuf)
 	
 	cvmx_fpa_free(cvmx_phys_to_ptr(start_of_buffer), buffer_ptr.s.pool, 0);
 
-	mbuf_free(mbuf);
+	MBUF_FREE(mbuf);
 }
 
 

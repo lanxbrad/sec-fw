@@ -5,23 +5,41 @@
 #include "decode-defrag.h"
 #include "decode-ipv4.h"
 
-#define frag_q_alloc()
 
-struct ipq 
-{
-	struct inet_frag_queue q;
-
-	uint32_t saddr;
-	uint32_t daddr;
-	uint16_t sport;
-	uint16_t dport;
-	uint16_t id;
-	uint8_t protocol;
-};
 
 
 
 static struct inet_frags ip4_frags;
+
+
+inet_frag_queue *ipq_alloc()
+{
+	void *buf = mem_pool_fpa_slice_alloc(MEM_POOL_ID_FLOW_NODE);
+
+	return (inet_frag_queue *)((uint8_t *)buf + sizeof(Mem_Slice_Ctrl_B));
+}
+
+
+void ipq_free(ipq_t *ipq)
+{
+	Mem_Slice_Ctrl_B *mscb = (Mem_Slice_Ctrl_B *)((uint8_t *)ipq - sizeof(Mem_Slice_Ctrl_B));
+	if(MEM_POOL_MAGIC_NUM != mscb->magic)
+	{
+		return;
+	}
+	if(MEM_POOL_ID_HOST_MBUF != mscb->pool_id)
+	{
+		return;
+	}
+
+	mem_pool_fpa_slice_free((void *)mscb, mscb->pool_id);
+
+	return;
+}
+
+
+
+
 
 
 static unsigned int ipqhashfn(uint16_t id, uint32_t saddr, uint32_t daddr, uint8_t prot)
@@ -47,18 +65,18 @@ static struct inet_frag_queue *inet_frag_intern(struct inet_frag_queue *qp_in, s
 static struct inet_frag_queue *inet_frag_alloc(struct inet_frags *f, struct mbuf_t *mbuf)
 {
 	struct inet_frag_queue *q;
-	struct ipq *qp;
+	struct ipq_t *qp;
 	IPV4Hdr *iph;
 	
-	q = frag_q_alloc();
+	q = ipq_alloc();
 	if(NULL == q)
 	{
 		return NULL;
 	}
 
-	memset(q, 0, sizeof(struct ipq));
+	memset(q, 0, sizeof(struct ipq_t));
 	
-	qp = container_of(q, struct ipq, q);
+	qp = container_of(q, struct ipq_t, q);
 
 	iph = mbuf->ip4h;
 
@@ -134,7 +152,7 @@ static inline struct ipq *ip_find(IPV4Hdr *iph,
 		return NULL;
 	}
 
-	return container_of(q, struct ipq, q);
+	return container_of(q, ipq_t, q);
 }
 
 

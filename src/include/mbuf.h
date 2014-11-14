@@ -58,12 +58,22 @@ typedef struct m_buf_
 #define MBUF_MAGIC_NUM 0xab00ab00
 
 
-/*TODO REPLACE FPA POOL*/
-#define mbuf_alloc(size)   malloc(size)
-#define mbuf_free(m)        free(m)
 
 
+
+extern mbuf_t *mbuf_alloc();
+extern void mbuf_free(mbuf_t *mb);
 extern void packet_destroy(mbuf_t *m);
+
+
+
+
+
+#define MBUF_ALLOC()  mbuf_alloc()
+#define MBUF_FREE(m)   mbuf_free(m)
+
+
+
 
 
 

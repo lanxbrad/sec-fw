@@ -22,7 +22,7 @@ INCLUDE_DIR := \
 	
 
 
-$(LIBCOMMON_OBJ_$(d)):  CFLAGS_LOCAL := -O2 -g -W -Wall -Wno-unused-parameter -Wundef -G0 $(INCLUDE_DIR)
+$(LIBCOMMON_OBJ_$(d)):  CFLAGS_LOCAL := -O2 -g -W -Wall -Werror -Wno-unused-parameter -Wundef -G0 $(INCLUDE_DIR)
 $(LIBCOMMON_OBJ_$(d)):  CFLAGS_GLOBAL := $(filter-out -fprofile-%,$(CFLAGS_GLOBAL))	
 
 

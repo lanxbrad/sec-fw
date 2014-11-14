@@ -204,7 +204,6 @@ static void flow_age_timeout_cb()
 
 
 
-
 int flow_init(void)
 {
 	int i = 0;
@@ -238,6 +237,7 @@ int flow_init(void)
 	}
 
 	/*TODO: Timer init*/
+	flow_age_timeout_cb();
 	
 	return SEC_OK;
 }

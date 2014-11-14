@@ -1,6 +1,8 @@
 #include <mbuf.h>
 #include "decode-tcp.h"
 
+extern void FlowHandlePacket(mbuf_t *m);
+
 static int DecodeTCPPacket(mbuf_t *mbuf, uint8_t *pkt, uint16_t len)
 {
 	if (unlikely(len < TCP_HEADER_LEN)) {

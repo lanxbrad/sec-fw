@@ -2,6 +2,13 @@
 #include <mbuf.h>
 #include "decode-ipv4.h"
 
+
+
+extern int DecodeTCP(mbuf_t *mbuf, uint8_t *pkt, uint16_t len);
+extern int DecodeUDP(mbuf_t *mbuf, uint8_t *pkt, uint16_t len);
+
+
+
 mbuf_t *Defrag(mbuf_t *mbuf)
 {
 	return NULL;

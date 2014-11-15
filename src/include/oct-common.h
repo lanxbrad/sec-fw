@@ -16,4 +16,22 @@
 #include "cvmx-atomic.h"
 #include "cvmx-bootmem.h"
 
+
+
+
+
+
+
+#define CPU_RUNNING_MAX    4
+
+
+
+
+
+
+
+
+
+
+
 #endif

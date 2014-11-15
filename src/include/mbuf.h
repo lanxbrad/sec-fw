@@ -33,8 +33,8 @@ typedef struct m_buf_
 
 	ipv4_tuple_t ipv4;           /*sip + dip*/
 
-	uint16_t  sport;             /*sport + dport*/
-   	uint16_t  dport;
+	uint16_t  sport;             /*sport */
+	uint16_t  dport;             /*dport*/
 
 	uint8_t proto;               /*protocol , now only support TCP + UDP */
 	uint8_t vlan_idx;            /*if vlan exist, set vlan_idx = 1*/
@@ -49,8 +49,8 @@ typedef struct m_buf_
 
 	uint32_t flags;              /*features of packet*/
 
-	uint32_t flow_hash;
-	void    *flow;
+	uint32_t flow_hash;          /*hash value, used to find flow_node*/
+	void    *flow;               /*flow node*/
 	
 }mbuf_t;
 

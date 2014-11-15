@@ -114,6 +114,8 @@ static inline void mem_pool_fpa_slice_free(void *buf, int pool_id)
 
 
 
+extern int Mem_Pool_Init(void);
+extern int Mem_Pool_Get(void);
 
 
 

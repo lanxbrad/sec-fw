@@ -26,6 +26,7 @@ oct_rx_process_work(cvmx_wqe_t *wq)
 		cvmx_helper_free_packet_data(wq);
  		cvmx_fpa_free(wq, wqe_pool, 0);
 	#endif
+		STAT_RECV_ERR;
 		return NULL;
 	}
 	
@@ -46,7 +47,11 @@ oct_rx_process_work(cvmx_wqe_t *wq)
 	m->pktptr = (void *) cvmx_phys_to_ptr(wq->packet_ptr.s.addr);
 
 	cvmx_fpa_free(wq, wqe_pool, 0);
-	
+
+	STAT_RECV_PC_ADD;
+	STAT_RECV_PB_ADD(m->pktlen);
+
+	STAT_RECV_OK;
 	return (void *)m;
 
 }

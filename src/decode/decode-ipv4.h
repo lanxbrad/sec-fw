@@ -1,7 +1,7 @@
 #ifndef __DECODE_IPV4_H__
 #define __DECODE_IPV4_H__
 
-
+#include <mbuf.h>
 #include "decode.h"
 
 
@@ -98,7 +98,7 @@ typedef struct IPV4Hdr_
 
 
 
-
+extern int DecodeIPV4(mbuf_t *mbuf, uint8_t *pkt, uint16_t len);
 
 
 

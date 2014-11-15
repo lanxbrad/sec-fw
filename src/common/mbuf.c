@@ -46,12 +46,13 @@ void packet_destroy(mbuf_t *mbuf)
 	cvmx_buf_ptr_t buffer_ptr;
 	uint64_t start_of_buffer;
 
-	
+	/*free packet, find start of packet buffer*/
 	buffer_ptr = mbuf->packet_ptr;
 	start_of_buffer = ((buffer_ptr.s.addr >> 7) - buffer_ptr.s.back) << 7;
-	
 	cvmx_fpa_free(cvmx_phys_to_ptr(start_of_buffer), buffer_ptr.s.pool, 0);
 
+
+	/*free mbuf*/
 	MBUF_FREE(mbuf);
 }
 

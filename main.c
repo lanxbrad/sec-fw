@@ -52,6 +52,9 @@
 #include <mbuf.h>
 
 #include <oct-common.h>
+#include <mem_pool.h>
+#include <decode-statistic.h>
+#include <oct-init.h>
 
 
 /* This define is the POW group packet destine to the Linux kernel should
@@ -308,7 +311,7 @@ mainloop()
 		{
 			grp = cvmx_wqe_get_grp(work);
 
-			if ( FROM_INPUT_PORT_GROUP == grp)
+			if ( FROM_INPUT_PORT_GROUP == grp )
 			{
 				mb = (mbuf_t *)oct_rx_process_work(work);
 				if (NULL == mb)
@@ -317,7 +320,7 @@ mainloop()
 				}
 				Decode(mb);
 			}
-			else if( FROM_LINUX_GROUP == grp)
+			else if( FROM_LINUX_GROUP == grp )
 			{
 				printf("receive packet from linux!\n");
 			}
@@ -333,18 +336,20 @@ mainloop()
 	}
 }
 
-extern int Mem_Pool_Init(void);
-extern int Mem_Pool_Get(void);
+
 
 int Sec_LowLevel_Init()
 {
+
+	OCT_CPU_Init();
+
 	if (cvmx_is_init_core())
 	{
 		if(SEC_OK != Mem_Pool_Init())
 		{
 			return SEC_NO;
 		}
-	
+
 		return SEC_OK;
 	}
 	else
@@ -362,8 +367,25 @@ int Sec_LowLevel_Init()
 
 int Sec_HighLevel_Init()
 {
-	
-	return SEC_NO;
+	if ( cvmx_is_init_core() )
+	{
+		if(SEC_OK != Decode_PktStat_Init())
+		{
+			return SEC_NO;
+		}
+
+		return SEC_OK;
+	}
+	else
+	{
+		if(SEC_OK != Decode_PktStat_Get())
+		{
+			return SEC_NO;
+		}
+
+		return SEC_OK;
+	}
+
 }
 
 

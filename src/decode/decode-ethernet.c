@@ -6,16 +6,23 @@
 
 #include "decode-ethernet.h"
 #include "decode-vlan.h"
-
-extern int DecodeIPV4(mbuf_t *mbuf, uint8_t *pkt, uint16_t len);
-extern int DecodeVLAN(mbuf_t *mbuf, uint8_t *pkt, uint16_t len);
+#include "decode-ipv4.h"
 
 
+
+
+/*
+  *   @mbuf:  
+  *   @pkt:    start of l2 header
+  *   @len:    len of l2 packet
+  */
 int DecodeEthernet(mbuf_t *mbuf, uint8_t *pkt, uint16_t len)
 {
 	if (unlikely(len < ETHERNET_HEADER_LEN))
+	{	
 		return DECODE_DROP;
-    
+	}
+	
 	mbuf->ethh = (EthernetHdr *)pkt;
 	if (unlikely(mbuf->ethh == NULL))
         return DECODE_DROP;

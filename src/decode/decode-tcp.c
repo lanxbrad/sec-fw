@@ -1,4 +1,6 @@
 #include <mbuf.h>
+#include "decode.h"
+#include "decode-ipv4.h"
 #include "decode-tcp.h"
 
 extern void FlowHandlePacket(mbuf_t *m);

@@ -1,4 +1,5 @@
 #include <mbuf.h>
+#include <decode.h>
 #include <mem_pool.h>
 #include "flow.h"
 #include "tluhash.h"

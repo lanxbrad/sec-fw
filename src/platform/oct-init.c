@@ -1,3 +1,4 @@
+#include <sec-common.h>
 #include <oct-common.h>
 #include "oct-init.h"
 

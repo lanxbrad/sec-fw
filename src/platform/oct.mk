@@ -12,6 +12,7 @@ LIBRARY_PLATFORM := $(OBJ_DIR)/libplatform.a
 
 LIBPLATFORM_OBJ_$(d)  :=  \
 	$(OBJ_DIR)/oct-rxtx.o \
+	$(OBJ_DIR)/oct-init.o \
 	$(OBJ_DIR)/mem_pool.o
 
 

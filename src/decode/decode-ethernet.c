@@ -18,17 +18,20 @@
   */
 int DecodeEthernet(mbuf_t *mbuf, uint8_t *pkt, uint16_t len)
 {
+	EthernetHdr *pethh;
+	
 	if (unlikely(len < ETHERNET_HEADER_LEN))
 	{	
 		return DECODE_DROP;
 	}
 	
-	mbuf->ethh = (EthernetHdr *)pkt;
+	mbuf->ethh = (void *)pkt;
 	if (unlikely(mbuf->ethh == NULL))
         return DECODE_DROP;
 
+	pethh = (EthernetHdr *)(mbuf->ethh);
 
-	switch (mbuf->ethh->eth_type) {
+	switch (pethh->eth_type) {
 		case ETHERNET_TYPE_IP:
 			return DecodeIPV4(mbuf, pkt + ETHERNET_HEADER_LEN, len - ETHERNET_HEADER_LEN);
 			
@@ -37,7 +40,7 @@ int DecodeEthernet(mbuf_t *mbuf, uint8_t *pkt, uint16_t len)
 			return DecodeVLAN(mbuf, pkt + ETHERNET_HEADER_LEN, len - ETHERNET_HEADER_LEN);
 
 		default:
-			printf("ether type %04x not supported", mbuf->ethh->eth_type);
+			printf("ether type %04x not supported", pethh->eth_type);
 			return DECODE_DROP;
 	}
 

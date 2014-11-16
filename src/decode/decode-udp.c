@@ -1,5 +1,6 @@
 #include <mbuf.h>
 #include <sec-util.h>
+#include "decode-ipv4.h"
 #include "decode-udp.h"
 
 extern void FlowHandlePacket(mbuf_t *m);

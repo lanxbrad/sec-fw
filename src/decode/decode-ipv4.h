@@ -14,10 +14,7 @@
 
 #define IPV4_HEADER_LEN           20    /**< Header length */
 
-typedef struct {
-	uint32_t sip;
-	uint32_t dip;
-}ipv4_tuple_t;
+
 
 
 typedef struct IPV4Hdr_

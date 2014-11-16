@@ -30,10 +30,12 @@ typedef struct
 
 
 
-extern pkt_stat *pktstat;
+extern pkt_stat *pktstat[];
 
-#define STAT_RECV_PC_ADD 		do { pktstat[local_cpu_id]->rc.recv_packet_count++; pktstat->rc.recv_packet_count_sum++; } while (0)
-#define STAT_RECV_PB_ADD(bytes) do { pktstat[local_cpu_id]->rc.recv_packet_bytes += bytes; pktstat->rc.recv_packet_bytes_sum += bytes; } while (0)
+extern int local_cpu_id;
+
+#define STAT_RECV_PC_ADD 		do { pktstat[local_cpu_id]->rc.recv_packet_count++; pktstat[local_cpu_id]->rc.recv_packet_count_sum++; } while (0)
+#define STAT_RECV_PB_ADD(bytes) do { pktstat[local_cpu_id]->rc.recv_packet_bytes += bytes; pktstat[local_cpu_id]->rc.recv_packet_bytes_sum += bytes; } while (0)
 
 
 #define STAT_RECV_ERR  do { pktstat[local_cpu_id]->rxstat.rx_err++; } while(0)

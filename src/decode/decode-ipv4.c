@@ -1,5 +1,7 @@
 #include <sec-util.h>
 #include <mbuf.h>
+#include "decode-ethernet.h"
+#include "decode-vlan.h"
 #include "decode-ipv4.h"
 
 

@@ -1,6 +1,7 @@
 #ifndef __DECODE_VLAN_H__
 #define __DECODE_VLAN_H__
 #include <sec-common.h>
+#include <decode.h>
 #include <mbuf.h>
 
 

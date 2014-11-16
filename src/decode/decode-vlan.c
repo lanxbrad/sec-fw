@@ -1,5 +1,7 @@
+#include "decode-ethernet.h"
 #include "decode-vlan.h"
 #include "mbuf.h"
+
 
 extern int DecodeIPV4(mbuf_t *mbuf, uint8_t *pkt, uint16_t len);
 
@@ -12,6 +14,7 @@ extern int DecodeIPV4(mbuf_t *mbuf, uint8_t *pkt, uint16_t len);
 int DecodeVLAN(mbuf_t *mb, uint8_t *pkt, uint16_t len)
 {
 	uint32_t proto;
+	VLANHdr *pvh;
 
 	if(len < VLAN_HEADER_LEN) {
     	return DECODE_DROP;
@@ -21,13 +24,15 @@ int DecodeVLAN(mbuf_t *mb, uint8_t *pkt, uint16_t len)
         return DECODE_DROP;
 	}
 
-	mb->vlanh = (VLANHdr *)pkt;
+	mb->vlanh = (void *)pkt;
 
 	if(mb->vlanh == NULL){
 		return DECODE_DROP;
 	}
 
-	proto = GET_VLAN_PROTO(mb->vlanh);
+	pvh = (VLANHdr *)(mb->vlanh);
+
+	proto = GET_VLAN_PROTO(pvh);
 
 	mb->vlan_idx = 1;
 
@@ -40,7 +45,7 @@ int DecodeVLAN(mbuf_t *mb, uint8_t *pkt, uint16_t len)
 			return DecodeVLAN(mb, pkt + VLAN_HEADER_LEN, len - VLAN_HEADER_LEN);
 
 		default:
-			printf("ether type %04x not supported", mb->ethh->eth_type);
+			printf("ether type %04x not supported", proto);
 			return DECODE_DROP;
 	}
 

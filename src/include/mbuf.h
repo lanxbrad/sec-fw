@@ -2,12 +2,13 @@
 #define __MBUF_H__
 
 #include <oct-common.h>
-#include <decode-ethernet.h>
-#include <decode-ipv4.h>
-#include <decode-vlan.h>
 #include <sec-util.h>
 
 
+typedef struct {
+	uint32_t sip;
+	uint32_t dip;
+}ipv4_tuple_t;
 
 
 /*packet info description
@@ -26,8 +27,8 @@ typedef struct m_buf_
 	
 	void *pktptr;                /*pointer to begin of packet from wqe packet_ptr*/
 	
-	EthernetHdr *ethh;           /*l2 layer header*/
-	VLANHdr *vlanh;
+	void *ethh;           /*l2 layer header*/
+	void *vlanh;
 	void *network_header;        /*network layer header*/
 	void *transport_header;      /*transport layer header*/
 

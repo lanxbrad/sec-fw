@@ -7,6 +7,7 @@
 #include "decode-ethernet.h"
 #include "decode-vlan.h"
 #include "decode-ipv4.h"
+#include "decode-statistic.h"
 
 
 
@@ -22,25 +23,26 @@ int DecodeEthernet(mbuf_t *mbuf, uint8_t *pkt, uint16_t len)
 	
 	if (unlikely(len < ETHERNET_HEADER_LEN))
 	{	
+		STAT_L2_HEADER_ERR;
 		return DECODE_DROP;
 	}
+
+	pethh = (EthernetHdr *)(pkt);
+	mbuf->ethh = pethh;
 	
-	mbuf->ethh = (void *)pkt;
-	if (unlikely(mbuf->ethh == NULL))
-        return DECODE_DROP;
-
-	pethh = (EthernetHdr *)(mbuf->ethh);
-
 	switch (pethh->eth_type) {
 		case ETHERNET_TYPE_IP:
+			STAT_L2_RECV_OK;
 			return DecodeIPV4(mbuf, pkt + ETHERNET_HEADER_LEN, len - ETHERNET_HEADER_LEN);
 			
 		case ETHERNET_TYPE_VLAN:
         case ETHERNET_TYPE_8021QINQ:
+			STAT_L2_RECV_OK;
 			return DecodeVLAN(mbuf, pkt + ETHERNET_HEADER_LEN, len - ETHERNET_HEADER_LEN);
 
 		default:
 			printf("ether type %04x not supported", pethh->eth_type);
+			STAT_L2_UNSUPPORT;
 			return DECODE_DROP;
 	}
 

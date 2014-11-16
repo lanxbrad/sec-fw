@@ -14,7 +14,9 @@ extern CVMX_SHARED int wqe_pool;
 void *
 oct_rx_process_work(cvmx_wqe_t *wq)
 {
-	mbuf_t *m = NULL;
+	void *pkt_virt;
+	mbuf_t *m;
+
 	
 	if (wq->word2.s.rcv_error || cvmx_wqe_get_bufs(wq) > 1){
 		/* 
@@ -27,6 +29,13 @@ oct_rx_process_work(cvmx_wqe_t *wq)
  		cvmx_fpa_free(wq, wqe_pool, 0);
 	#endif
 		STAT_RECV_ERR;
+		return NULL;
+	}
+
+	pkt_virt = (void *) cvmx_phys_to_ptr(wq->packet_ptr.s.addr);
+	if(NULL == pkt_virt)
+	{
+		STAT_RECV_ADDR_ERR;
 		return NULL;
 	}
 	
@@ -44,7 +53,7 @@ oct_rx_process_work(cvmx_wqe_t *wq)
 	m->packet_ptr.u64 = wq->packet_ptr.u64;
 	
 	m->pktlen = cvmx_wqe_get_len(wq);
-	m->pktptr = (void *) cvmx_phys_to_ptr(wq->packet_ptr.s.addr);
+	m->pktptr = pkt_virt;
 
 	cvmx_fpa_free(wq, wqe_pool, 0);
 	

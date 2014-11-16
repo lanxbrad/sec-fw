@@ -10,6 +10,9 @@ extern int DecodeIPV4(mbuf_t *mbuf, uint8_t *pkt, uint16_t len);
 
 /*
  * current support  one layer vlan
+ *   @mbuf:  
+ *   @pkt:    start of vlan header
+ *   @len:    len of packet from vlan header
  */
 int DecodeVLAN(mbuf_t *mb, uint8_t *pkt, uint16_t len)
 {

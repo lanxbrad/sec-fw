@@ -2,12 +2,14 @@
 #include "decode.h"
 #include "decode-ipv4.h"
 #include "decode-tcp.h"
+#include "decode-statistic.h"
 
 extern void FlowHandlePacket(mbuf_t *m);
 
 static int DecodeTCPPacket(mbuf_t *mbuf, uint8_t *pkt, uint16_t len)
 {
 	if (unlikely(len < TCP_HEADER_LEN)) {
+		STAT_TCP_HEADER_ERR;
         return DECODE_DROP;
     }
 
@@ -15,11 +17,13 @@ static int DecodeTCPPacket(mbuf_t *mbuf, uint8_t *pkt, uint16_t len)
 
     uint8_t hlen = TCP_GET_HLEN(mbuf);
     if (unlikely(len < hlen)) {
+		STAT_TCP_LEN_ERR;
         return DECODE_DROP;
     }
 
 	uint8_t tcp_opt_len = hlen - TCP_HEADER_LEN;
     if (unlikely(tcp_opt_len > TCP_OPTLENMAX)) {
+		STAT_TCP_LEN_ERR;
         return DECODE_DROP;
     }
 
@@ -30,6 +34,7 @@ static int DecodeTCPPacket(mbuf_t *mbuf, uint8_t *pkt, uint16_t len)
 
     mbuf->payload = pkt + hlen;
     mbuf->payload_len = len - hlen;
+
 
     return DECODE_OK;
 
@@ -45,6 +50,7 @@ int DecodeTCP(mbuf_t *mbuf, uint8_t *pkt, uint16_t len)
     }
 
 	FlowHandlePacket(mbuf);
-	
+
+	STAT_TCP_RECV_OK;
 	return DECODE_OK;
 }

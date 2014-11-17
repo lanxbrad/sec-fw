@@ -3,7 +3,7 @@
 #include "decode-ethernet.h"
 #include "decode-vlan.h"
 #include "decode-ipv4.h"
-
+#include "decode-statistic.h"
 
 
 extern int DecodeTCP(mbuf_t *mbuf, uint8_t *pkt, uint16_t len);
@@ -22,24 +22,29 @@ static int DecodeIPV4Packet(mbuf_t *mbuf, uint8_t *pkt, uint16_t len)
 {
 	
 	if (unlikely(len < IPV4_HEADER_LEN)) {
+		STAT_IPV4_HEADER_ERR;
         return DECODE_DROP;
     }
 
 	if (unlikely(IP_GET_RAW_VER(pkt) != 4)) {
+		STAT_IPV4_VERSION_ERR;
         return DECODE_DROP;
     }
 
 	mbuf->network_header = (void *)pkt;
 
 	if (unlikely(IPV4_GET_HLEN(mbuf) < IPV4_HEADER_LEN)) {
+		STAT_IPV4_HEADER_ERR;
         return DECODE_DROP;
     }
 
 	if (unlikely(IPV4_GET_IPLEN(mbuf) < IPV4_GET_HLEN(mbuf))) {
+		STAT_IPV4_LEN_ERR;
         return DECODE_DROP;
     }
 
     if (unlikely(len < IPV4_GET_IPLEN(mbuf))) {
+		STAT_IPV4_LEN_ERR;
         return DECODE_DROP;
     }
 
@@ -80,9 +85,11 @@ int DecodeIPV4(mbuf_t *mbuf, uint8_t *pkt, uint16_t len)
 			return DecodeUDP(mbuf, pkt + IPV4_GET_HLEN(mbuf), IPV4_GET_IPLEN(mbuf) - IPV4_GET_HLEN(mbuf));
 		default:
 			printf("unsupport protocol %d\n",IPV4_GET_IPPROTO(mbuf));
+			STAT_IPV4_UNSUPPORT;
 			return DECODE_DROP;
 	}
-		
+
+	STAT_IPV4_RECV_OK;
 	return DECODE_OK;
 }
 

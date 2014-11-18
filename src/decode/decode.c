@@ -1,3 +1,17 @@
+//======================================================================
+//
+//        Copyright (C) 2014-2015 北京威努特技术有限公司    
+//        All rights reserved
+//
+//        filename : decode.c
+//        description :    decode entry
+//
+//        created by  luoye  at  2014-11-18
+//
+//======================================================================
+
+
+
 #include <sec-common.h>
 #include <decode.h>
 #include <mbuf.h>

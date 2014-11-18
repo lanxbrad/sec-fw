@@ -56,41 +56,116 @@
 #include <decode-statistic.h>
 #include <oct-init.h>
 
+#include <flow.h>
 
-/* This define is the POW group packet destine to the Linux kernel should
-    use. This must match the ethernet driver's pow_receive_group parameter */
-#define TO_LINUX_GROUP          14
 
-/* This define is the POW group packet from the Linux kernel use. This must
-    match the ethernet driver's pow_send_group parameter */
-#define FROM_LINUX_GROUP        13
 
-/* This define is the POW group this program uses for packet interception.
-    Packets from intercept_port are routed to this POW group instead of the
-    normal ethernet pow_receive_group */
-#define FROM_INPUT_PORT_GROUP   0
+extern flow_item_t *flow_item_alloc();
 
-/* This is the Octeon hardware port number to intercept. Packets coming
-    in this port are intercepted by linux-filter and processed. Packets
-    received from the ethernet POW0 device are sent out this port */
-CVMX_SHARED int intercept_port = 0;
-
-/* wqe pool */
-CVMX_SHARED int wqe_pool = -1;
-
-/**
- * Determine if the supplied work queue entry and packet
- * should be filtered.
- *
- * @param work   Work queue entry to check
- * @return Non zero if packet should be filtered out
- */
-static int is_filtered_packet(cvmx_wqe_t *work)
+int Sec_LowLevel_Init(int argc, char *argv[])
 {
-    /* As an example, block all IP broadcasts */
-    return (work->word2.s.is_bcast && !work->word2.s.not_IP);
+
+	OCT_CPU_Init();
+
+	OCT_UserApp_Init();
+
+	if (cvmx_is_init_core())
+	{	/* Have one core do the hardware initialization */
+		OCT_Intercept_Port_Init(argc, argv);
+
+		if(SEC_OK != Mem_Pool_Init())
+		{
+			return SEC_NO;
+		}
+
+	}
+	else
+	{
+		if(SEC_OK != Mem_Pool_Get())
+		{
+			return SEC_NO;
+		}
+	
+	}
+
+	OCT_RX_Group_Init();
+
+	return SEC_OK;
+
 }
 
+
+
+
+
+extern void *oct_rx_process_work(cvmx_wqe_t *wq);
+extern void Decode(mbuf_t *mbuf);
+
+void 
+mainloop()
+{
+	mbuf_t *mb;
+	int grp;
+	while(1){
+		
+		cvmx_wqe_t *work = cvmx_pow_work_request_sync(CVMX_POW_WAIT);
+		if (NULL != work)
+		{
+			grp = cvmx_wqe_get_grp(work);
+
+			if ( FROM_INPUT_PORT_GROUP == grp )
+			{
+				mb = (mbuf_t *)oct_rx_process_work(work);
+				if (NULL == mb)
+				{
+					continue;
+				}
+				Decode(mb);
+			}
+			else if( FROM_LINUX_GROUP == grp )
+			{
+				printf("receive packet from linux!\n");
+			}
+			else
+			{
+				printf("work group error %d\n", grp);
+			}
+			
+		}
+		else
+		{
+			continue;
+		}
+	}
+}
+
+
+
+
+
+
+int Sec_HighLevel_Init()
+{
+	if ( cvmx_is_init_core() )
+	{
+		if(SEC_OK != Decode_PktStat_Init())
+		{
+			return SEC_NO;
+		}
+
+		return SEC_OK;
+	}
+	else
+	{
+		if(SEC_OK != Decode_PktStat_Get())
+		{
+			return SEC_NO;
+		}
+
+		return SEC_OK;
+	}
+
+}
 
 
 
@@ -101,6 +176,24 @@ static int is_filtered_packet(cvmx_wqe_t *work)
  */
 int main(int argc, char *argv[])
 {
+    
+
+    if(SEC_OK != Sec_LowLevel_Init(argc, argv))
+	{
+		printf("sec lowlevel init err!\n");
+		exit(0);
+	}
+
+	mainloop();
+	
+
+    return 0;
+}
+
+
+#ifdef xxxx
+int old_main(int argc, char *argv[])
+{
     long port_override = -1;
 
     cvmx_skip_app_config_set();
@@ -110,8 +203,8 @@ int main(int argc, char *argv[])
     /* Have one core do the hardware initialization */
     if (cvmx_is_init_core())
     {
-		if (argc > 1)
-	    	port_override = strtol(argv[1], NULL, 0);
+	if (argc > 1)
+	    port_override = strtol(argv[1], NULL, 0);
 
         printf("\n\nLoad the Linux ethernet driver with:\n"
                "\t $ modprobe octeon-ethernet\n"
@@ -147,45 +240,45 @@ int main(int argc, char *argv[])
             }
         }
 
-		/* Their is no interface 0 on nic_xle_4g card, use interface 1. */
-		if (cvmx_sysinfo_get()->board_type == CVMX_BOARD_TYPE_NIC_XLE_4G)
-	    	intercept_port = 16;
+	/* Their is no interface 0 on nic_xle_4g card, use interface 1. */
+	if (cvmx_sysinfo_get()->board_type == CVMX_BOARD_TYPE_NIC_XLE_4G)
+	    intercept_port = 16;
 
-		if (port_override > 0)
-	    	intercept_port = port_override;
+	if (port_override > 0)
+	    intercept_port = port_override;
 
-		__cvmx_helper_init_port_valid();
+	__cvmx_helper_init_port_valid();
 
-		__cvmx_import_app_config_from_named_block(CVMX_APP_CONFIG);
+	__cvmx_import_app_config_from_named_block(CVMX_APP_CONFIG);
 
-		__cvmx_helper_init_port_config_data_local();
+	__cvmx_helper_init_port_config_data_local();
 
-		wqe_pool = cvmx_fpa_get_wqe_pool();
+	wqe_pool = cvmx_fpa_get_wqe_pool();
 
-		if (octeon_has_feature(OCTEON_FEATURE_PKND)) {
-		    cvmx_pip_prt_tagx_t tag_config;
-		    cvmx_gmxx_prtx_cfg_t prt_cfg;
-		    int pkind;
-		    int iface = (intercept_port >> 8) - 8;
-		    int iport = (intercept_port >> 4) & 0xf;
-		    
-		    if (iface < 0)
-			iface = 0;
+	if (octeon_has_feature(OCTEON_FEATURE_PKND)) {
+	    cvmx_pip_prt_tagx_t tag_config;
+	    cvmx_gmxx_prtx_cfg_t prt_cfg;
+	    int pkind;
+	    int iface = (intercept_port >> 8) - 8;
+	    int iport = (intercept_port >> 4) & 0xf;
+	    
+	    if (iface < 0)
+		iface = 0;
 
-		    prt_cfg.u64 = cvmx_read_csr(CVMX_GMXX_PRTX_CFG(iport, iface));
-		    pkind = prt_cfg.s.pknd;
+	    prt_cfg.u64 = cvmx_read_csr(CVMX_GMXX_PRTX_CFG(iport, iface));
+	    pkind = prt_cfg.s.pknd;
 
-		    tag_config.u64 = cvmx_read_csr(CVMX_PIP_PRT_TAGX(pkind));
-		    tag_config.s.grp = FROM_INPUT_PORT_GROUP & 0xf;
-		    tag_config.s.grp_msb = (FROM_INPUT_PORT_GROUP >> 4) & 3;
-		    cvmx_write_csr(CVMX_PIP_PRT_TAGX(pkind), tag_config.u64);
-		} else {
-		    /* Change the group for only the port we're interested in */
-		    cvmx_pip_port_tag_cfg_t tag_config;
-		    tag_config.u64 = cvmx_read_csr(CVMX_PIP_PRT_TAGX(intercept_port));
-		    tag_config.s.grp = FROM_INPUT_PORT_GROUP;
-		    cvmx_write_csr(CVMX_PIP_PRT_TAGX(intercept_port), tag_config.u64);
-		}
+	    tag_config.u64 = cvmx_read_csr(CVMX_PIP_PRT_TAGX(pkind));
+	    tag_config.s.grp = FROM_INPUT_PORT_GROUP & 0xf;
+	    tag_config.s.grp_msb = (FROM_INPUT_PORT_GROUP >> 4) & 3;
+	    cvmx_write_csr(CVMX_PIP_PRT_TAGX(pkind), tag_config.u64);
+	} else {
+	    /* Change the group for only the port we're interested in */
+	    cvmx_pip_port_tag_cfg_t tag_config;
+	    tag_config.u64 = cvmx_read_csr(CVMX_PIP_PRT_TAGX(intercept_port));
+	    tag_config.s.grp = FROM_INPUT_PORT_GROUP;
+	    cvmx_write_csr(CVMX_PIP_PRT_TAGX(intercept_port), tag_config.u64);
+	}
         /* We need to call cvmx_cmd_queue_initialize() to get the pointer to
             the named block. The queues are already setup by the ethernet
             driver, so we don't actually need to setup a queue. Pass some
@@ -234,6 +327,8 @@ int main(int argc, char *argv[])
         if (work->word2.s.rcv_error)
         {
             /* Work has error, so drop */
+	    printf("error is %d\n", work->word2.s.rcv_error);
+            cvmx_helper_dump_packet(work);
             cvmx_helper_free_packet_data(work);
             cvmx_fpa_free(work, wqe_pool, 0);
             continue;
@@ -278,6 +373,8 @@ int main(int argc, char *argv[])
         else
         {
             printf("Received %u byte packet. Sending to Linux.\n", cvmx_wqe_get_len(work));
+
+	    cvmx_helper_dump_packet(work);
             cvmx_wqe_set_port(work, 0);
 #ifdef __linux__
             /* If we're running under Linux userspace we can't desched since
@@ -295,99 +392,5 @@ int main(int argc, char *argv[])
 
     return 0;
 }
-
-extern void *oct_rx_process_work(cvmx_wqe_t *wq);
-extern void Decode(mbuf_t *mbuf);
-
-void 
-mainloop()
-{
-	mbuf_t *mb;
-	int grp;
-	while(1){
-		
-		cvmx_wqe_t *work = cvmx_pow_work_request_sync(CVMX_POW_NO_WAIT);
-		if (NULL != work)
-		{
-			grp = cvmx_wqe_get_grp(work);
-
-			if ( FROM_INPUT_PORT_GROUP == grp )
-			{
-				mb = (mbuf_t *)oct_rx_process_work(work);
-				if (NULL == mb)
-				{
-					continue;
-				}
-				Decode(mb);
-			}
-			else if( FROM_LINUX_GROUP == grp )
-			{
-				printf("receive packet from linux!\n");
-			}
-			else
-			{
-				printf("work group error %d\n", grp);
-			}
-			
-		}
-		else
-			continue;
-
-	}
-}
-
-
-
-int Sec_LowLevel_Init()
-{
-
-	OCT_CPU_Init();
-
-	if (cvmx_is_init_core())
-	{
-		if(SEC_OK != Mem_Pool_Init())
-		{
-			return SEC_NO;
-		}
-
-		return SEC_OK;
-	}
-	else
-	{
-		if(SEC_OK != Mem_Pool_Get())
-		{
-			return SEC_NO;
-		}
-
-		return SEC_OK;
-	}
-
-
-}
-
-int Sec_HighLevel_Init()
-{
-	if ( cvmx_is_init_core() )
-	{
-		if(SEC_OK != Decode_PktStat_Init())
-		{
-			return SEC_NO;
-		}
-
-		return SEC_OK;
-	}
-	else
-	{
-		if(SEC_OK != Decode_PktStat_Get())
-		{
-			return SEC_NO;
-		}
-
-		return SEC_OK;
-	}
-
-}
-
-
-
+#endif
 

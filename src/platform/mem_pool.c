@@ -138,6 +138,8 @@ int mem_pool_fpa_slice_inject(int pool_id)
 		return SEC_NO;
 	}
 
+	printf("fpa %d inject\n",fpa_pool_id);
+	
 	start_address = (uint64_t)mem_pool[pool_id]->start;
 	for (i = 0; i < mem_pool[pool_id]->slicenum; i++)
 	{
@@ -154,44 +156,61 @@ int mem_pool_fpa_slice_inject(int pool_id)
 
 int Mem_Pool_Init(void)
 {
+	printf("Mem_Pool_Init()\n");
 
 	/* HOST MBUF POOL INIT*/
 	Mem_Pool_Cfg *mpc = (Mem_Pool_Cfg *)cvmx_bootmem_alloc_named(MEM_POOL_TOTAL_HOST_MBUF , 128, MEM_POOL_NAME_HOST_MBUF);
 	if(NULL == mpc)
+	{
 		return SEC_NO;
+	}
+
+	printf("mpc is %p\n", mpc);
 	
-	memset((void *)mpc, 0, sizeof(Mem_Pool_Cfg));
+	memset((void *)mpc, 0, MEM_POOL_CFG_SIZE);
 	
 	mpc->slicesize = MEM_POOL_HOST_MBUF_SIZE;
 	mpc->slicenum = MEM_POOL_HOST_MBUF_NUM;
-	mpc->start = (uint8_t *)mpc + sizeof(Mem_Pool_Cfg);
+	mpc->start = (uint8_t *)mpc + MEM_POOL_CFG_SIZE;
 	mpc->totalsize = MEM_POOL_HOST_MBUF_NUM * MEM_POOL_HOST_MBUF_SIZE;
 	mem_pool[MEM_POOL_ID_HOST_MBUF] = mpc;
 	
+	printf("slicesize is %d, slicenum is %d, start is 0x%p, totalsize is %d\n",
+		mpc->slicesize,mpc->slicenum,mpc->start,mpc->totalsize);
+
 	if( SEC_NO == mem_pool_fpa_slice_inject(MEM_POOL_ID_HOST_MBUF))
 	{
 		return SEC_NO;
 	}
-	
-	
+
+
+
 	/* FLOW NODE POOL INIT*/
 	mpc = (Mem_Pool_Cfg *)cvmx_bootmem_alloc_named(MEM_POOL_TOTAL_FLOW_NODE, 128, MEM_POOL_NAME_FLOW_NODE);
 	if(NULL == mpc)
+	{
+		printf("FLOW NODE POOL INIT FAIL\n");
 		return SEC_NO;
+	}
+	printf("mpc is %p\n", mpc);
 
-	memset((void *)mpc, 0, sizeof(Mem_Pool_Cfg));
+	memset((void *)mpc, 0, MEM_POOL_CFG_SIZE);
 	
 	mpc->slicesize = MEM_POOL_FLOW_NODE_SIZE;
 	mpc->slicenum = MEM_POOL_FLOW_NODE_NUM;
-	mpc->start = (uint8_t *)mpc + sizeof(Mem_Pool_Cfg);
+	mpc->start = (uint8_t *)mpc + MEM_POOL_CFG_SIZE;
 	mpc->totalsize = MEM_POOL_FLOW_NODE_NUM * MEM_POOL_FLOW_NODE_SIZE;
 	mem_pool[MEM_POOL_ID_FLOW_NODE] = mpc;
+
+	printf("slicesize is %d, slicenum is %d, start is 0x%p, totalsize is %d\n",
+		mpc->slicesize,mpc->slicenum,mpc->start,mpc->totalsize);
 
 	if( SEC_NO == mem_pool_fpa_slice_inject(MEM_POOL_ID_FLOW_NODE))
 	{
 		return SEC_NO;
 	}
 
+#if 0
 	/*SMALL BUF POOL INIT*/
 	mpc = (Mem_Pool_Cfg *)cvmx_bootmem_alloc_named(MEM_POOL_TOTAL_SMALL_BUFFER, 128, MEM_POOL_NAME_SMALL_BUFFER);
 	if(NULL == mpc)
@@ -227,7 +246,8 @@ int Mem_Pool_Init(void)
 	{
 		return SEC_NO;
 	}
-	
+
+#endif
 	return SEC_OK;
 
 }

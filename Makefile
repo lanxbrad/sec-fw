@@ -90,7 +90,8 @@ OBJS = $(OBJ_DIR)/main.o
 INCLUDE_DIR := \
 	-I$(OCTEON_ROOT)/sec-fw/src/include \
 	-I$(OCTEON_ROOT)/sec-fw/src/decode \
-	-I$(OCTEON_ROOT)/sec-fw/src/platform
+	-I$(OCTEON_ROOT)/sec-fw/src/platform \
+	-I$(OCTEON_ROOT)/sec-fw/src/flow
 		
 
 CFLAGS_LOCAL = -g -O2 -W -Wall -Wno-unused-parameter $(INCLUDE_DIR)

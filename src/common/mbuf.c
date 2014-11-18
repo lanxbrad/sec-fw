@@ -11,7 +11,8 @@ void mbuf_init(void)
 
 mbuf_t *mbuf_alloc()
 {
-	void *buf = mem_pool_fpa_slice_alloc(MEM_POOL_ID_HOST_MBUF);
+	void *buf = mem_pool_fpa_slice_alloc(FPA_POOL_ID_HOST_MBUF);
+	printf("mbuf magic is 0x%x\n", ((Mem_Slice_Ctrl_B *)buf)->magic);
 
 	return (mbuf_t *)((uint8_t *)buf + sizeof(Mem_Slice_Ctrl_B));
 }

@@ -15,8 +15,8 @@ flow_table_info_t flow_table;
 
 flow_item_t *flow_item_alloc()
 {
-	void *buf = mem_pool_fpa_slice_alloc(MEM_POOL_ID_FLOW_NODE);
-
+	void *buf = mem_pool_fpa_slice_alloc(FPA_POOL_ID_FLOW_NODE);
+	printf("mbuf magic is 0x%x\n", ((Mem_Slice_Ctrl_B *)buf)->magic);
 	return (flow_item_t *)((uint8_t *)buf + sizeof(Mem_Slice_Ctrl_B));
 	
 }

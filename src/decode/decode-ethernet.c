@@ -1,3 +1,15 @@
+/********************************************************************************
+ *
+ *        Copyright (C) 2014-2015  Beijing winicssec Technology 
+ *        All rights reserved
+ *
+ *        filename :       decode-ethernet.c
+ *        description :    ethernet layer decode
+ *
+ *        created by  luoye  at  2014-11-18
+ *
+ ********************************************************************************/
+
 #include "sec-common.h"
 #include <mbuf.h>
 #include <sec-util.h>

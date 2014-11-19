@@ -27,6 +27,12 @@ static int DecodeUDPPacket(mbuf_t *mbuf, uint8_t *pkt, uint16_t len)
         return DECODE_DROP;
     }
 
+	mbuf->sport = UDP_GET_SRC_PORT(mbuf);
+	mbuf->dport = UDP_GET_DST_PORT(mbuf);
+
+	printf("src port is %d\n", mbuf->sport);
+	printf("dst port is %d\n", mbuf->dport);
+
 	mbuf->payload = pkt + UDP_HEADER_LEN;
     mbuf->payload_len = len - UDP_HEADER_LEN;
 
@@ -40,9 +46,13 @@ static int DecodeUDPPacket(mbuf_t *mbuf, uint8_t *pkt, uint16_t len)
 
 int DecodeUDP(mbuf_t *mbuf, uint8_t *pkt, uint16_t len)
 {
+	printf("=========>enter DecodeTCP\n");
+
 	if (unlikely(DECODE_OK != DecodeUDPPacket(mbuf, pkt, len))) {
 		return DECODE_DROP;
 	}
+
+	return DECODE_DROP;
 
 	FlowHandlePacket(mbuf);
 

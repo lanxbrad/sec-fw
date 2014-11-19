@@ -19,6 +19,20 @@
 
 
 
+
+#define TIME_PER_TICK_US                 1000//2000
+#define TIME_TICK_MAX                    400000
+
+
+
+
+
+
+
+
+
+
+
 extern CVMX_SHARED int intercept_port;
 
 /* wqe pool */
@@ -29,5 +43,7 @@ extern int OCT_CPU_Init();
 extern int OCT_UserApp_Init();
 extern void OCT_RX_Group_Init();
 extern int OCT_Intercept_Port_Init(int argc, char *argv[]);
+extern int OCT_Timer_Init();
+extern int OCT_Create_Timer();
 
 #endif

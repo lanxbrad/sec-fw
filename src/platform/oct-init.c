@@ -136,6 +136,45 @@ int OCT_Intercept_Port_Init(int argc, char *argv[])
 }
 
 
+int OCT_Timer_Init()
+{
+	int status;
+
+	printf("OCT_Timer_Init\n");
+	
+    status = cvmx_tim_setup(TIME_PER_TICK_US , TIME_TICK_MAX);
+    if (status != 0) {
+        return SEC_NO;
+    }
+    cvmx_tim_start();
+
+    return SEC_OK;
+}
+
+int OCT_Create_Timer()
+{
+	cvmx_wqe_t *wqe_p;
+	cvmx_tim_status_t result;
+	wqe_p = cvmx_fpa_alloc(1);
+	if (wqe_p == NULL) {
+		return SEC_NO;
+	}
+
+	memset(wqe_p, 0, sizeof(cvmx_wqe_t));
+
+	cvmx_wqe_set_unused8(wqe_p, 0x10);
+	cvmx_wqe_set_tag(wqe_p, 1);
+	cvmx_wqe_set_tt(wqe_p, 1);
+	cvmx_wqe_set_qos(wqe_p, 2);
+	cvmx_wqe_set_grp(wqe_p, 0);
+    cvmx_wqe_set_port(wqe_p, 2112);
+
+	result = cvmx_tim_add_entry(wqe_p, cvmx_clock_get_count(CVMX_CLOCK_TIM), NULL);
+
+	CVMX_SYNCW;
+	return result;
+}
+
 
 
 int OCT_CPU_Init()

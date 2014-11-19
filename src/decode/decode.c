@@ -27,6 +27,9 @@ extern int DecodeEthernet(mbuf_t *mbuf, uint8_t *pkt, uint16_t len);
 
 void Decode(mbuf_t *m)
 {
+	printf("==========>enter decode()\n");
+	printf("magic is 0x%x\n", m->magic_flag);
+
 	if( DECODE_OK != DecodeEthernet(m, GET_PKT_DATA(m), GET_PKT_LEN(m))){
 		packet_destroy(m);
 	}

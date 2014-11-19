@@ -15,7 +15,7 @@ typedef struct UDPHdr_
 
 #define UDP_GET_RAW_LEN(udph)                (udph)->uh_len
 #define UDP_GET_RAW_SRC_PORT(udph)           (udph)->uh_sport
-#define UDP_GET_RAW_DST_PORT(udph)           (udph)->uh_dpor)
+#define UDP_GET_RAW_DST_PORT(udph)           (udph)->uh_dport
 
 #define UDP_GET_LEN(p)                       UDP_GET_RAW_LEN(((UDPHdr *)(p->transport_header)))
 #define UDP_GET_SRC_PORT(p)                  UDP_GET_RAW_SRC_PORT(((UDPHdr *)(p->transport_header)))

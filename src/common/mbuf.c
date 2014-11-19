@@ -23,9 +23,10 @@ void mbuf_free(mbuf_t *mb)
 	Mem_Slice_Ctrl_B *mscb = (Mem_Slice_Ctrl_B *)((uint8_t *)mb - sizeof(Mem_Slice_Ctrl_B));
 	if(MEM_POOL_MAGIC_NUM != mscb->magic)
 	{
+		printf("mbuf has been destroyed\n");
 		return;
 	}
-	if(MEM_POOL_ID_HOST_MBUF != mscb->pool_id)
+	if(FPA_POOL_ID_HOST_MBUF != mscb->pool_id)
 	{
 		return;
 	}
@@ -50,6 +51,7 @@ void packet_destroy(mbuf_t *mbuf)
 	/*free packet, find start of packet buffer*/
 	buffer_ptr = mbuf->packet_ptr;
 	start_of_buffer = ((buffer_ptr.s.addr >> 7) - buffer_ptr.s.back) << 7;
+	printf("start_of_buff is 0x%lx\n", (unsigned long)start_of_buffer);
 	cvmx_fpa_free(cvmx_phys_to_ptr(start_of_buffer), buffer_ptr.s.pool, 0);
 
 

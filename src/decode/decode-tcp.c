@@ -30,6 +30,9 @@ static int DecodeTCPPacket(mbuf_t *mbuf, uint8_t *pkt, uint16_t len)
 	mbuf->sport = TCP_GET_SRC_PORT(mbuf);
     mbuf->dport = TCP_GET_DST_PORT(mbuf);
 
+	printf("src port is %d\n", mbuf->sport);
+	printf("dst port is %d\n", mbuf->dport);
+
     mbuf->proto = PROTO_TCP;
 
     mbuf->payload = pkt + hlen;
@@ -44,10 +47,13 @@ static int DecodeTCPPacket(mbuf_t *mbuf, uint8_t *pkt, uint16_t len)
 
 int DecodeTCP(mbuf_t *mbuf, uint8_t *pkt, uint16_t len)
 {
+	printf("=========>enter DecodeTCP\n");
 
 	if (unlikely(DecodeTCPPacket(mbuf, pkt, len) != DECODE_OK)) {
         return DECODE_DROP;
     }
+
+	return DECODE_DROP;
 
 	FlowHandlePacket(mbuf);
 

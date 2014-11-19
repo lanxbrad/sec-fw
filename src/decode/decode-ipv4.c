@@ -60,11 +60,20 @@ static int DecodeIPV4Packet(mbuf_t *mbuf, uint8_t *pkt, uint16_t len)
 int DecodeIPV4(mbuf_t *mbuf, uint8_t *pkt, uint16_t len)
 {
 	mbuf_t *m_defrag;
+	uint8_t protocol;
+
+	printf("enter DecodeIPV4()\n");
+	
 	if (unlikely(DECODE_OK != DecodeIPV4Packet (mbuf, pkt, len))) {
 		return DECODE_DROP;
 	}
 
-	mbuf->proto = IPV4_GET_IPPROTO(mbuf);
+	protocol = IPV4_GET_IPPROTO(mbuf);
+	mbuf->proto = protocol;
+
+	printf("protocol is %d\n", protocol);
+	printf("total len is %d\n", IPV4_GET_IPLEN(mbuf));
+	
 
 	/* If a fragment, pass off for re-assembly. */
 	if (unlikely(IPV4_GET_IPOFFSET(mbuf) > 0 || IPV4_GET_MF(mbuf) == 1)) {
@@ -78,7 +87,7 @@ int DecodeIPV4(mbuf_t *mbuf, uint8_t *pkt, uint16_t len)
 	}
 
 	/* check what next decoder to invoke */
-	switch (IPV4_GET_IPPROTO(mbuf)) {
+	switch (protocol) {
 		case PROTO_TCP:
 			return DecodeTCP(mbuf, pkt + IPV4_GET_HLEN(mbuf), IPV4_GET_IPLEN(mbuf) - IPV4_GET_HLEN(mbuf));
 		case PROTO_UDP:

@@ -18,10 +18,12 @@ int Decode_PktStat_Init()
 	{
 		return SEC_NO;
 	}
+	memset(start, 0, sizeof(pkt_stat) * CPU_RUNNING_MAX);
 
 	for( i = 0; i < CPU_RUNNING_MAX; i++)
 	{
 		pktstat[i] = (pkt_stat *)((uint8_t *)start + i * sizeof(pkt_stat));
+		printf("%d, pktstat is 0x%p\n", i, pktstat[i]);		
 	}
 
 	return SEC_OK;

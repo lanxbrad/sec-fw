@@ -32,6 +32,8 @@
 int DecodeEthernet(mbuf_t *mbuf, uint8_t *pkt, uint16_t len)
 {
 	EthernetHdr *pethh;
+
+	printf("==============>enter DecodeEthernet\n");
 	
 	if (unlikely(len < ETHERNET_HEADER_LEN))
 	{	
@@ -41,6 +43,24 @@ int DecodeEthernet(mbuf_t *mbuf, uint8_t *pkt, uint16_t len)
 
 	pethh = (EthernetHdr *)(pkt);
 	mbuf->ethh = pethh;
+
+	printf("dst mac is %x:%x:%x:%x:%x:%x\n", 
+		pethh->eth_dst[0],pethh->eth_dst[1],
+		pethh->eth_dst[2],pethh->eth_dst[3],
+		pethh->eth_dst[4],pethh->eth_dst[5]);
+
+	printf("src mac is %x:%x:%x:%x:%x:%x\n", 
+		pethh->eth_src[0],pethh->eth_src[1],
+		pethh->eth_src[2],pethh->eth_src[3],
+		pethh->eth_src[4],pethh->eth_src[5]);
+
+	if(pethh->eth_dst[0] != 0x88)
+	{
+		packet_destroy(mbuf);
+		return DECODE_OK;
+	}
+
+	printf("eth type is 0x%x\n", pethh->eth_type);
 	
 	switch (pethh->eth_type) {
 		case ETHERNET_TYPE_IP:

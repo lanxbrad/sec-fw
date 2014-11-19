@@ -61,6 +61,9 @@
 
 
 extern flow_item_t *flow_item_alloc();
+extern void *oct_rx_process_work(cvmx_wqe_t *wq);
+extern void Decode(mbuf_t *mbuf);
+extern cvmx_sysinfo_t *sysinfo;
 
 int Sec_LowLevel_Init(int argc, char *argv[])
 {
@@ -73,33 +76,38 @@ int Sec_LowLevel_Init(int argc, char *argv[])
 	{	/* Have one core do the hardware initialization */
 		OCT_Intercept_Port_Init(argc, argv);
 
+		if (SEC_OK != OCT_Timer_Init())
+		{
+			printf("OCT_Timer_Init fail\n");
+			return SEC_NO;
+		}
+		else
+		{
+			printf("OCT_Timer_Init ok\n");
+		}
+
 		if(SEC_OK != Mem_Pool_Init())
 		{
 			return SEC_NO;
 		}
 
 	}
-	else
+
+	OCT_RX_Group_Init();
+
+	if (!cvmx_is_init_core())
 	{
 		if(SEC_OK != Mem_Pool_Get())
 		{
 			return SEC_NO;
 		}
-	
 	}
-
-	OCT_RX_Group_Init();
 
 	return SEC_OK;
 
 }
 
 
-
-
-
-extern void *oct_rx_process_work(cvmx_wqe_t *wq);
-extern void Decode(mbuf_t *mbuf);
 
 void 
 mainloop()
@@ -115,6 +123,14 @@ mainloop()
 
 			if ( FROM_INPUT_PORT_GROUP == grp )
 			{
+				if( cvmx_wqe_get_unused8(work) == 0x10)
+				{
+					printf("timer handler\n");
+
+					cvmx_tim_add_entry(work, cvmx_clock_get_count(CVMX_CLOCK_TIM), NULL);
+					continue;
+				}
+			
 				mb = (mbuf_t *)oct_rx_process_work(work);
 				if (NULL == mb)
 				{
@@ -153,18 +169,27 @@ int Sec_HighLevel_Init()
 			return SEC_NO;
 		}
 
-		return SEC_OK;
+		if(OCT_Create_Timer())
+		{
+			printf("timer create fail\n");
+		}
+		else
+		{
+			printf("timer create ok\n");
+		}
 	}
-	else
+
+	cvmx_coremask_barrier_sync(&sysinfo->core_mask);
+	
+	if ( !cvmx_is_init_core() )
 	{
 		if(SEC_OK != Decode_PktStat_Get())
 		{
 			return SEC_NO;
 		}
-
-		return SEC_OK;
 	}
 
+	return SEC_OK;
 }
 
 
@@ -182,6 +207,20 @@ int main(int argc, char *argv[])
 	{
 		printf("sec lowlevel init err!\n");
 		exit(0);
+	}
+	else
+	{
+		printf("sec lowlevel init ok!\n");
+	}
+
+	if(SEC_OK != Sec_HighLevel_Init())
+	{
+		printf("sec HighLevel init err!\n");
+		exit(0);
+	}
+	else
+	{
+		printf("sec HighLevel init ok!\n");
 	}
 
 	mainloop();

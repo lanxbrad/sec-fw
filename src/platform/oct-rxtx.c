@@ -69,8 +69,6 @@ oct_rx_process_work(cvmx_wqe_t *wq)
     cvmx_helper_dump_packet(wq);
 #endif
 
-	oct_packet_free(wq, wqe_pool);
-	return NULL;
 
 	m = (mbuf_t *)MBUF_ALLOC();
 

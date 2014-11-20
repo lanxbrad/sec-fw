@@ -1,4 +1,5 @@
 
+#include <sec-util.h>
 #include <sec-common.h>
 
 #include "mem_pool.h"
@@ -160,7 +161,7 @@ int Mem_Pool_Init(void)
 
 	/* HOST MBUF POOL INIT*/
 	printf("mbuf pool init\n");
-	Mem_Pool_Cfg *mpc = (Mem_Pool_Cfg *)cvmx_bootmem_alloc_named(MEM_POOL_TOTAL_HOST_MBUF , 128, MEM_POOL_NAME_HOST_MBUF);
+	Mem_Pool_Cfg *mpc = (Mem_Pool_Cfg *)cvmx_bootmem_alloc_named(MEM_POOL_TOTAL_HOST_MBUF , CACHE_LINE_SIZE, MEM_POOL_NAME_HOST_MBUF);
 	if(NULL == mpc)
 	{
 		return SEC_NO;
@@ -188,7 +189,7 @@ int Mem_Pool_Init(void)
 
 	/* FLOW NODE POOL INIT*/
 	printf("flow node pool init\n");
-	mpc = (Mem_Pool_Cfg *)cvmx_bootmem_alloc_named(MEM_POOL_TOTAL_FLOW_NODE, 128, MEM_POOL_NAME_FLOW_NODE);
+	mpc = (Mem_Pool_Cfg *)cvmx_bootmem_alloc_named(MEM_POOL_TOTAL_FLOW_NODE, CACHE_LINE_SIZE, MEM_POOL_NAME_FLOW_NODE);
 	if(NULL == mpc)
 	{
 		printf("FLOW NODE POOL INIT FAIL\n");
@@ -215,7 +216,7 @@ int Mem_Pool_Init(void)
 #if 0
 	/*SMALL BUF POOL INIT*/
 	printf("small buf pool init\n");
-	mpc = (Mem_Pool_Cfg *)cvmx_bootmem_alloc_named(MEM_POOL_TOTAL_SMALL_BUFFER, 128, MEM_POOL_NAME_SMALL_BUFFER);
+	mpc = (Mem_Pool_Cfg *)cvmx_bootmem_alloc_named(MEM_POOL_TOTAL_SMALL_BUFFER, CACHE_LINE_SIZE, MEM_POOL_NAME_SMALL_BUFFER);
 	if(NULL == mpc)
 		return SEC_NO;
 
@@ -234,7 +235,7 @@ int Mem_Pool_Init(void)
 
 	/*LARGE BUF POOL INIT*/
 	printf("large buf pool init\n");
-	mpc = (Mem_Pool_Cfg *)cvmx_bootmem_alloc_named(MEM_POOL_TOTAL_LARGE_BUFFER, 128, MEM_POOL_NAME_LARGE_BUFFER);
+	mpc = (Mem_Pool_Cfg *)cvmx_bootmem_alloc_named(MEM_POOL_TOTAL_LARGE_BUFFER, CACHE_LINE_SIZE, MEM_POOL_NAME_LARGE_BUFFER);
 	if(NULL == mpc)
 		return SEC_NO;
 

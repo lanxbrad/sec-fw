@@ -29,8 +29,12 @@ CVMX_SHARED int wqe_pool = -1;
 
 
 int local_cpu_id;
+uint64_t oct_cpu_rate;
 
 cvmx_sysinfo_t *sysinfo;
+
+
+
 
 
 
@@ -142,7 +146,7 @@ int OCT_Timer_Init()
 
 	printf("OCT_Timer_Init\n");
 	
-    status = cvmx_tim_setup(TIME_PER_TICK_US , TIME_TICK_MAX);
+    status = cvmx_tim_setup(1000 , 10000);
     if (status != 0) {
         return SEC_NO;
     }
@@ -162,14 +166,14 @@ int OCT_Create_Timer()
 
 	memset(wqe_p, 0, sizeof(cvmx_wqe_t));
 
-	cvmx_wqe_set_unused8(wqe_p, 0x10);
+	cvmx_wqe_set_unused8(wqe_p, TIMER_FLAG_OF_WORK);
 	cvmx_wqe_set_tag(wqe_p, 1);
 	cvmx_wqe_set_tt(wqe_p, 1);
 	cvmx_wqe_set_qos(wqe_p, 2);
 	cvmx_wqe_set_grp(wqe_p, 0);
     cvmx_wqe_set_port(wqe_p, 2112);
 
-	result = cvmx_tim_add_entry(wqe_p, cvmx_clock_get_count(CVMX_CLOCK_TIM), NULL);
+	result = cvmx_tim_add_entry(wqe_p, 1000, NULL);
 
 	CVMX_SYNCW;
 	return result;
@@ -181,6 +185,7 @@ int OCT_CPU_Init()
 {
 	local_cpu_id = cvmx_get_core_num();
 
+	oct_cpu_rate = cvmx_clock_get_rate(CVMX_CLOCK_CORE);
 
 	return SEC_OK;
 }

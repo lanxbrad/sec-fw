@@ -1,3 +1,15 @@
+/********************************************************************************
+ *
+ *        Copyright (C) 2014-2015  Beijing winicssec Technology 
+ *        All rights reserved
+ *
+ *        filename :       flow.c
+ *        description :    flog manage
+ *
+ *        created by  luoye  at  2014-11-18
+ *
+ ********************************************************************************/
+
 #include <mbuf.h>
 #include <decode.h>
 #include <mem_pool.h>
@@ -11,9 +23,9 @@ extern void l7_deliver(mbuf_t *m);
 
 
 
-flow_table_info_t flow_table;
+flow_table_info_t *flow_table;
 
-flow_item_t *flow_item_alloc()
+static inline flow_item_t *flow_item_alloc()
 {
 	void *buf = mem_pool_fpa_slice_alloc(FPA_POOL_ID_FLOW_NODE);
 	printf("mbuf magic is 0x%x\n", ((Mem_Slice_Ctrl_B *)buf)->magic);
@@ -21,29 +33,25 @@ flow_item_t *flow_item_alloc()
 	
 }
 
-void flow_item_free(flow_item_t *f)
+static inline void flow_item_free(flow_item_t *f)
 {
 	Mem_Slice_Ctrl_B *mscb = (Mem_Slice_Ctrl_B *)((uint8_t *)f - sizeof(Mem_Slice_Ctrl_B));
 	if(MEM_POOL_MAGIC_NUM != mscb->magic)
 	{
+		printf("magic num err %d\n", mscb->magic);
 		return;
 	}
-	if(MEM_POOL_ID_FLOW_NODE != mscb->pool_id)
+	if(FPA_POOL_ID_FLOW_NODE != mscb->pool_id)
 	{
+		printf("pool id err %d\n", mscb->pool_id);
 		return;
 	}
 
-	mem_pool_fpa_slice_free((void *)mscb, mscb->pool_id);
+	mem_pool_fpa_slice_free((void *)mscb, FPA_POOL_ID_FLOW_NODE);
 
 	return;
 }
 
-
-
-int flow_item_init()
-{
-	return SEC_OK;
-}
 
 
 
@@ -52,29 +60,29 @@ unsigned int flowhashfn(uint32_t saddr, uint32_t daddr, uint16_t sport, uint16_t
 	return flow_hashfn(prot, saddr, daddr, sport, dport) & FLOW_BUCKET_MASK;
 }
 
-static int flow_match(flow_item_t *f, mbuf_t *mbuf)
+static int FlowMatch(flow_item_t *f, mbuf_t *mbuf)
 {
-	return ((f->ipv4.sip == mbuf->ipv4.sip
-		&& f->ipv4.dip == mbuf->ipv4.dip
-		&& f->sport == mbuf->sport
-		&& f->dport == mbuf->dport
-		&& f->protocol == mbuf->proto) 
-		|| (f->ipv4.sip == mbuf->ipv4.dip
-		&& f->ipv4.dip == mbuf->ipv4.sip
-		&& f->sport == mbuf->dport
-		&& f->dport == mbuf->sport
-		&& f->protocol == mbuf->proto));
+	return ((f->ipv4.sip   == mbuf->ipv4.sip
+			&& f->ipv4.dip == mbuf->ipv4.dip
+			&& f->sport    == mbuf->sport
+			&& f->dport    == mbuf->dport
+			&& f->protocol == mbuf->proto) 
+		|| (f->ipv4.sip    == mbuf->ipv4.dip
+			&& f->ipv4.dip == mbuf->ipv4.sip
+			&& f->sport    == mbuf->dport
+			&& f->dport    == mbuf->sport
+			&& f->protocol == mbuf->proto));
 }
 
 
-flow_item_t *flow_find(flow_bucket_t *base, mbuf_t *mbuf, unsigned int hash)
+static inline flow_item_t *FlowFind(flow_bucket_t *base, mbuf_t *mbuf, unsigned int hash)
 {
 	flow_item_t *f;
 	struct hlist_node *n;
 
 	hlist_for_each_entry(f, n, &base[hash].hash, list)
 	{
-		if(flow_match(f, mbuf))
+		if(FlowMatch(f, mbuf))
 		{
 			return f;
 		}
@@ -83,7 +91,7 @@ flow_item_t *flow_find(flow_bucket_t *base, mbuf_t *mbuf, unsigned int hash)
 	return NULL;
 }
 
-flow_item_t *flow_add(flow_bucket_t *base, unsigned int hash, mbuf_t *mbuf)
+flow_item_t *FlowAdd(flow_bucket_t *base, unsigned int hash, mbuf_t *mbuf)
 {
 	flow_item_t *newf = flow_item_alloc();
 	if(NULL == newf)
@@ -91,13 +99,13 @@ flow_item_t *flow_add(flow_bucket_t *base, unsigned int hash, mbuf_t *mbuf)
 		return NULL;
 	}
 
-	memset((void *)newf, 0, sizeof(flow_item_t));
+	memset((void *)newf, 0, FLOW_ITEM_SIZE);
 
 	/*TODO: Fill flow node with useful info*/
 	newf->ipv4.sip = mbuf->ipv4.sip;
 	newf->ipv4.dip = mbuf->ipv4.dip;
-	newf->sport = mbuf->sport;
-	newf->dport = mbuf->dport;
+	newf->sport    = mbuf->sport;
+	newf->dport    = mbuf->dport;
 	newf->protocol = mbuf->proto;
 
 	hlist_add_head(&newf->list, &base[hash].hash);
@@ -112,17 +120,19 @@ flow_item_t *FlowGetFlowFromHash(mbuf_t *mbuf)
 	unsigned int hash;
 	flow_item_t * flow;
 	flow_bucket_t *base;
-	base = (flow_bucket_t *)flow_table.bucket_base_ptr;
 
 	
+	base = (flow_bucket_t *)flow_table->bucket_base_ptr;
+
 	hash = flowhashfn(mbuf->ipv4.sip, mbuf->ipv4.dip, mbuf->sport, mbuf->dport, mbuf->proto);
+	printf("hash value is %d\n", hash);
 	
 	cvmx_spinlock_lock(&base[hash].lock);
 
-	flow = flow_find(base, mbuf, hash);
+	flow = FlowFind(base, mbuf, hash);
 	if(NULL == flow)
 	{
-		flow = flow_add(base, hash, mbuf);
+		flow = FlowAdd(base, hash, mbuf);
 	}
 
 	if(NULL != flow)
@@ -131,6 +141,8 @@ flow_item_t *FlowGetFlowFromHash(mbuf_t *mbuf)
 	}
 	
 	cvmx_spinlock_unlock(&base[hash].lock);
+
+	flow->cycle = cvmx_get_cycle();
 	
 	return flow;
 }
@@ -152,6 +164,7 @@ void FlowHandlePacket(mbuf_t *m)
 	/*TODO:  update info in the flow*/
 	
 	m->flow = (void *)f;
+	
 
 	cvmx_spinlock_unlock(&f->item_lock);
 
@@ -166,7 +179,7 @@ void FlowHandlePacket(mbuf_t *m)
 
 
 
-static void flow_age_timeout_cb()
+static void FlowAgeTimeoutCB()
 {
 	int i = 0;
 	uint64_t current_cycle;
@@ -179,9 +192,9 @@ static void flow_age_timeout_cb()
 	struct hlist_node *t;
 	struct hlist_head timeout;
 
-	base = (flow_bucket_t *)flow_table.bucket_base_ptr;
+	base = (flow_bucket_t *)flow_table->bucket_base_ptr;
 	
-	//current_cycle = utaf_get_timer_cycles();
+	current_cycle = cvmx_get_cycle();
 
 	for(i = 0; i < FLOW_BUCKET_NUM; i++)
 	{
@@ -189,7 +202,6 @@ static void flow_age_timeout_cb()
 		
 		cvmx_spinlock_lock(&base[i].lock);
 
-		//hlist_for_each_entry(si, n, &base[i].hash, list) 
 		hlist_for_each_entry_safe(f, t, n, &base[i].hash, list)	
 		{
 			if((current_cycle > f->cycle) && ((current_cycle - f->cycle) > FLOW_MAX_TIMEOUT))
@@ -222,31 +234,29 @@ static void flow_age_timeout_cb()
 
 
 
-int flow_init(void)
+int FlowInit(void)
 {
 	int i = 0;
 
 	flow_bucket_t *base = NULL;
 
-	flow_table.bucket_num = FLOW_BUCKET_NUM;
-	flow_table.bucket_size = sizeof(flow_bucket_t);
-
-	flow_table.item_num = FLOW_ITEM_NUM;
-	flow_table.item_size = sizeof(flow_item_t);
-
-	flow_table.bucket_base_ptr = (void *)malloc(flow_table.bucket_num * flow_table.bucket_size);
-	if(flow_table.bucket_base_ptr == NULL)
+	flow_table = (flow_table_info_t *)cvmx_bootmem_alloc_named((sizeof(flow_table_info_t) + FLOW_BUCKET_NUM * FLOW_BUCKET_SIZE), CACHE_LINE_SIZE, FLOW_HASH_TABLE_NAME);
+	if(NULL == flow_table)
 	{
-		printf("no memory\n");
-		return SEC_NO;
-	}
-	printf("flow_item_init\n");
-	if(SEC_NO != flow_item_init())
-	{
+		printf("flow init: no memory\n");
 		return SEC_NO;
 	}
 
-	base = (flow_bucket_t *)flow_table.bucket_base_ptr;
+	flow_table->bucket_num = FLOW_BUCKET_NUM;
+	flow_table->bucket_size = FLOW_BUCKET_SIZE;
+
+	flow_table->item_num = FLOW_ITEM_NUM;
+	flow_table->item_size = FLOW_ITEM_SIZE;
+
+	flow_table->bucket_base_ptr = (void *)((uint8_t *)flow_table + sizeof(flow_table_info_t));
+	
+
+	base = (flow_bucket_t *)flow_table->bucket_base_ptr;
 	
 	for(i = 0; i < FLOW_BUCKET_NUM; i++)
 	{
@@ -255,10 +265,22 @@ int flow_init(void)
 	}
 
 	/*TODO: Timer init*/
-	flow_age_timeout_cb();
+	FlowAgeTimeoutCB();
 	
 	return SEC_OK;
 }
 
+
+int FlowInfoGet()
+{
+	flow_table = (flow_table_info_t *)cvmx_bootmem_find_named_block(FLOW_HASH_TABLE_NAME);
+	if(NULL == flow_table)
+	{
+		printf("FlowInfoGet fail\n");
+		return SEC_NO;
+	}
+
+	return SEC_OK;
+}
 
 

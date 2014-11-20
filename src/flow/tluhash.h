@@ -4,7 +4,7 @@
 #include <stdint.h>
 
 
-static uint32_t TluHash(uint32_t u1,uint32_t u2)
+static inline uint32_t TluHash(uint32_t u1,uint32_t u2)
 {
 	uint32_t a,b,c;
 	a = u2 + 0x9e3779b9;
@@ -23,7 +23,7 @@ static uint32_t TluHash(uint32_t u1,uint32_t u2)
 }
 
 
-static uint32_t flow_hashfn(uint8_t ucPro,uint32_t ulSrcIp,uint32_t ulDstIp,uint16_t usSrcPort,uint16_t usDstPort)
+static inline uint32_t flow_hashfn(uint8_t ucPro,uint32_t ulSrcIp,uint32_t ulDstIp,uint16_t usSrcPort,uint16_t usDstPort)
 {
 	uint32_t s_hash, d_hash, p_hash;
 

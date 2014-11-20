@@ -19,6 +19,8 @@
 
 
 
+#define TIMER_FLAG_OF_WORK    0x11
+
 
 #define TIME_PER_TICK_US                 1000//2000
 #define TIME_TICK_MAX                    400000
@@ -37,6 +39,8 @@ extern CVMX_SHARED int intercept_port;
 
 /* wqe pool */
 extern CVMX_SHARED int wqe_pool;
+
+extern uint64_t oct_cpu_rate;
 
 
 extern int OCT_CPU_Init();

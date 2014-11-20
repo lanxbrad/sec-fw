@@ -41,10 +41,6 @@ oct_rx_process_work(cvmx_wqe_t *wq)
 		  */
 		printf("recv error\n");
 		oct_packet_free(wq, wqe_pool);
-	#if 0
-		cvmx_helper_free_packet_data(wq);
- 		cvmx_fpa_free(wq, wqe_pool, 0);
-	#endif
 		STAT_RECV_ERR;
 		return NULL;
 	}

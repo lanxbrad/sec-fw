@@ -23,7 +23,6 @@ int Decode_PktStat_Init()
 	for( i = 0; i < CPU_RUNNING_MAX; i++)
 	{
 		pktstat[i] = (pkt_stat *)((uint8_t *)start + i * sizeof(pkt_stat));
-		printf("%d, pktstat is 0x%p\n", i, pktstat[i]);		
 	}
 
 	return SEC_OK;
@@ -45,7 +44,6 @@ int Decode_PktStat_Get()
 	}
 
 	
-
 	return SEC_OK;
 }
 

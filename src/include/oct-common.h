@@ -16,7 +16,7 @@
 #include "cvmx-atomic.h"
 #include "cvmx-bootmem.h"
 #include "cvmx-tim.h"
-
+#include "cvmx-config.h"
 
 
 

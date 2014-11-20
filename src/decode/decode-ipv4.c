@@ -1,3 +1,4 @@
+#include <sec-common.h>
 #include <sec-util.h>
 #include <mbuf.h>
 #include "decode-ethernet.h"
@@ -51,6 +52,11 @@ static int DecodeIPV4Packet(mbuf_t *mbuf, uint8_t *pkt, uint16_t len)
 	mbuf->ipv4.sip = IPV4_GET_IPSRC(mbuf);
 	mbuf->ipv4.dip = IPV4_GET_IPDST(mbuf);
 
+#ifdef SEC_IPV4_DEBUG
+	printf("sip is 0x%x\n", mbuf->ipv4.sip);
+	printf("dip is 0x%x\n", mbuf->ipv4.dip);
+#endif
+
 	/*TODO: DecodeIPV4Options*/
 
 	return DECODE_OK;
@@ -62,8 +68,10 @@ int DecodeIPV4(mbuf_t *mbuf, uint8_t *pkt, uint16_t len)
 	mbuf_t *m_defrag;
 	uint8_t protocol;
 
-	printf("enter DecodeIPV4()\n");
-	
+#ifdef SEC_IPV4_DEBUG
+	printf("=========>enter DecodeIPV4()\n");
+#endif
+
 	if (unlikely(DECODE_OK != DecodeIPV4Packet (mbuf, pkt, len))) {
 		return DECODE_DROP;
 	}
@@ -71,8 +79,9 @@ int DecodeIPV4(mbuf_t *mbuf, uint8_t *pkt, uint16_t len)
 	protocol = IPV4_GET_IPPROTO(mbuf);
 	mbuf->proto = protocol;
 
+#ifdef SEC_IPV4_DEBUG
 	printf("protocol is %d\n", protocol);
-	printf("total len is %d\n", IPV4_GET_IPLEN(mbuf));
+#endif
 	
 
 	/* If a fragment, pass off for re-assembly. */
@@ -89,8 +98,10 @@ int DecodeIPV4(mbuf_t *mbuf, uint8_t *pkt, uint16_t len)
 	/* check what next decoder to invoke */
 	switch (protocol) {
 		case PROTO_TCP:
+			STAT_IPV4_RECV_OK;
 			return DecodeTCP(mbuf, pkt + IPV4_GET_HLEN(mbuf), IPV4_GET_IPLEN(mbuf) - IPV4_GET_HLEN(mbuf));
 		case PROTO_UDP:
+			STAT_IPV4_RECV_OK;
 			return DecodeUDP(mbuf, pkt + IPV4_GET_HLEN(mbuf), IPV4_GET_IPLEN(mbuf) - IPV4_GET_HLEN(mbuf));
 		default:
 			printf("unsupport protocol %d\n",IPV4_GET_IPPROTO(mbuf));
@@ -98,7 +109,6 @@ int DecodeIPV4(mbuf_t *mbuf, uint8_t *pkt, uint16_t len)
 			return DECODE_DROP;
 	}
 
-	STAT_IPV4_RECV_OK;
 	return DECODE_OK;
 }
 

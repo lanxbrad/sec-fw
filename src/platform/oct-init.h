@@ -1,3 +1,15 @@
+/********************************************************************************
+ *
+ *        Copyright (C) 2014-2015  Beijing winicssec Technology 
+ *        All rights reserved
+ *
+ *        filename :       oct-init.h
+ *        description :    
+ *
+ *        created by  luoye  at  2014-11-18
+ *
+ ********************************************************************************/
+
 #ifndef __OCT_INIT_H__
 #define __OCT_INIT_H__
 
@@ -17,17 +29,27 @@
     normal ethernet pow_receive_group */
 #define FROM_INPUT_PORT_GROUP   0
 
+/* This group used to rx timer work */
+#define TIMER_GROUP          8
+
 
 
 #define TIMER_FLAG_OF_WORK    0x11
+#define TIMER_THREAD_MAGIC    0xabab
+
+typedef struct Oct_Timer_Thread_t Oct_Timer_Threat;
+
+typedef void (*timer_thread_fn)(Oct_Timer_Threat *, void *);
 
 
-#define TIME_PER_TICK_US                 1000//2000
-#define TIME_TICK_MAX                    400000
-
-
-
-
+struct Oct_Timer_Thread_t
+{
+	uint32_t magic;
+	uint16_t free;
+	uint16_t tick;
+	timer_thread_fn fn;
+	void *param;
+};
 
 
 
@@ -48,6 +70,8 @@ extern int OCT_UserApp_Init();
 extern void OCT_RX_Group_Init();
 extern int OCT_Intercept_Port_Init(int argc, char *argv[]);
 extern int OCT_Timer_Init();
-extern int OCT_Create_Timer();
+extern int OCT_Timer_Create(uint32_t tag, cvmx_pow_tag_type_t tag_type, uint64_t qos, uint64_t grp, timer_thread_fn fn,
+								void *param, uint32_t param_len, uint16_t tick);
+extern void OCT_Timer_Thread_Process(cvmx_wqe_t *wq);
 
 #endif

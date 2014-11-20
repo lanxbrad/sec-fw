@@ -4,7 +4,7 @@
  *        All rights reserved
  *
  *        filename :       flow.h
- *        description :    flog manage
+ *        description :    flow manage
  *
  *        created by  luoye  at  2014-11-18
  *
@@ -51,6 +51,7 @@ typedef struct flow_item_tag_s
 	uint16_t  sport;
    	uint16_t  dport;
 	uint16_t  protocol;
+	
 }flow_item_t;
 
 
@@ -72,6 +73,7 @@ typedef struct flow_item_tag_s
 
 extern int FlowInit(void);
 extern int FlowInfoGet();
+extern void FlowAgeTimeoutCB(Oct_Timer_Threat *o, void *param);
 
 
 #endif

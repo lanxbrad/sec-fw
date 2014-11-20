@@ -4,7 +4,7 @@
  *        All rights reserved
  *
  *        filename :       flow.c
- *        description :    flog manage
+ *        description :    flow manage
  *
  *        created by  luoye  at  2014-11-18
  *
@@ -13,6 +13,7 @@
 #include <mbuf.h>
 #include <decode.h>
 #include <mem_pool.h>
+#include <sec-common.h>
 #include "flow.h"
 #include "tluhash.h"
 
@@ -28,9 +29,8 @@ flow_table_info_t *flow_table;
 static inline flow_item_t *flow_item_alloc()
 {
 	void *buf = mem_pool_fpa_slice_alloc(FPA_POOL_ID_FLOW_NODE);
-	printf("mbuf magic is 0x%x\n", ((Mem_Slice_Ctrl_B *)buf)->magic);
-	return (flow_item_t *)((uint8_t *)buf + sizeof(Mem_Slice_Ctrl_B));
 	
+	return (flow_item_t *)((uint8_t *)buf + sizeof(Mem_Slice_Ctrl_B));
 }
 
 static inline void flow_item_free(flow_item_t *f)
@@ -79,20 +79,33 @@ static inline flow_item_t *FlowFind(flow_bucket_t *base, mbuf_t *mbuf, unsigned 
 {
 	flow_item_t *f;
 	struct hlist_node *n;
+	
+#ifdef SEC_FLOW_DEBUG
+	printf("============>enter FlowFind\n");
+#endif
 
 	hlist_for_each_entry(f, n, &base[hash].hash, list)
 	{
 		if(FlowMatch(f, mbuf))
 		{
+		#ifdef SEC_FLOW_DEBUG
+			printf("FlowMatch is ok\n");
+		#endif
 			return f;
 		}
 	}
-	
+#ifdef SEC_FLOW_DEBUG
+	printf("FlowMatch is fail\n");
+#endif
 	return NULL;
 }
 
 flow_item_t *FlowAdd(flow_bucket_t *base, unsigned int hash, mbuf_t *mbuf)
 {
+#ifdef SEC_FLOW_DEBUG
+	printf("==========>enter FlowAdd\n");
+#endif
+
 	flow_item_t *newf = flow_item_alloc();
 	if(NULL == newf)
 	{
@@ -125,13 +138,19 @@ flow_item_t *FlowGetFlowFromHash(mbuf_t *mbuf)
 	base = (flow_bucket_t *)flow_table->bucket_base_ptr;
 
 	hash = flowhashfn(mbuf->ipv4.sip, mbuf->ipv4.dip, mbuf->sport, mbuf->dport, mbuf->proto);
+
+#ifdef SEC_FLOW_DEBUG
 	printf("hash value is %d\n", hash);
-	
+#endif
+
 	cvmx_spinlock_lock(&base[hash].lock);
 
 	flow = FlowFind(base, mbuf, hash);
 	if(NULL == flow)
 	{
+	#ifdef SEC_FLOW_DEBUG
+		printf("flow has not been found\n");
+	#endif
 		flow = FlowAdd(base, hash, mbuf);
 	}
 
@@ -153,6 +172,9 @@ void FlowHandlePacket(mbuf_t *m)
 {
 	flow_item_t *f;
 
+#ifdef SEC_FLOW_DEBUG
+	printf("=========>enter FlowHandlePacket\n");
+#endif
 	f = FlowGetFlowFromHash(m);
 	if(NULL == f)
 	{
@@ -179,7 +201,7 @@ void FlowHandlePacket(mbuf_t *m)
 
 
 
-static void FlowAgeTimeoutCB()
+void FlowAgeTimeoutCB(Oct_Timer_Threat *o, void *param)
 {
 	int i = 0;
 	uint64_t current_cycle;
@@ -209,7 +231,6 @@ static void FlowAgeTimeoutCB()
 				hlist_del(&f->list);
 				
 				hlist_add_head(&f->list, &timeout);
-			
 			}
 		}
 		
@@ -218,6 +239,7 @@ static void FlowAgeTimeoutCB()
 		hlist_for_each_entry_safe(tf, t, n, &timeout, list)	
 		{	
 			hlist_del(&tf->list);
+
 			/*TODO: session ageing do something*/
 			
 			flow_item_free(tf);
@@ -227,7 +249,6 @@ static void FlowAgeTimeoutCB()
 
 	return;
 }
-
 
 
 
@@ -262,6 +283,13 @@ int FlowInit(void)
 		cvmx_spinlock_init(&base[i].lock);
 	}
 
+	if(OCT_Timer_Create(0xFFFFFF, 0, 2, TIMER_GROUP, FlowAgeTimeoutCB, NULL, 0, 1000))/*1s*/
+	{
+		printf("timer create fail\n");
+		return SEC_NO;
+	}
+
+	printf("flow age timer create ok\n");
 	
 	return SEC_OK;
 }

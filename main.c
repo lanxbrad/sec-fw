@@ -65,57 +65,6 @@ extern void *oct_rx_process_work(cvmx_wqe_t *wq);
 extern void Decode(mbuf_t *mbuf);
 extern cvmx_sysinfo_t *sysinfo;
 
-
-
-int Sec_HighLevel_Init()
-{
-	if ( cvmx_is_init_core() )
-	{
-		if(SEC_OK != Decode_PktStat_Init())
-		{
-			return SEC_NO;
-		}
-	
-		if(SEC_OK != FlowInit())
-		{
-			return SEC_NO;
-		}
-
-		if(OCT_Create_Timer())
-		{
-			printf("timer create fail\n");
-		}
-		else
-		{
-			printf("timer create ok\n");
-		}
-	}
-
-	cvmx_coremask_barrier_sync(&sysinfo->core_mask);
-	
-	if ( !cvmx_is_init_core() )
-	{
-		if(SEC_OK != Decode_PktStat_Get())
-		{
-			return SEC_NO;
-		}
-
-		if(SEC_OK != FlowInfoGet())
-		{
-			return SEC_NO;
-		}	
-	}
-
-	return SEC_OK;
-}
-
-
-
-
-
-
-
-
 int Sec_LowLevel_Init(int argc, char *argv[])
 {
 
@@ -150,44 +99,92 @@ int Sec_LowLevel_Init(int argc, char *argv[])
 	{
 		if(SEC_OK != Mem_Pool_Get())
 		{
+			printf("mem pool info get failed!\n");
 			return SEC_NO;
 		}
+
+		printf("mem pool info get ok!\n");
 	}
 
 	return SEC_OK;
 
 }
 
+
+int Sec_HighLevel_Init()
+{
+	if ( cvmx_is_init_core() )
+	{
+		if(SEC_OK != Decode_PktStat_Init())
+		{
+			printf("Decode_PktStat_Init failed\n");
+			return SEC_NO;
+		}
+
+		printf("Decode_PktStat_Init ok\n");
+		
+		if(SEC_OK != FlowInit())
+		{
+			printf("FlowInit failed\n");
+			return SEC_NO;
+		}
+		printf("FlowInit ok\n");
+	}
+
+	cvmx_coremask_barrier_sync(&sysinfo->core_mask);
+	
+	if ( !cvmx_is_init_core() )
+	{
+		if(SEC_OK != Decode_PktStat_Get())
+		{
+			printf("Decode_PktStat_Get failed\n");
+			return SEC_NO;
+		}
+
+		printf("Decode_PktStat_Get ok\n");
+
+		if(SEC_OK != FlowInfoGet())
+		{
+			printf("FlowInfoGet failed\n");
+			return SEC_NO;
+		}	
+
+		printf("FlowInfoGet ok\n");
+	}
+
+	return SEC_OK;
+}
+
+
+
 uint32_t global_time = 0;
 
 
-void 
-mainloop()
+void mainloop()
 {
 	mbuf_t *mb;
 	int grp;
+	cvmx_wqe_t *work;
 	while(1){
 		
-		cvmx_wqe_t *work = cvmx_pow_work_request_sync(CVMX_POW_WAIT);
+		work = cvmx_pow_work_request_sync(CVMX_POW_WAIT);
 		if (NULL != work)
 		{
 			grp = cvmx_wqe_get_grp(work);
 
 			if ( FROM_INPUT_PORT_GROUP == grp )
 			{
-				if( TIMER_FLAG_OF_WORK == cvmx_wqe_get_unused8(work) )
-				{
-					global_time++;
-					cvmx_tim_add_entry(work, 1000, NULL);
-					continue;
-				}
-			
 				mb = (mbuf_t *)oct_rx_process_work(work);
 				if (NULL == mb)
 				{
 					continue;
 				}
 				Decode(mb);
+			}
+			else if ( TIMER_GROUP == grp )
+			{
+				global_time++;
+				OCT_Timer_Thread_Process(work);
 			}
 			else if( FROM_LINUX_GROUP == grp )
 			{
@@ -222,7 +219,6 @@ mainloop()
 int main(int argc, char *argv[])
 {
     
-
     if(SEC_OK != Sec_LowLevel_Init(argc, argv))
 	{
 		printf("sec lowlevel init err!\n");

@@ -6,21 +6,6 @@
 
 extern CVMX_SHARED int wqe_pool;
 
-/**
- * Determine if the supplied work queue entry and packet
- * should be filtered.
- *
- * @param work   Work queue entry to check
- * @return Non zero if packet should be filtered out
- */
-static int is_filtered_packet(cvmx_wqe_t *work)
-{
-    /* As an example, block all IP broadcasts */
-    return (work->word2.s.is_bcast && !work->word2.s.not_IP);
-}
-
-
-
 
 /*
  *  alloc a mbuf which can be used to describe the packet
@@ -45,13 +30,6 @@ oct_rx_process_work(cvmx_wqe_t *wq)
 		return NULL;
 	}
 
-	if (is_filtered_packet(wq))
-    {
-        printf("Received %u byte packet. Filtered.\n", cvmx_wqe_get_len(wq));
-        oct_packet_free(wq, wqe_pool);
-		return NULL;
-    }
-
 	pkt_virt = (void *) cvmx_phys_to_ptr(wq->packet_ptr.s.addr);
 	if(NULL == pkt_virt)
 	{
@@ -64,7 +42,6 @@ oct_rx_process_work(cvmx_wqe_t *wq)
     printf("Processing packet\n");
     cvmx_helper_dump_packet(wq);
 #endif
-
 
 	m = (mbuf_t *)MBUF_ALLOC();
 

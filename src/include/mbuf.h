@@ -27,11 +27,13 @@ typedef struct m_buf_
 	
 	void *pktptr;                /*pointer to begin of packet from wqe packet_ptr*/
 	
-	void *ethh;           /*l2 layer header*/
+	void *ethh;                  /*l2 layer header*/
 	void *vlanh;
 	void *network_header;        /*network layer header*/
 	void *transport_header;      /*transport layer header*/
 
+	uint8_t eth_dst[6];          /*DMAC*/
+    uint8_t eth_src[6];          /*SMAC*/
 	
 	ipv4_tuple_t ipv4;           /*sip + dip*/
 

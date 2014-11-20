@@ -59,7 +59,7 @@ void OCT_RX_Group_Init()
 
     /* Accept any packet except for the ones destined to the Linux group */
     cvmx_pow_set_group_mask(cvmx_get_core_num(),
-                            (1<<FROM_INPUT_PORT_GROUP)|(1<<FROM_LINUX_GROUP));
+                            (1<<FROM_INPUT_PORT_GROUP)|(1<<FROM_LINUX_GROUP) | (1<<TIMER_GROUP));
 
     /* Wait for hardware init to complete */
     cvmx_coremask_barrier_sync(&sysinfo->core_mask);
@@ -143,10 +143,8 @@ int OCT_Intercept_Port_Init(int argc, char *argv[])
 int OCT_Timer_Init()
 {
 	int status;
-
-	printf("OCT_Timer_Init\n");
 	
-    status = cvmx_tim_setup(1000 , 10000);
+    status = cvmx_tim_setup(1000 , 5000);
     if (status != 0) {
         return SEC_NO;
     }
@@ -155,30 +153,64 @@ int OCT_Timer_Init()
     return SEC_OK;
 }
 
-int OCT_Create_Timer()
+int OCT_Timer_Create(uint32_t tag, cvmx_pow_tag_type_t tag_type, uint64_t qos, uint64_t grp, timer_thread_fn fn,
+								void *param, uint32_t param_len, uint16_t tick)
 {
 	cvmx_wqe_t *wqe_p;
 	cvmx_tim_status_t result;
-	wqe_p = cvmx_fpa_alloc(1);
-	if (wqe_p == NULL) {
+	Oct_Timer_Threat *o;
+
+	if( grp >= 16 || param_len > 96 - sizeof(Oct_Timer_Threat))
+	{
+		return SEC_NO;
+	}
+	
+	wqe_p = cvmx_fpa_alloc(CVMX_FPA_WQE_POOL);
+	if (wqe_p == NULL) 
+	{
 		return SEC_NO;
 	}
 
 	memset(wqe_p, 0, sizeof(cvmx_wqe_t));
 
 	cvmx_wqe_set_unused8(wqe_p, TIMER_FLAG_OF_WORK);
-	cvmx_wqe_set_tag(wqe_p, 1);
-	cvmx_wqe_set_tt(wqe_p, 1);
-	cvmx_wqe_set_qos(wqe_p, 2);
-	cvmx_wqe_set_grp(wqe_p, 0);
-    cvmx_wqe_set_port(wqe_p, 2112);
+	cvmx_wqe_set_tag(wqe_p, tag);
+	cvmx_wqe_set_tt(wqe_p, tag_type);
+	cvmx_wqe_set_qos(wqe_p, qos);
+	cvmx_wqe_set_grp(wqe_p, grp);
 
-	result = cvmx_tim_add_entry(wqe_p, 1000, NULL);
+	o = (Oct_Timer_Threat *)wqe_p->packet_data;
+	o->magic = TIMER_THREAD_MAGIC;
+	o->fn = fn;
+	o->param = (void *)o+sizeof(Oct_Timer_Threat);
+	o->tick = tick;
+
+	result = cvmx_tim_add_entry(wqe_p, o->tick, NULL);
 
 	CVMX_SYNCW;
 	return result;
 }
 
+void OCT_Timer_Thread_Process(cvmx_wqe_t *wq)
+{
+	Oct_Timer_Threat *o;
+	o = (Oct_Timer_Threat *)wq->packet_data;
+	if( TIMER_THREAD_MAGIC != o->magic || TIMER_FLAG_OF_WORK != cvmx_wqe_get_unused8(wq))
+	{
+		printf("this is not a valid tim work\n");
+		return;
+	}
+
+	if (o->fn != NULL) 
+	{
+		o->fn(o, o->param);
+	}
+
+	cvmx_tim_add_entry(wq, o->tick, NULL);
+	CVMX_SYNCW;
+
+	return;
+}
 
 
 int OCT_CPU_Init()

@@ -12,7 +12,6 @@ void mbuf_init(void)
 mbuf_t *mbuf_alloc()
 {
 	void *buf = mem_pool_fpa_slice_alloc(FPA_POOL_ID_HOST_MBUF);
-	printf("mbuf magic is 0x%x\n", ((Mem_Slice_Ctrl_B *)buf)->magic);
 
 	return (mbuf_t *)((uint8_t *)buf + sizeof(Mem_Slice_Ctrl_B));
 }
@@ -51,9 +50,8 @@ void packet_destroy(mbuf_t *mbuf)
 	/*free packet, find start of packet buffer*/
 	buffer_ptr = mbuf->packet_ptr;
 	start_of_buffer = ((buffer_ptr.s.addr >> 7) - buffer_ptr.s.back) << 7;
-	printf("start_of_buff is 0x%lx\n", (unsigned long)start_of_buffer);
+	
 	cvmx_fpa_free(cvmx_phys_to_ptr(start_of_buffer), buffer_ptr.s.pool, 0);
-
 
 	/*free mbuf*/
 	MBUF_FREE(mbuf);

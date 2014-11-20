@@ -1,4 +1,5 @@
 #include <mbuf.h>
+#include <sec-common.h>
 #include "decode.h"
 #include "decode-ipv4.h"
 #include "decode-tcp.h"
@@ -30,8 +31,10 @@ static int DecodeTCPPacket(mbuf_t *mbuf, uint8_t *pkt, uint16_t len)
 	mbuf->sport = TCP_GET_SRC_PORT(mbuf);
     mbuf->dport = TCP_GET_DST_PORT(mbuf);
 
+#ifdef SEC_TCP_DEBUG
 	printf("src port is %d\n", mbuf->sport);
 	printf("dst port is %d\n", mbuf->dport);
+#endif
 
     mbuf->proto = PROTO_TCP;
 
@@ -47,16 +50,16 @@ static int DecodeTCPPacket(mbuf_t *mbuf, uint8_t *pkt, uint16_t len)
 
 int DecodeTCP(mbuf_t *mbuf, uint8_t *pkt, uint16_t len)
 {
+#ifdef SEC_TCP_DEBUG
 	printf("=========>enter DecodeTCP\n");
-
+#endif
 	if (unlikely(DecodeTCPPacket(mbuf, pkt, len) != DECODE_OK)) {
         return DECODE_DROP;
     }
 
-	return DECODE_DROP;
-
+	STAT_TCP_RECV_OK;
+	
 	FlowHandlePacket(mbuf);
 
-	STAT_TCP_RECV_OK;
 	return DECODE_OK;
 }

@@ -232,8 +232,6 @@ static void FlowAgeTimeoutCB()
 
 
 
-
-
 int FlowInit(void)
 {
 	int i = 0;
@@ -264,8 +262,6 @@ int FlowInit(void)
 		cvmx_spinlock_init(&base[i].lock);
 	}
 
-	/*TODO: Timer init*/
-	FlowAgeTimeoutCB();
 	
 	return SEC_OK;
 }

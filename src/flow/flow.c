@@ -26,6 +26,16 @@ extern void l7_deliver(mbuf_t *m);
 
 flow_table_info_t *flow_table;
 
+
+void flow_item_size_judge(void)
+{
+	BUILD_BUG_ON((sizeof(flow_item_t) + sizeof(Mem_Slice_Ctrl_B)) > 256);
+
+	return;
+}
+
+
+
 static inline flow_item_t *flow_item_alloc()
 {
 	void *buf = mem_pool_fpa_slice_alloc(FPA_POOL_ID_FLOW_NODE);
@@ -186,7 +196,7 @@ void FlowHandlePacket(mbuf_t *m)
 	/*TODO:  update info in the flow*/
 	
 	m->flow = (void *)f;
-	
+	f->input_port = m->input_port;
 
 	cvmx_spinlock_unlock(&f->item_lock);
 

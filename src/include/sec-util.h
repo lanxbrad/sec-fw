@@ -1,3 +1,14 @@
+/********************************************************************************
+ *
+ *        Copyright (C) 2014-2015  Beijing winicssec Technology 
+ *        All rights reserved
+ *
+ *        filename :       sec-util.h
+ *        description :    
+ *
+ *        created by  luoye  at  2014-11-18
+ *
+ ********************************************************************************/
 #ifndef __SEC_UTIL_H__
 #define __SEC_UTIL_H__
 

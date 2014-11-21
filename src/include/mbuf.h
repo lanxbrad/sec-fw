@@ -32,6 +32,8 @@ typedef struct m_buf_
 	void *network_header;        /*network layer header*/
 	void *transport_header;      /*transport layer header*/
 
+	uint32_t input_port;         /*input port of phy*/
+	
 	uint8_t eth_dst[6];          /*DMAC*/
     uint8_t eth_src[6];          /*SMAC*/
 	
@@ -75,6 +77,7 @@ extern void packet_destroy(mbuf_t *m);
 
 #define MBUF_ALLOC()  mbuf_alloc()
 #define MBUF_FREE(m)   mbuf_free(m)
+
 
 
 

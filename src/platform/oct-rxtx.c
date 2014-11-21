@@ -49,6 +49,8 @@ oct_rx_process_work(cvmx_wqe_t *wq)
 
 	m->magic_flag = MBUF_MAGIC_NUM;
 	m->packet_ptr.u64 = wq->packet_ptr.u64;
+
+	m->input_port = cvmx_wqe_get_port(wq);
 	
 	m->pktlen = cvmx_wqe_get_len(wq);
 	m->pktptr = pkt_virt;

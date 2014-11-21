@@ -14,6 +14,7 @@
 #include <decode.h>
 #include <mem_pool.h>
 #include <sec-common.h>
+#include <oct-init.h>
 #include "flow.h"
 #include "tluhash.h"
 
@@ -21,7 +22,8 @@
 extern void l7_deliver(mbuf_t *m);
 
 
-
+CVMX_SHARED uint64_t new_flow[CPU_HW_RUNNING_MAX] = {0, 0, 0, 0};
+CVMX_SHARED uint64_t del_flow[CPU_HW_RUNNING_MAX] = {0, 0, 0, 0};
 
 
 flow_table_info_t *flow_table;
@@ -38,7 +40,14 @@ void flow_item_size_judge(void)
 
 static inline flow_item_t *flow_item_alloc()
 {
+	Mem_Slice_Ctrl_B *mscb;
 	void *buf = mem_pool_fpa_slice_alloc(FPA_POOL_ID_FLOW_NODE);
+	if(NULL == buf)
+		return NULL;
+	
+	mscb = (Mem_Slice_Ctrl_B *)buf;
+	mscb->magic = MEM_POOL_MAGIC_NUM;
+	mscb->pool_id = FPA_POOL_ID_FLOW_NODE;
 	
 	return (flow_item_t *)((uint8_t *)buf + sizeof(Mem_Slice_Ctrl_B));
 }
@@ -85,7 +94,7 @@ static int FlowMatch(flow_item_t *f, mbuf_t *mbuf)
 }
 
 
-static inline flow_item_t *FlowFind(flow_bucket_t *base, mbuf_t *mbuf, unsigned int hash)
+static inline flow_item_t *FlowFind(flow_bucket_t *fb, mbuf_t *mbuf, unsigned int hash)
 {
 	flow_item_t *f;
 	struct hlist_node *n;
@@ -94,13 +103,14 @@ static inline flow_item_t *FlowFind(flow_bucket_t *base, mbuf_t *mbuf, unsigned 
 	printf("============>enter FlowFind\n");
 #endif
 
-	hlist_for_each_entry(f, n, &base[hash].hash, list)
+	hlist_for_each_entry(f, n, &fb->hash, list)
 	{
 		if(FlowMatch(f, mbuf))
 		{
 		#ifdef SEC_FLOW_DEBUG
 			printf("FlowMatch is ok\n");
 		#endif
+			FLOW_UPDATE_TIMESTAMP(f);
 			return f;
 		}
 	}
@@ -110,32 +120,58 @@ static inline flow_item_t *FlowFind(flow_bucket_t *base, mbuf_t *mbuf, unsigned 
 	return NULL;
 }
 
-flow_item_t *FlowAdd(flow_bucket_t *base, unsigned int hash, mbuf_t *mbuf)
+flow_item_t *FlowAdd(flow_bucket_t *fb, unsigned int hash, mbuf_t *mbuf)
 {
 #ifdef SEC_FLOW_DEBUG
 	printf("==========>enter FlowAdd\n");
 #endif
-
+	flow_item_t *flow;
 	flow_item_t *newf = flow_item_alloc();
+	
 	if(NULL == newf)
 	{
 		return NULL;
 	}
-
+	
 	memset((void *)newf, 0, FLOW_ITEM_SIZE);
 
-	/*TODO: Fill flow node with useful info*/
+	/*TODO: init flow node with necessary info*/
 	newf->ipv4.sip = mbuf->ipv4.sip;
 	newf->ipv4.dip = mbuf->ipv4.dip;
 	newf->sport    = mbuf->sport;
 	newf->dport    = mbuf->dport;
 	newf->protocol = mbuf->proto;
+	FLOW_UPDATE_TIMESTAMP(newf);
+	
+	/*now scan and add, if exist, free new and return old*/
+	cvmx_spinlock_lock(&fb->lock);
+	flow = FlowFind(fb, mbuf, hash);
+	if(NULL == flow)/*not exist, add new*/
+	{
+		hlist_add_head(&newf->list, &fb->hash);
+		cvmx_spinlock_unlock(&fb->lock);
+		new_flow[local_cpu_id]++;
+		return newf;
+	}
+	else/*exist, free new and return old*/
+	{
+		cvmx_spinlock_unlock(&fb->lock);
+		flow_item_free(newf);
+		
+		return flow;
+	}
 
-	hlist_add_head(&newf->list, &base[hash].hash);
-
-	return newf;
 }
 
+
+/*update flow node info*/
+static inline void FlowUpdate(flow_item_t *f, mbuf_t *m)
+{
+	cvmx_spinlock_lock(&f->item_lock);
+	
+	
+	cvmx_spinlock_unlock(&f->item_lock);
+}
 
 
 flow_item_t *FlowGetFlowFromHash(mbuf_t *mbuf)
@@ -143,48 +179,42 @@ flow_item_t *FlowGetFlowFromHash(mbuf_t *mbuf)
 	unsigned int hash;
 	flow_item_t * flow;
 	flow_bucket_t *base;
-
+	flow_bucket_t *fb;
 	
-	base = (flow_bucket_t *)flow_table->bucket_base_ptr;
-
 	hash = flowhashfn(mbuf->ipv4.sip, mbuf->ipv4.dip, mbuf->sport, mbuf->dport, mbuf->proto);
+
+	base = (flow_bucket_t *)flow_table->bucket_base_ptr;
+	fb = &base[hash];
 
 #ifdef SEC_FLOW_DEBUG
 	printf("hash value is %d\n", hash);
 #endif
 
-	cvmx_spinlock_lock(&base[hash].lock);
+	cvmx_spinlock_lock(&fb->lock);
+	flow = FlowFind(fb, mbuf, hash);
+	cvmx_spinlock_unlock(&fb->lock);
 
-	flow = FlowFind(base, mbuf, hash);
-	if(NULL == flow)
+	if(NULL != flow)/*find , lock it and return*/
 	{
-	#ifdef SEC_FLOW_DEBUG
-		printf("flow has not been found\n");
-	#endif
-		flow = FlowAdd(base, hash, mbuf);
+		return flow;
 	}
-
-	if(NULL != flow)
+	else/*not find, create a new node and add it*/
 	{
-		cvmx_spinlock_lock(&flow->item_lock);
+		return FlowAdd(fb, hash, mbuf);
 	}
-	
-	cvmx_spinlock_unlock(&base[hash].lock);
-
-	flow->cycle = cvmx_get_cycle();
-	
-	return flow;
 }
 
 
 
 void FlowHandlePacket(mbuf_t *m)
 {
-	flow_item_t *f;
 
 #ifdef SEC_FLOW_DEBUG
-	printf("=========>enter FlowHandlePacket\n");
+		printf("=========>enter FlowHandlePacket\n");
 #endif
+
+	flow_item_t *f;
+
 	f = FlowGetFlowFromHash(m);
 	if(NULL == f)
 	{
@@ -194,13 +224,11 @@ void FlowHandlePacket(mbuf_t *m)
 	}
 
 	/*TODO:  update info in the flow*/
-	
-	m->flow = (void *)f;
-	f->input_port = m->input_port;
-
-	cvmx_spinlock_unlock(&f->item_lock);
+	FlowUpdate(f, m);
 
 	/* set the flow in the packet */
+	m->flow = (void *)f;
+	
 	m->flags |= PKT_HAS_FLOW;
 
 	l7_deliver(m);
@@ -213,11 +241,10 @@ void FlowHandlePacket(mbuf_t *m)
 
 void FlowAgeTimeoutCB(Oct_Timer_Threat *o, void *param)
 {
-	int i = 0;
+	int i;
 	uint64_t current_cycle;
 
-	flow_bucket_t *base = NULL;
-	
+	flow_bucket_t *base;
 	flow_item_t *f;
 	flow_item_t *tf;
 	struct hlist_node *n;
@@ -239,7 +266,10 @@ void FlowAgeTimeoutCB(Oct_Timer_Threat *o, void *param)
 			if((current_cycle > f->cycle) && ((current_cycle - f->cycle) > FLOW_MAX_TIMEOUT))
 			{
 				hlist_del(&f->list);
-				
+			#ifdef SEC_FLOW_DEBUG
+				printf("delete one flow node 0x%p\n", f);
+			#endif
+				del_flow[local_cpu_id]++;
 				hlist_add_head(&f->list, &timeout);
 			}
 		}

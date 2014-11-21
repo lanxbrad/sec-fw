@@ -51,6 +51,8 @@ oct_rx_process_work(cvmx_wqe_t *wq)
 	m->packet_ptr.u64 = wq->packet_ptr.u64;
 
 	m->input_port = cvmx_wqe_get_port(wq);
+
+	printf("input port is %d\n", m->input_port);
 	
 	m->pktlen = cvmx_wqe_get_len(wq);
 	m->pktptr = pkt_virt;

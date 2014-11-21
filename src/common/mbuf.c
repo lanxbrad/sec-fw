@@ -11,7 +11,15 @@ void mbuf_size_judge(void)
 
 mbuf_t *mbuf_alloc()
 {
+	Mem_Slice_Ctrl_B *mscb;
 	void *buf = mem_pool_fpa_slice_alloc(FPA_POOL_ID_HOST_MBUF);
+	if(NULL == buf)
+		return NULL;
+
+	mscb = (Mem_Slice_Ctrl_B *)buf;
+	mscb->magic = MEM_POOL_MAGIC_NUM;
+	mscb->pool_id = FPA_POOL_ID_HOST_MBUF;
+	
 
 	return (mbuf_t *)((uint8_t *)buf + sizeof(Mem_Slice_Ctrl_B));
 }

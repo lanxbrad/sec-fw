@@ -72,6 +72,9 @@ typedef struct flow_item_tag_s
 
 #define FLOW_MAX_TIMEOUT    20*oct_cpu_rate   /* 20s */
 
+#define FLOW_UPDATE_TIMESTAMP(m)  (m->cycle = cvmx_get_cycle())
+
+
 
 extern int FlowInit(void);
 extern int FlowInfoGet();

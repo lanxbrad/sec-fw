@@ -124,7 +124,6 @@ int mem_pool_fpa_slice_inject(int pool_id)
 {
 	uint32_t i, fpa_pool_id;
 	uint64_t start_address;
-	Mem_Slice_Ctrl_B *mscb;
 	if(MEM_POOL_ID_HOST_MBUF == pool_id)
 	{
 		fpa_pool_id = FPA_POOL_ID_HOST_MBUF;
@@ -142,9 +141,6 @@ int mem_pool_fpa_slice_inject(int pool_id)
 	start_address = (uint64_t)mem_pool[pool_id]->start;
 	for (i = 0; i < mem_pool[pool_id]->slicenum; i++)
 	{
-		mscb = (Mem_Slice_Ctrl_B *)start_address;
-		mscb->magic = MEM_POOL_MAGIC_NUM;
-		mscb->pool_id = fpa_pool_id;
 		cvmx_fpa_free((void *)start_address, fpa_pool_id, 0);
 		start_address += mem_pool[pool_id]->slicesize;
 	}

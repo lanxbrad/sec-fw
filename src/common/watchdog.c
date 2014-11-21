@@ -85,7 +85,7 @@ static void *wd_watchdog_func(void *arg)
 	return NULL;
 }
 
-void sec_watchdog_init(void)
+void wd_watchdog_init(void)
 {
 	wd_enable_watchdog();
 

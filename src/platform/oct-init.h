@@ -64,6 +64,8 @@ extern CVMX_SHARED int wqe_pool;
 
 extern uint64_t oct_cpu_rate;
 
+extern int local_cpu_id;
+
 
 extern int OCT_CPU_Init();
 extern int OCT_UserApp_Init();

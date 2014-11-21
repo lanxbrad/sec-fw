@@ -98,6 +98,10 @@ int Sec_LowLevel_Init(int argc, char *argv[])
 		
 		printf("oct_sched_init ok\n");
 
+		wd_watchdog_init();
+
+		printf("wd_watchdog_init ok\n");
+
 	}
 
 	OCT_RX_Group_Init();

@@ -94,7 +94,7 @@ INCLUDE_DIR := \
 	-I$(OCTEON_ROOT)/sec-fw/src/flow
 		
 
-CFLAGS_LOCAL = -g -O2 -W -Wall -Wno-unused-parameter $(INCLUDE_DIR)
+CFLAGS_LOCAL = -g -O2 -W -Wall -Wno-unused-parameter $(INCLUDE_DIR) -lpthread
 
 
 

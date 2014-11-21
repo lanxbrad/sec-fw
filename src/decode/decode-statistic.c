@@ -5,7 +5,7 @@
 
 
 
-pkt_stat *pktstat[CPU_RUNNING_MAX];
+pkt_stat *pktstat[CPU_HW_RUNNING_MAX];
 
 
 
@@ -13,14 +13,14 @@ int Decode_PktStat_Init()
 {
 	int i;
 	void *start;
-	start = (void *)cvmx_bootmem_alloc_named(sizeof(pkt_stat) * CPU_RUNNING_MAX, 128, "pkt-statistic");
+	start = (void *)cvmx_bootmem_alloc_named(sizeof(pkt_stat) * CPU_HW_RUNNING_MAX, 128, "pkt-statistic");
 	if( NULL == start )
 	{
 		return SEC_NO;
 	}
-	memset(start, 0, sizeof(pkt_stat) * CPU_RUNNING_MAX);
+	memset(start, 0, sizeof(pkt_stat) * CPU_HW_RUNNING_MAX);
 
-	for( i = 0; i < CPU_RUNNING_MAX; i++)
+	for( i = 0; i < CPU_HW_RUNNING_MAX; i++)
 	{
 		pktstat[i] = (pkt_stat *)((uint8_t *)start + i * sizeof(pkt_stat));
 	}
@@ -38,7 +38,7 @@ int Decode_PktStat_Get()
 		return SEC_NO;
 	}
 	
-	for( i = 0; i < CPU_RUNNING_MAX; i++)
+	for( i = 0; i < CPU_HW_RUNNING_MAX; i++)
 	{
 		pktstat[i] = (pkt_stat *)((uint8_t *)start + i * sizeof(pkt_stat));
 	}

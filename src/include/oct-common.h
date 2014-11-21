@@ -20,14 +20,7 @@
 
 
 
-
-
-
-#define CPU_RUNNING_MAX    4
-
-
-
-
+#include <oct-arch.h>
 
 
 

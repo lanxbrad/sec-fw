@@ -22,8 +22,8 @@ LIBDECODE_OBJ_$(d)  :=  \
 
 INCLUDE_DIR := \
 	-I$(d) \
-	-I$(OCTEON_ROOT)/sec-fw/src/include
-
+	-I$(OCTEON_ROOT)/sec-fw/src/include \
+	-I$(OCTEON_ROOT)/sec-fw/src/platform
 
 $(LIBDECODE_OBJ_$(d)):  CFLAGS_LOCAL := -O2 -g -W -Wall -Werror -Wno-unused-parameter -Wundef -G0 $(INCLUDE_DIR)
 $(LIBDECODE_OBJ_$(d)):  CFLAGS_GLOBAL := $(filter-out -fprofile-%,$(CFLAGS_GLOBAL))	

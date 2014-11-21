@@ -55,7 +55,7 @@
 #include <mem_pool.h>
 #include <decode-statistic.h>
 #include <oct-init.h>
-
+#include <oct-sched.h>
 #include <flow.h>
 
 
@@ -91,6 +91,13 @@ int Sec_LowLevel_Init(int argc, char *argv[])
 			return SEC_NO;
 		}
 
+		if(SEC_OK != oct_sched_init())
+		{
+			return SEC_NO;
+		}
+		
+		printf("oct_sched_init ok\n");
+
 	}
 
 	OCT_RX_Group_Init();
@@ -104,7 +111,15 @@ int Sec_LowLevel_Init(int argc, char *argv[])
 		}
 
 		printf("mem pool info get ok!\n");
+
+		if(SEC_OK != oct_sched_Get())
+		{
+			return SEC_NO;
+		}
+		printf("oct_sched_Get ok\n");
 	}
+
+	register_watchdog();
 
 	return SEC_OK;
 
@@ -166,7 +181,6 @@ void mainloop()
 	int grp;
 	cvmx_wqe_t *work;
 	while(1){
-		
 		work = cvmx_pow_work_request_sync(CVMX_POW_WAIT);
 		if (NULL != work)
 		{
@@ -184,6 +198,7 @@ void mainloop()
 			else if ( TIMER_GROUP == grp )
 			{
 				global_time++;
+				watchdog_ok();
 				OCT_Timer_Thread_Process(work);
 			}
 			else if( FROM_LINUX_GROUP == grp )

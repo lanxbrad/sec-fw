@@ -1,3 +1,15 @@
+/********************************************************************************
+ *
+ *        Copyright (C) 2014-2015  Beijing winicssec Technology 
+ *        All rights reserved
+ *
+ *        filename :       mbuf.h
+ *        description :    
+ *
+ *        created by  luoye  at  2014-11-21
+ *
+ ********************************************************************************/
+
 #ifndef __MBUF_H__
 #define __MBUF_H__
 
@@ -64,25 +76,19 @@ typedef struct m_buf_
 #define MBUF_MAGIC_NUM 0xab00ab00
 
 
-
-
-
-extern mbuf_t *mbuf_alloc();
-extern void mbuf_free(mbuf_t *mb);
-extern void packet_destroy(mbuf_t *m);
-
-
-
-
-
 #define MBUF_ALLOC()  mbuf_alloc()
 #define MBUF_FREE(m)   mbuf_free(m)
 
 
 
+extern mbuf_t *mbuf_alloc();
+extern void mbuf_free(mbuf_t *mb);
+extern void packet_destroy_all(mbuf_t *m);
+extern void packet_destroy_data(mbuf_t *mbuf);
 
 
+#define PACKET_DESTROY_ALL(m)   packet_destroy_all(m)
+#define PACKET_DESTROY_DATA(m)  packet_destroy_data(m)
 
 
 #endif
-

@@ -65,7 +65,7 @@ extern void *oct_rx_process_work(cvmx_wqe_t *wq);
 extern void Decode(mbuf_t *mbuf);
 extern cvmx_sysinfo_t *sysinfo;
 
-int Sec_LowLevel_Init(int argc, char *argv[])
+int Sec_LowLevel_Init()
 {
 
 	OCT_CPU_Init();
@@ -74,7 +74,7 @@ int Sec_LowLevel_Init(int argc, char *argv[])
 
 	if (cvmx_is_init_core())
 	{	/* Have one core do the hardware initialization */
-		OCT_Intercept_Port_Init(argc, argv);
+		OCT_Intercept_Port_Init();
 
 		if (SEC_OK != OCT_Timer_Init())
 		{
@@ -238,7 +238,7 @@ void mainloop()
 int main(int argc, char *argv[])
 {
     
-    if(SEC_OK != Sec_LowLevel_Init(argc, argv))
+    if(SEC_OK != Sec_LowLevel_Init())
 	{
 		printf("sec lowlevel init err!\n");
 		exit(0);
@@ -448,7 +448,7 @@ int old_main(int argc, char *argv[])
         {
             printf("Received %u byte packet. Sending to Linux.\n", cvmx_wqe_get_len(work));
 
-	    cvmx_helper_dump_packet(work);
+	    	cvmx_helper_dump_packet(work);
             cvmx_wqe_set_port(work, 0);
 #ifdef __linux__
             /* If we're running under Linux userspace we can't desched since

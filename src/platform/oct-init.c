@@ -13,6 +13,7 @@
 #include <sec-common.h>
 #include <oct-common.h>
 #include "oct-init.h"
+#include "oct-port.h"
 
 
 
@@ -68,12 +69,8 @@ void OCT_RX_Group_Init()
 }
 
 
-int OCT_Intercept_Port_Init(int argc, char *argv[])
+int OCT_Intercept_Port_Init()
 {
-	long port_override = -1;
-
-	if (argc > 1)
-    	port_override = strtol(argv[1], NULL, 0);
 
     printf("\n\nLoad the Linux ethernet driver with:\n"
            "\t $ modprobe octeon-ethernet\n"
@@ -90,12 +87,10 @@ int OCT_Intercept_Port_Init(int argc, char *argv[])
 /* Wait a second for things to really get started. */
     if (cvmx_sysinfo_get()->board_type != CVMX_BOARD_TYPE_SIM)
     cvmx_wait_usec(1000000);
+	
 #ifdef CVMX_PKO_USE_FAU_FOR_OUTPUT_QUEUES
     #error Linux-filter cannot be built with CVMX_PKO_USE_FAU_FOR_OUTPUT_QUEUES
 #endif
-
-	if (port_override > 0)
-    	intercept_port = port_override;
 
 	__cvmx_helper_init_port_valid();
 
@@ -107,17 +102,44 @@ int OCT_Intercept_Port_Init(int argc, char *argv[])
 
 
     /* Change the group for only the port we're interested in */
-    cvmx_pip_port_tag_cfg_t tag_config;
-    tag_config.u64 = cvmx_read_csr(CVMX_PIP_PRT_TAGX(intercept_port));
-    tag_config.s.grp = FROM_INPUT_PORT_GROUP;
-    cvmx_write_csr(CVMX_PIP_PRT_TAGX(intercept_port), tag_config.u64);
+	/*now we force four phy ports, QSGMII port0-3*/
+    cvmx_pip_port_tag_cfg_t tag_config0;
+    tag_config0.u64 = cvmx_read_csr(CVMX_PIP_PRT_TAGX(OCT_PHY_PORT_FIRST));
+    tag_config0.s.grp = FROM_INPUT_PORT_GROUP;
+    cvmx_write_csr(CVMX_PIP_PRT_TAGX(OCT_PHY_PORT_FIRST), tag_config0.u64);
+
+	cvmx_wait_usec(1000);
+
+	cvmx_pip_port_tag_cfg_t tag_config1;
+    tag_config1.u64 = cvmx_read_csr(CVMX_PIP_PRT_TAGX(OCT_PHY_PORT_SECONDE));
+    tag_config1.s.grp = FROM_INPUT_PORT_GROUP;
+    cvmx_write_csr(CVMX_PIP_PRT_TAGX((OCT_PHY_PORT_SECONDE)), tag_config1.u64);
+
+	cvmx_wait_usec(1000);
+
+	cvmx_pip_port_tag_cfg_t tag_config2;
+    tag_config2.u64 = cvmx_read_csr(CVMX_PIP_PRT_TAGX(OCT_PHY_PORT_THIRD));
+    tag_config2.s.grp = FROM_INPUT_PORT_GROUP;
+    cvmx_write_csr(CVMX_PIP_PRT_TAGX(OCT_PHY_PORT_THIRD), tag_config2.u64);
+
+	cvmx_wait_usec(1000);
+
+	cvmx_pip_port_tag_cfg_t tag_config3;
+    tag_config3.u64 = cvmx_read_csr(CVMX_PIP_PRT_TAGX(OCT_PHY_PORT_FOURTH));
+    tag_config3.s.grp = FROM_INPUT_PORT_GROUP;
+    cvmx_write_csr(CVMX_PIP_PRT_TAGX(OCT_PHY_PORT_FOURTH), tag_config3.u64);
+	
 	
     /* We need to call cvmx_cmd_queue_initialize() to get the pointer to
         the named block. The queues are already setup by the ethernet
         driver, so we don't actually need to setup a queue. Pass some
         invalid parameters to cause the queue setup to fail */
     cvmx_cmd_queue_initialize(0, 0, -1, 0);
-    printf("Waiting for packets from port %d... \n", intercept_port);
+    printf("Waiting for packets from port %d, %d, %d, %d... \n", 
+		OCT_PHY_PORT_FIRST, 
+		OCT_PHY_PORT_SECONDE,
+		OCT_PHY_PORT_THIRD,
+		OCT_PHY_PORT_FOURTH);
 
 	return SEC_OK;
 }

@@ -50,5 +50,7 @@ extern oct_sched_t *sched_tbl;
 extern int oct_sched_init(void);
 extern int oct_sched_Get(void);
 
+extern void wd_watchdog_init(void);
+
 
 #endif

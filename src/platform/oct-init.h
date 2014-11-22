@@ -70,7 +70,7 @@ extern int local_cpu_id;
 extern int OCT_CPU_Init();
 extern int OCT_UserApp_Init();
 extern void OCT_RX_Group_Init();
-extern int OCT_Intercept_Port_Init(int argc, char *argv[]);
+extern int OCT_Intercept_Port_Init();
 extern int OCT_Timer_Init();
 extern int OCT_Timer_Create(uint32_t tag, cvmx_pow_tag_type_t tag_type, uint64_t qos, uint64_t grp, timer_thread_fn fn,
 								void *param, uint32_t param_len, uint16_t tick);

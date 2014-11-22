@@ -1,3 +1,14 @@
+/********************************************************************************
+ *
+ *        Copyright (C) 2014-2015  Beijing winicssec Technology 
+ *        All rights reserved
+ *
+ *        filename :       mbuf.c
+ *        description :    
+ *
+ *        created by  luoye  at  2014-11-21
+ *
+ ********************************************************************************/
 #include <mbuf.h>
 #include <mem_pool.h>
 
@@ -50,7 +61,7 @@ void mbuf_free(mbuf_t *mb)
  *   first: free packet
  *   secode: free mbuf
  */
-void packet_destroy(mbuf_t *mbuf)
+void packet_destroy_all(mbuf_t *mbuf)
 {
 	cvmx_buf_ptr_t buffer_ptr;
 	uint64_t start_of_buffer;
@@ -66,6 +77,18 @@ void packet_destroy(mbuf_t *mbuf)
 }
 
 
+/*only free packet*/
+void packet_destroy_data(mbuf_t *mbuf)
+{
+	cvmx_buf_ptr_t buffer_ptr;
+	uint64_t start_of_buffer;
+
+	/*free packet, find start of packet buffer*/
+	buffer_ptr = mbuf->packet_ptr;
+	start_of_buffer = ((buffer_ptr.s.addr >> 7) - buffer_ptr.s.back) << 7;
+	
+	cvmx_fpa_free(cvmx_phys_to_ptr(start_of_buffer), buffer_ptr.s.pool, 0);
+}
 
 
 

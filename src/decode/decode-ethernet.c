@@ -62,12 +62,6 @@ int DecodeEthernet(mbuf_t *mbuf, uint8_t *pkt, uint16_t len)
 
 	memcpy(mbuf->eth_dst, pethh->eth_dst, 6);
 	memcpy(mbuf->eth_src, pethh->eth_src, 6);
-
-	if(pethh->eth_dst[0] != 0x88)
-	{
-		packet_destroy(mbuf);
-		return DECODE_OK;
-	}
 	
 	switch (pethh->eth_type) {
 		case ETHERNET_TYPE_IP:

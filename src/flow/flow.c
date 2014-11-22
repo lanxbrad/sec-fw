@@ -219,7 +219,7 @@ void FlowHandlePacket(mbuf_t *m)
 	if(NULL == f)
 	{
 		/*flow failed, destroy packet*/
-		packet_destroy(m);
+		PACKET_DESTROY_ALL(m);
 		return;
 	}
 

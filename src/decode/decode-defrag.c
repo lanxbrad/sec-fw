@@ -305,7 +305,7 @@ mbuf_t *Defrag(mbuf_t *mbuf)
 	}
 	else /*find fail*/
 	{
-		packet_destroy(mbuf);
+		PACKET_DESTROY_ALL(mbuf);
 	}
 	
 	return 0;

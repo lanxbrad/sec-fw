@@ -24,6 +24,7 @@ extern int DecodeEthernet(mbuf_t *mbuf, uint8_t *pkt, uint16_t len);
  * if result is DECODE_OK, not need to free anything, the packet data will pass to the next module
  * if result is DECODE_DROP, decode function must destroy the packet data,include packet buffer and mbuf
  */
+extern void oct_tx_process_mbuf(mbuf_t *mbuf, uint8_t port);
 
 void Decode(mbuf_t *m)
 {
@@ -32,7 +33,7 @@ void Decode(mbuf_t *m)
 #endif
 
 	if( DECODE_OK != DecodeEthernet(m, GET_PKT_DATA(m), GET_PKT_LEN(m))){
-		packet_destroy(m);
+		PACKET_DESTROY_ALL(m);
 	}
 
 	return;

@@ -59,6 +59,7 @@ typedef struct m_buf_
 	uint16_t payload_len;        /*L7 payload_len */
 
 	uint16_t vlan_id;            /*if vlan_idx support, vlan_id*/
+	uint16_t defrag_id;
   
     uint8_t *payload;            /*L7 payload pointer*/
 

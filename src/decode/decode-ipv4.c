@@ -5,6 +5,7 @@
 #include "decode-vlan.h"
 #include "decode-ipv4.h"
 #include "decode-statistic.h"
+#include "decode-defrag.h"
 
 
 extern int DecodeTCP(mbuf_t *mbuf, uint8_t *pkt, uint16_t len);
@@ -12,10 +13,7 @@ extern int DecodeUDP(mbuf_t *mbuf, uint8_t *pkt, uint16_t len);
 
 
 
-mbuf_t *Defrag(mbuf_t *mbuf)
-{
-	return NULL;
-}
+
 
 
 
@@ -65,8 +63,8 @@ static int DecodeIPV4Packet(mbuf_t *mbuf, uint8_t *pkt, uint16_t len)
 
 int DecodeIPV4(mbuf_t *mbuf, uint8_t *pkt, uint16_t len)
 {
-	mbuf_t *m_defrag;
 	uint8_t protocol;
+	uint16_t ipoffset;
 
 #ifdef SEC_IPV4_DEBUG
 	printf("=========>enter DecodeIPV4()\n");
@@ -82,8 +80,27 @@ int DecodeIPV4(mbuf_t *mbuf, uint8_t *pkt, uint16_t len)
 #ifdef SEC_IPV4_DEBUG
 	printf("protocol is %d\n", protocol);
 #endif
-	
 
+	/* If a fragment, pass off for re-assembly. */
+	ipoffset = IPV4_GET_IPOFFSET(mbuf);
+
+	if(0 == ipoffset && IPV4_GET_MF(mbuf) == 1)
+	{
+		PKT_SET_IP_FRAG(mbuf);
+		PKT_SET_FIRST_FRAG(mbuf);
+	}
+
+	if(ipoffset > 0)
+	{
+		PKT_SET_IP_FRAG(mbuf);;
+	}
+
+	if(PKT_IS_IP_FRAG(mbuf))
+	{
+		mbuf->defrag_id = IPV4_GET_IPID(mbuf);
+		Defrag(mbuf);
+	}
+#if 0
 	/* If a fragment, pass off for re-assembly. */
 	if (unlikely(IPV4_GET_IPOFFSET(mbuf) > 0 || IPV4_GET_MF(mbuf) == 1)) {
 		m_defrag = Defrag(mbuf);
@@ -94,6 +111,7 @@ int DecodeIPV4(mbuf_t *mbuf, uint8_t *pkt, uint16_t len)
 		}
 		return DECODE_OK;
 	}
+#endif
 
 	/* check what next decoder to invoke */
 	switch (protocol) {

@@ -95,24 +95,6 @@ int DecodeIPV4(mbuf_t *mbuf, uint8_t *pkt, uint16_t len)
 		PKT_SET_IP_FRAG(mbuf);;
 	}
 
-	if(PKT_IS_IP_FRAG(mbuf))
-	{
-		mbuf->defrag_id = IPV4_GET_IPID(mbuf);
-		Defrag(mbuf);
-	}
-#if 0
-	/* If a fragment, pass off for re-assembly. */
-	if (unlikely(IPV4_GET_IPOFFSET(mbuf) > 0 || IPV4_GET_MF(mbuf) == 1)) {
-		m_defrag = Defrag(mbuf);
-		if(NULL != m_defrag)
-		{
-			return DecodeIPV4(m_defrag, m_defrag->network_header, 
-				m_defrag->pktlen - ETHERNET_HEADER_LEN - m_defrag->vlan_idx * VLAN_HEADER_LEN);
-		}
-		return DECODE_OK;
-	}
-#endif
-
 	/* check what next decoder to invoke */
 	switch (protocol) {
 		case PROTO_TCP:

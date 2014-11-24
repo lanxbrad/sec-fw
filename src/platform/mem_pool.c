@@ -201,7 +201,7 @@ int Mem_Pool_Init(void)
 	}
 
 	printf("flow node pool init ok!\n");
-#if 0
+
 	/*SMALL BUF POOL INIT*/
 	printf("small buf pool init\n");
 	mpc = (Mem_Pool_Cfg *)cvmx_bootmem_alloc_named(MEM_POOL_TOTAL_SMALL_BUFFER, CACHE_LINE_SIZE, MEM_POOL_NAME_SMALL_BUFFER);
@@ -240,7 +240,7 @@ int Mem_Pool_Init(void)
 		return SEC_NO;
 	}
 
-#endif
+
 	return SEC_OK;
 
 }

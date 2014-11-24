@@ -53,6 +53,9 @@ int DecodeTCP(mbuf_t *mbuf, uint8_t *pkt, uint16_t len)
 #ifdef SEC_TCP_DEBUG
 	printf("=========>enter DecodeTCP\n");
 #endif
+
+	
+	
 	if (unlikely(DecodeTCPPacket(mbuf, pkt, len) != DECODE_OK)) {
         return DECODE_DROP;
     }

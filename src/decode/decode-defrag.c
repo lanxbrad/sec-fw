@@ -15,128 +15,6 @@ frag_table_info_t *ip4_frags_table;
 
 
 #if 0
-
-
-static struct inet_frag_queue *inet_frag_intern(struct inet_frag_queue *qp_in, struct inet_frags *f, unsigned int hash)
-{
-	cvmx_spinlock_lock(&f.bucket[hash].bkt_lock);
-	
-	hlist_add_head(&qp_in->list, &f->bucket[hash].hash);
-
-	cvmx_spinlock_unlock(&f.bucket[hash].bkt_lock);
-
-	return qp_in;
-}
-
-static struct inet_frag_queue *inet_frag_alloc(struct inet_frags *f, struct mbuf_t *mbuf)
-{
-	struct inet_frag_queue *q;
-	struct ipq_t *qp;
-	IPV4Hdr *iph;
-	
-	q = ipq_alloc();
-	if(NULL == q)
-	{
-		return NULL;
-	}
-
-	memset(q, 0, sizeof(struct ipq_t));
-	
-	qp = container_of(q, struct ipq_t, q);
-
-	iph = mbuf->ip4h;
-
-	qp->protocol = iph->next_proto_id;
-	qp->id = iph->packet_id;
-	qp->saddr = iph->src_addr;
-	qp->daddr = iph->dst_addr;
-
-	return q;
-}
-
-
-
-static struct inet_frag_queue *inet_frag_create(struct inet_frags *f, struct mbuf_t *mbuf, unsigned int hash)
-{
-	struct inet_frag_queue *q;
-
-	q = inet_frag_alloc(f, mbuf);
-	if(q == NULL)
-	{
-		return NULL;
-	}
-
-	return inet_frag_intern(q, f, hash);
-}
-
-
-
-
-
-
-
-
-
-struct inet_frag_queue *inet_frag_find(struct inet_frags *f, 
-											unsigned int hash, 
-											IPV4Hdr *iph, 
-											struct mbuf_t *mbuf)
-{
-	struct inet_frag_queue *q;
-	struct hlist_node *n;
-
-	cvmx_spinlock_lock(&ip4_frags.bucket[hash].bkt_lock);
-	
-	hlist_for_each_entry(q, n, &f->bucket[hash].hash, list) 
-	{
-		if(f->match(q, (void *)iph))
-		{
-			cvmx_spinlock_unlock(&ip4_frags.bucket[hash].bkt_lock);
-			return q;
-		}
-	}
-
-	cvmx_spinlock_unlock(&ip4_frags.bucket[hash].bkt_lock);
-
-	return inet_frag_create(f, mbuf, hash);
-}
-
-
-
-
-static inline struct ipq *ip_find(IPV4Hdr *iph, 
-	                                 struct mbuf_t *mbuf, 
-	                                 unsigned int hash)
-{
-	struct inet_frag_queue *q;
-
-	cvmx_spinlock_lock(&ip4_frags.bucket[hash].bkt_lock);
-
-	q = inet_frag_find(&ip4_frags, hash, iph, mbuf);
-	if(NULL == q)
-	{
-		return NULL;
-	}
-
-	return container_of(q, ipq_t, q);
-}
-
-
-
-static int ip4_frag_match(struct inet_frag_queue *q, void *arg)
-{
-	struct ipq *qp = NULL;
-	IPV4Hdr *iph = (IPV4Hdr *)arg;
-
-	qp = container_of(q, struct ipq, q);
-
-	return (qp->id == iph->ip_id &&
-		qp->saddr == iph->src_addr &&
-		qp->daddr == iph->dst_addr &&
-		qp->protocol == iph->ip_proto);
-
-}
-
 /* Build a new IP datagram from all its fragments. */
 
 static int ip_frag_reasm(struct ipq *qp)
@@ -259,9 +137,6 @@ static inline fcb_t *fcb_alloc()
 }
 
 
-
-
-
 static inline void fcb_free(fcb_t *fcb)
 {
 	Mem_Slice_Ctrl_B *mscb = (Mem_Slice_Ctrl_B *)((uint8_t *)fcb - sizeof(Mem_Slice_Ctrl_B));
@@ -352,11 +227,21 @@ fcb_t *FragFind(frag_bucket_t *fbucket, mbuf_t *mbuf, uint32_t hash)
 uint32_t Frag_defrag_begin(mbuf_t *mbuf, fcb_t *fcb)
 {
 	/*for first fragment packet */
-	
-	
+	if(PKT_IS_FIRST_FRAG(mbuf))
+	{
+		FCB_LOCK(fcb);
+
+		if(fcb->status)
+
+		FCB_UNLOCK(fcb);
+	}
+	else /*for nofirst fragment packet*/
+	{
+		
+	}
 
 
-	/*for nofirst fragment packet*/
+	
 
 	/*frag reassemble or frag session*/
 }
@@ -393,8 +278,6 @@ void *Defrag(mbuf_t *mb)
 
 	FCB_TABLE_UNLOCK(fb);
 
-	
-
 	Frag_defrag_begin(mb, fcb);
 	
 	
@@ -427,7 +310,7 @@ uint32_t FragModule_init()
 	for (i = 0; i < FRAG_BUCKET_NUM; i++)
 	{
 		INIT_HLIST_HEAD(&base[i].hash);
-		cvmx_spinlock_init(&base[i].bkt_lock);
+		FCB_TABLE_INITLOCK(base[i]);
 	}
 
 	ip4_frags_table->match = ip4_frag_match;

@@ -53,10 +53,20 @@ int DecodeUDP(mbuf_t *mbuf, uint8_t *pkt, uint16_t len)
 	printf("=========>enter DecodeTCP\n");
 #endif
 
-	if (unlikely(DECODE_OK != DecodeUDPPacket(mbuf, pkt, len))) {
-		return DECODE_DROP;
+	if(!PKT_IS_IP_FRAG(mbuf) || PKT_IS_FIRST_FRAG(mbuf))/*own udp header, can be decoded*/
+	{
+		if (unlikely(DECODE_OK != DecodeUDPPacket(mbuf, pkt, len))) 
+		{
+			return DECODE_DROP;
+		}
 	}
 
+	if(PKT_IS_IP_FRAG(mbuf))/*need be defraged */
+	{
+		Defrag(mbuf);	
+	}
+	
+	
 	STAT_UDP_RECV_OK;
 
 	FlowHandlePacket(mbuf);

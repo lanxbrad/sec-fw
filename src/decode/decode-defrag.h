@@ -8,25 +8,28 @@
 #include <hlist.h>
 
 
-#define DEFRAG_COMPLETE	4
-#define DEFRAG_FIRST_IN	2
-#define DEFRAG_LAST_IN	1
+#define DEFRAG_NONE       (1 << 0)
+#define DEFRAG_LAST_IN	  (1 << 1)
+#define DEFRAG_FIRST_IN	  (1 << 2)
+#define DEFRAG_COMPLETE	  (1 << 3)
+
 
 
 typedef struct {
 	struct hlist_node	list;
-	struct mbuf_t    *queue;    /* list of cached fragments */
-	uint64_t          cycle;
+	struct mbuf_t     *queue;    /* list of cached fragments */
+	uint64_t           cycle;
+	
 	cvmx_spinlock_t		lock;
+	uint32_t             sip;
+
+	uint32_t             dip;
+	uint16_t              id;
+	uint16_t          status;
 	
+	uint32_t             len;
+	uint32_t	        meat;
 	
-	uint32_t sip;
-	uint32_t dip;
-	uint16_t id;
-	
-	int			len;
-	int			meat;
-	uint8_t		last_in;    /* first/last segment arrived? */
 }fcb_t;
 
 
@@ -65,8 +68,15 @@ typedef struct {
 
 #define FRAG_HASH_TABLE_NAME   "Frag_Hash_Table"
 
-#define FCB_TABLE_LOCK(fb)     cvmx_spinlock_lock(&fb->bkt_lock);  
-#define FCB_TABLE_UNLOCK(fb)   cvmx_spinlock_unlock(&fb->bkt_lock); 
+#define FCB_TABLE_INITLOCK(fb) cvmx_spinlock_init(&fb->bkt_lock)
+#define FCB_TABLE_LOCK(fb)     cvmx_spinlock_lock(&fb->bkt_lock)
+#define FCB_TABLE_UNLOCK(fb)   cvmx_spinlock_unlock(&fb->bkt_lock)
+
+
+#define FCB_INITLOCK(fcb)      cvmx_spinlock_init(&fcb->lock)
+#define FCB_LOCK(fcb)          cvmx_spinlock_lock(&fcb->lock)
+#define FCB_UNLOCK(fcb)        cvmx_spinlock_unlock(&fcb->lock)
+
 
 
 

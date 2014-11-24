@@ -81,6 +81,14 @@ typedef struct m_buf_
 #define MBUF_FREE(m)   mbuf_free(m)
 
 
+static inline void mbuf_size_judge(void)
+{
+	BUILD_BUG_ON((sizeof(mbuf_t) + sizeof(Mem_Slice_Ctrl_B)) > 256);
+
+	return;
+}
+
+
 
 extern mbuf_t *mbuf_alloc();
 extern void mbuf_free(mbuf_t *mb);

@@ -12,7 +12,7 @@
 
 #include <mbuf.h>
 #include <decode.h>
-#include <mem_pool.h>
+
 #include <sec-common.h>
 #include <oct-init.h>
 #include "flow.h"
@@ -29,12 +29,7 @@ CVMX_SHARED uint64_t del_flow[CPU_HW_RUNNING_MAX] = {0, 0, 0, 0};
 flow_table_info_t *flow_table;
 
 
-void flow_item_size_judge(void)
-{
-	BUILD_BUG_ON((sizeof(flow_item_t) + sizeof(Mem_Slice_Ctrl_B)) > 256);
 
-	return;
-}
 
 
 
@@ -72,14 +67,19 @@ static inline void flow_item_free(flow_item_t *f)
 }
 
 
+static void FlowInsert(flow_bucket_t *fb, flow_item_t *fi)
+{
+	hlist_add_head(&fi->list, &fb->hash);
+}
 
 
-unsigned int flowhashfn(uint32_t saddr, uint32_t daddr, uint16_t sport, uint16_t dport, uint8_t prot)
+
+static inline uint32_t flowhashfn(uint32_t saddr, uint32_t daddr, uint16_t sport, uint16_t dport, uint8_t prot)
 {
 	return flow_hashfn(prot, saddr, daddr, sport, dport) & FLOW_BUCKET_MASK;
 }
 
-static int FlowMatch(flow_item_t *f, mbuf_t *mbuf)
+static uint32_t FlowMatch(flow_item_t *f, mbuf_t *mbuf)
 {
 	return ((f->ipv4.sip   == mbuf->ipv4.sip
 			&& f->ipv4.dip == mbuf->ipv4.dip
@@ -144,18 +144,18 @@ flow_item_t *FlowAdd(flow_bucket_t *fb, unsigned int hash, mbuf_t *mbuf)
 	FLOW_UPDATE_TIMESTAMP(newf);
 	
 	/*now scan and add, if exist, free new and return old*/
-	cvmx_spinlock_lock(&fb->lock);
+	FLOW_TABLE_LOCK(fb);
 	flow = FlowFind(fb, mbuf, hash);
 	if(NULL == flow)/*not exist, add new*/
 	{
-		hlist_add_head(&newf->list, &fb->hash);
-		cvmx_spinlock_unlock(&fb->lock);
+		FlowInsert(fb, newf);
+		FLOW_TABLE_UNLOCK(fb);
 		new_flow[local_cpu_id]++;
 		return newf;
 	}
 	else/*exist, free new and return old*/
 	{
-		cvmx_spinlock_unlock(&fb->lock);
+		FLOW_TABLE_UNLOCK(fb);
 		flow_item_free(newf);
 		
 		return flow;

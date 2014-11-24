@@ -17,6 +17,8 @@
 #include <oct-common.h>
 #include <oct-init.h>
 #include <hlist.h>
+#include <mem_pool.h>
+
 
 
 typedef struct flow_table_info_tag_s
@@ -73,6 +75,19 @@ typedef struct flow_item_tag_s
 #define FLOW_MAX_TIMEOUT    20*oct_cpu_rate   /* 20s */
 
 #define FLOW_UPDATE_TIMESTAMP(m)  (m->cycle = cvmx_get_cycle())
+
+
+
+static void flow_item_size_judge(void)
+{
+	BUILD_BUG_ON((sizeof(flow_item_t) + sizeof(Mem_Slice_Ctrl_B)) > 256);
+
+	return;
+}
+
+
+#define FLOW_TABLE_LOCK(f)     cvmx_spinlock_lock(&f->lock)
+#define FLOW_TABLE_UNLOCK(f)   cvmx_spinlock_unlock(&f->lock)
 
 
 

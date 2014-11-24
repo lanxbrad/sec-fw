@@ -12,12 +12,7 @@
 #include <mbuf.h>
 #include <mem_pool.h>
 
-void mbuf_size_judge(void)
-{
-	BUILD_BUG_ON((sizeof(mbuf_t) + sizeof(Mem_Slice_Ctrl_B)) > 256);
 
-	return;
-}
 
 
 mbuf_t *mbuf_alloc()

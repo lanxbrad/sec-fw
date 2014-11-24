@@ -16,18 +16,17 @@
 typedef struct {
 	struct hlist_node	list;
 	struct mbuf_t    *queue;    /* list of cached fragments */
+	uint64_t          cycle;
 	cvmx_spinlock_t		lock;
+	
 	
 	uint32_t sip;
 	uint32_t dip;
-	uint16_t sport;
-	uint16_t dport;
 	uint16_t id;
-	uint8_t protocol;
 	
-	int             len;
-	int             meat;
-	uint8_t			last_in;    /* first/last segment arrived? */
+	int			len;
+	int			meat;
+	uint8_t		last_in;    /* first/last segment arrived? */
 }fcb_t;
 
 
@@ -66,6 +65,22 @@ typedef struct {
 
 #define FRAG_HASH_TABLE_NAME   "Frag_Hash_Table"
 
+#define FCB_TABLE_LOCK(fb)     cvmx_spinlock_lock(&fb->bkt_lock);  
+#define FCB_TABLE_UNLOCK(fb)   cvmx_spinlock_unlock(&fb->bkt_lock); 
+
+
+
+#define FCB_UPDATE_TIMESTAMP(f)  (f->cycle = cvmx_get_cycle())
+
+
+
+
+static inline void fcb_size_judge(void)
+{
+	BUILD_BUG_ON((sizeof(fcb_t) + sizeof(Mem_Slice_Ctrl_B)) > 256);
+
+	return;
+}
 
 
 

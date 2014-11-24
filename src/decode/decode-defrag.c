@@ -11,39 +11,11 @@
 
 frag_table_info_t *ip4_frags_table;
 
+
+
+
 #if 0
-inet_frag_queue *ipq_alloc()
-{
-	void *buf = mem_pool_fpa_slice_alloc(MEM_POOL_ID_FLOW_NODE);
 
-	return (inet_frag_queue *)((uint8_t *)buf + sizeof(Mem_Slice_Ctrl_B));
-}
-
-
-void ipq_free(ipq_t *ipq)
-{
-	Mem_Slice_Ctrl_B *mscb = (Mem_Slice_Ctrl_B *)((uint8_t *)ipq - sizeof(Mem_Slice_Ctrl_B));
-	if(MEM_POOL_MAGIC_NUM != mscb->magic)
-	{
-		return;
-	}
-	if(MEM_POOL_ID_HOST_MBUF != mscb->pool_id)
-	{
-		return;
-	}
-
-	mem_pool_fpa_slice_free((void *)mscb, mscb->pool_id);
-
-	return;
-}
-
-
-
-
-
-
-	
-}
 
 static struct inet_frag_queue *inet_frag_intern(struct inet_frag_queue *qp_in, struct inet_frags *f, unsigned int hash)
 {
@@ -270,7 +242,71 @@ err:
 #endif
 
 
-uint32_t fraghashfn(mbuf_t *mb)
+
+
+static inline fcb_t *fcb_alloc()
+{
+	Mem_Slice_Ctrl_B *mscb;
+	void *buf = mem_pool_fpa_slice_alloc(FPA_POOL_ID_HOST_MBUF);
+	if(NULL == buf)
+		return NULL;
+
+	mscb = (Mem_Slice_Ctrl_B *)buf;
+	mscb->magic = MEM_POOL_MAGIC_NUM;
+	mscb->pool_id = FPA_POOL_ID_HOST_MBUF;
+
+	return (fcb_t *)((uint8_t *)buf + sizeof(Mem_Slice_Ctrl_B));
+}
+
+
+
+
+
+static inline void fcb_free(fcb_t *fcb)
+{
+	Mem_Slice_Ctrl_B *mscb = (Mem_Slice_Ctrl_B *)((uint8_t *)fcb - sizeof(Mem_Slice_Ctrl_B));
+	if(MEM_POOL_MAGIC_NUM != mscb->magic)
+	{
+		return;
+	}
+	if(MEM_POOL_ID_HOST_MBUF != mscb->pool_id)
+	{
+		return;
+	}
+
+	mem_pool_fpa_slice_free((void *)mscb, mscb->pool_id);
+
+	return;
+}
+
+
+
+fcb_t *fcb_create(mbuf_t *mb)
+{
+	fcb_t *fcb = fcb_alloc();
+	if(NULL == fcb)
+	{
+		return NULL;
+	}
+
+	memset((void *)fcb, 0, sizeof(fcb_t));
+
+	fcb->sip = mb->ipv4.sip;
+	fcb->dip = mb->ipv4.dip;
+	fcb->id  = mb->defrag_id;
+
+
+	return fcb;
+}
+
+
+static inline void fcb_insert(frag_bucket_t *fb, fcb_t *fcb)
+{
+	hlist_add_head(&fcb->list, &fb->hash);
+}
+
+
+uint32_t ip4_frag_hashfn(mbuf_t *mb)
 {
 	return jhash_3words(mb->ipv4.sip, mb->ipv4.dip, mb->defrag_id, 0) & FRAG_BUCKET_MASK;
 }
@@ -279,27 +315,55 @@ uint32_t fraghashfn(mbuf_t *mb)
 
 uint32_t ip4_frag_match(fcb_t *fcb, mbuf_t *mb)
 {
-	if(fcb->id == mb->defrag_id 
+	return (fcb->id == mb->defrag_id 
 		&& fcb->sip == mb->ipv4.sip 
-		&& fcb->dip == mb->ipv4.dip)
-	{
-		return SEC_OK;
-	}
-	else
-	{
-		return SEC_NO;
-	}
+		&& fcb->dip == mb->ipv4.dip);
 }
+
+
 
 fcb_t *FragFind(frag_bucket_t *fbucket, mbuf_t *mbuf, uint32_t hash)
 {
+	fcb_t *fcb;
+	struct hlist_node *n;
+	
+#ifdef SEC_FRAG_DEBUG
+	printf("============>enter FragFind\n");
+#endif
+
+	hlist_for_each_entry(fcb, n, &fbucket->hash, list)
+	{
+		if(ip4_frags_table->match(fcb, mbuf))
+		{
+		#ifdef SEC_FRAG_DEBUG
+			printf("frag match is ok\n");
+		#endif
+			FCB_UPDATE_TIMESTAMP(fcb);
+			return fcb;
+		}
+	}
+#ifdef SEC_FRAG_DEBUG
+	printf("frag match is fail\n");
+#endif
 	return NULL;
+
+}
+
+uint32_t Frag_defrag_begin(mbuf_t *mbuf, fcb_t *fcb)
+{
+	/*for first fragment packet */
+	
+	
+
+
+	/*for nofirst fragment packet*/
+
+	/*frag reassemble or frag session*/
 }
 
 
 
-
-fcb_t *FragGetFcbFromHash(mbuf_t *mb)
+void *Defrag(mbuf_t *mb)
 {
 	uint32_t hash;
 	frag_bucket_t *base;
@@ -311,32 +375,34 @@ fcb_t *FragGetFcbFromHash(mbuf_t *mb)
 	base = (frag_bucket_t *)ip4_frags_table->bucket_base_ptr;
 	fb = &base[hash];
 
-	cvmx_spinlock_lock(&fb->bkt_lock);
+	FCB_TABLE_LOCK(fb);
+	
 	fcb = FragFind(fb, mb, hash);
-	cvmx_spinlock_unlock(&fb->bkt_lock);
 	
-	return fcb;
-}
+	if(NULL == fcb) /*not find , create a new one and add it into table*/
+	{
+		fcb = fcb_create(mb);
+		if(NULL == fcb)
+		{
+			FCB_TABLE_UNLOCK(fb);
+			return NULL;
+		}
 
+		fcb_insert(fb, fcb);		
+	}
 
+	FCB_TABLE_UNLOCK(fb);
 
-void *Defrag(mbuf_t *mbuf)
-{
-	//uint32_t hash;
-	//fcb_t *fcb;
 	
 
-	//hash = ip4_frags_table->hashfn(mbuf);
-
-	//fcb = FragGetFcbFromHash(mbuf);
-
+	Frag_defrag_begin(mb, fcb);
 	
 	
 	return NULL;
 }
 
 
-uint32_t ipfrag_init()
+uint32_t FragModule_init()
 {
 	int i;
 	frag_bucket_t *base;
@@ -365,13 +431,13 @@ uint32_t ipfrag_init()
 	}
 
 	ip4_frags_table->match = ip4_frag_match;
-	ip4_frags_table->hashfn = fraghashfn;
+	ip4_frags_table->hashfn = ip4_frag_hashfn;
 
 	return SEC_OK;
 }
 
 
-int ipfragInfo_Get()
+int FragModuleInfo_Get()
 {
 	ip4_frags_table = (frag_table_info_t *)cvmx_bootmem_find_named_block(FRAG_HASH_TABLE_NAME);
 	if(NULL == ip4_frags_table)

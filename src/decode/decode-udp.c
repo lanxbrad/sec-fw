@@ -4,6 +4,7 @@
 #include "decode-ipv4.h"
 #include "decode-udp.h"
 #include "decode-statistic.h"
+#include "decode-defrag.h"
 
 
 

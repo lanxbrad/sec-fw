@@ -8,28 +8,49 @@
 #include <hlist.h>
 
 
-#define DEFRAG_NONE       (1 << 0)
-#define DEFRAG_LAST_IN	  (1 << 1)
-#define DEFRAG_FIRST_IN	  (1 << 2)
+#define DEFRAG_NONE       0
+#define DEFRAG_FIRST_IN	  (1 << 0)
+#define DEFRAG_NOFIRST_IN (1 << 1)
+#define DEFRAG_LAST_IN	  (1 << 2)
 #define DEFRAG_COMPLETE	  (1 << 3)
+
+
+#define FCB_STATUS_IS_NONE(f)       (f->status == DEFRAG_NONE)
+#define FCB_STATUS_IS_FIRST_IN(f)   (f->status & DEFRAG_FIRST_IN)
+#define FCB_STATUS_IS_NOFIRST_IN(f) (f->status & DEFRAG_NOFIRST_IN)
+
+#define FCB_STATUS_SET_NONE(f)       (f->status == DEFRAG_NONE)
+#define FCB_STATUS_SET_FIRST_IN(f)   (f->status |= DEFRAG_FIRST_IN)
+#define FCB_STATUS_SET_NOFIRST_IN(f) (f->status |= DEFRAG_NOFIRST_IN)
+
+
+
+
+#define DEFRAG_OK    0
+#define DEFRAG_CACHE 1
+
+
 
 
 
 typedef struct {
 	struct hlist_node	list;
-	struct mbuf_t     *queue;    /* list of cached fragments */
+	mbuf_t            *queue;    /* list of cached fragments */
 	uint64_t           cycle;
 	
 	cvmx_spinlock_t		lock;
+	
 	uint32_t             sip;
-
 	uint32_t             dip;
+	uint16_t  sport;             /*sport */
+	uint16_t  dport;             /*dport*/
+	uint8_t   protocol;
 	uint16_t              id;
+	
 	uint16_t          status;
 	
 	uint32_t             len;
 	uint32_t	        meat;
-	
 }fcb_t;
 
 

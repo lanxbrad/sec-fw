@@ -10,7 +10,7 @@
  *
  ********************************************************************************/
 #include <mbuf.h>
-#include <mem_pool.h>
+
 
 
 
@@ -87,6 +87,10 @@ void packet_destroy_data(mbuf_t *mbuf)
 
 
 
+uint32_t packet_hw2sw(mbuf_t *mbuf)
+{
+	return SEC_OK;
+}
 
 
 

@@ -14,7 +14,9 @@
 #define __MBUF_H__
 
 #include <oct-common.h>
+#include <sec-common.h>
 #include <sec-util.h>
+#include <mem_pool.h>
 
 
 typedef struct {
@@ -83,7 +85,7 @@ typedef struct m_buf_
 
 static inline void mbuf_size_judge(void)
 {
-	BUILD_BUG_ON((sizeof(mbuf_t) + sizeof(Mem_Slice_Ctrl_B)) > 256);
+	BUILD_BUG_ON((sizeof(mbuf_t) + sizeof(Mem_Slice_Ctrl_B)) > MEM_POOL_HOST_MBUF_SIZE);
 
 	return;
 }
@@ -94,6 +96,7 @@ extern mbuf_t *mbuf_alloc();
 extern void mbuf_free(mbuf_t *mb);
 extern void packet_destroy_all(mbuf_t *m);
 extern void packet_destroy_data(mbuf_t *mbuf);
+extern uint32_t packet_hw2sw(mbuf_t *mbuf);
 
 
 #define PACKET_DESTROY_ALL(m)   packet_destroy_all(m)

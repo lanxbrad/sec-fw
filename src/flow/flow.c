@@ -299,6 +299,9 @@ int FlowInit(void)
 
 	flow_bucket_t *base = NULL;
 
+	
+	flow_item_size_judge();
+
 	flow_table = (flow_table_info_t *)cvmx_bootmem_alloc_named((sizeof(flow_table_info_t) + FLOW_BUCKET_NUM * FLOW_BUCKET_SIZE), CACHE_LINE_SIZE, FLOW_HASH_TABLE_NAME);
 	if(NULL == flow_table)
 	{

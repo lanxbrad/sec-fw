@@ -132,6 +132,9 @@ int Sec_LowLevel_Init()
 
 int Sec_HighLevel_Init()
 {
+	mbuf_size_judge();
+	flow_item_size_judge();
+
 	if ( cvmx_is_init_core() )
 	{
 		if(SEC_OK != Decode_PktStat_Init())

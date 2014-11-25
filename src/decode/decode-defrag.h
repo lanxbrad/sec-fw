@@ -116,7 +116,7 @@ static inline void fcb_size_judge(void)
 
 
 
-extern void *Defrag(mbuf_t *mbuf);
+extern mbuf_t *Defrag(mbuf_t *mbuf);
 
 
 

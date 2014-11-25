@@ -224,63 +224,50 @@ fcb_t *FragFind(frag_bucket_t *fbucket, mbuf_t *mbuf, uint32_t hash)
 
 }
 
-uint32_t Frag_defrag_begin(mbuf_t *mbuf, fcb_t *fcb)
+
+void Frag_defrag_process(mbuf_t * mbuf,fcb_t * fcb)
 {
-	/*for first fragment packet */
-	if(PKT_IS_FIRST_FRAG(mbuf))
+	int offset;
+	int ihl, end;
+	/* Determine the position of this fragment. */
+	ihl = IPV4_GET_HLEN(mbuf);
+	offset = IPV4_GET_IPOFFSET(mbuf);
+
+	end = offset + mbuf->len - ihl;
+
+	if(0 == IPV4_GET_MF(mbuf))
 	{
-		FCB_LOCK(fcb);
-		/*update port info*/
-		fcb->sport = mbuf->sport;
-		fcb->dport = mbuf->dport;
-		fcb->protocol = mbuf->proto;
-
-		FCB_STATUS_SET_FIRST_IN(fcb);
-
-		/*if fcb queue is not empty, take all and follow first*/
-		if(!FCB_STATUS_IS_NONE(fcb))
-		{
-			mbuf->next = fcb->queue; /*now mbuf is a chain*/
-			fcb->queue = NULL;
-		}
-		
-		FCB_UNLOCK(fcb);
-		return DEFRAG_OK;
-	}
-	else /*for nofirst fragment packet*/
-	{
-		FCB_LOCK(fcb);
-
-		if(FCB_STATUS_IS_FIRST_IN(fcb))/*must be contain port info*/
-		{
-			mbuf->sport = fcb->sport;
-			mbuf->dport = fcb->dport;
-			FCB_UNLOCK(fcb);
-			return DEFRAG_OK;
-		}
-		else/*need be cached*/
-		{
-			if(SEC_OK == packet_hw2sw(mbuf))
-			{
-				FCB_UNLOCK(fcb);
-				return DEFRAG_CACHE;
-			}
-		}
-		
 		
 	}
-
-
-	
-
-	/*frag reassemble or frag session*/
-	
-	return SEC_OK;
 }
 
 
 
-void *Defrag(mbuf_t *mb)
+/*
+ * PACKET_HW TO PACKET_SW
+ * Cache
+ * merge
+ */
+mbuf_t *Frag_defrag_begin(mbuf_t *mbuf, fcb_t *fcb)
+{
+	if(SEC_OK != packet_hw2sw(mbuf))
+	{
+		packet_destroy_all(mbuf);
+		return NULL;
+	}
+	
+	FCB_LOCK(fcb);
+
+	Frag_defrag_process(mbuf, fcb);
+	
+	/*frag reassemble or frag session*/
+	FCB_UNLOCK(fcb);
+	return NULL;
+}
+
+
+
+mbuf_t *Defrag(mbuf_t *mb)
 {
 	uint32_t hash;
 	frag_bucket_t *base;
@@ -310,10 +297,7 @@ void *Defrag(mbuf_t *mb)
 
 	FCB_TABLE_UNLOCK(fb);
 
-	Frag_defrag_begin(mb, fcb);
-	
-	
-	return NULL;
+	return Frag_defrag_begin(mb, fcb);
 }
 
 
@@ -323,7 +307,7 @@ uint32_t FragModule_init()
 	frag_bucket_t *base;
 	frag_bucket_t *f;
 
-	ip4_frags_table = (frag_table_info_t *)cvmx_bootmem_alloc_named((sizeof(frag_table_info_t) + FRAG_BUCKET_NUM * FRAG_BUCKET_SIZE), 																	CACHE_LINE_SIZE, 
+	ip4_frags_table = (frag_table_info_t *)cvmx_bootmem_alloc_named((sizeof(frag_table_info_t) + FRAG_BUCKET_NUM * FRAG_BUCKET_SIZE), 																												CACHE_LINE_SIZE, 
 																  FRAG_HASH_TABLE_NAME);
 	if(NULL == ip4_frags_table)
 	{
@@ -366,9 +350,4 @@ int FragModuleInfo_Get()
 
 	return SEC_OK;
 }
-
-
-
-
-
 

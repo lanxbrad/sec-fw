@@ -26,13 +26,13 @@ typedef struct {
 
 
 /*packet info description
- * using wqe 96 bytes space
- * so this struct size must be less than**** 96 bytes ****
  */
 typedef struct m_buf_
 {
 	uint32_t magic_flag;         /* mbuf memory magic num*/
-	uint32_t pktlen;             /*pkt total len*/
+
+	uint16_t pkt_space;          /*pkt is hw or sw buffer*/
+	uint16_t pkttotallen;             /*pkt total len*/
 
 	cvmx_buf_ptr_t packet_ptr;   /*copy from wqe packet_ptr*/
 
@@ -45,7 +45,7 @@ typedef struct m_buf_
 	void *vlanh;
 	void *network_header;        /*network layer header*/
 	void *transport_header;      /*transport layer header*/
-
+	
 	uint32_t input_port;         /*input port of phy*/
 	
 	uint8_t eth_dst[6];          /*DMAC*/
@@ -62,8 +62,11 @@ typedef struct m_buf_
 
 	uint16_t vlan_id;            /*if vlan_idx support, vlan_id*/
 	uint16_t defrag_id;
+
+	uint16_t len;               /*move with decode process*/
+	void *   pkt;                  
   
-    uint8_t *payload;            /*L7 payload pointer*/
+    void *payload;            /*L7 payload pointer*/
 
 	uint32_t offset;             /*offset of ip fragment packet*/
 	uint32_t ip_fraglen;         /*len of ip fragment packet*/
@@ -77,6 +80,10 @@ typedef struct m_buf_
 
 
 #define MBUF_MAGIC_NUM 0xab00ab00
+
+
+#define PKTBUF_HW    1
+#define PKTBUF_SW    2
 
 
 #define MBUF_ALLOC()  mbuf_alloc()

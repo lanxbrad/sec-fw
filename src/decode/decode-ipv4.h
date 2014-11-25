@@ -64,6 +64,8 @@ typedef struct IPV4Hdr_
 /* _IPV4_GET_IPOFFSET: get the content of the offset header field in host order */
 #define _IPV4_GET_IPOFFSET(p) \
     IPV4_GET_RAW_IPOFFSET((IPV4Hdr *)((p)->network_header))
+
+
 /* IPV4_GET_IPOFFSET: get the final offset */
 #define IPV4_GET_IPOFFSET(p) \
     (_IPV4_GET_IPOFFSET(p) & 0x1fff)

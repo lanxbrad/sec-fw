@@ -65,10 +65,14 @@ int DecodeIPV4(mbuf_t *mbuf, uint8_t *pkt, uint16_t len)
 {
 	uint8_t protocol;
 	uint16_t ipoffset;
+	mbuf_t *mb;
 
 #ifdef SEC_IPV4_DEBUG
 	printf("=========>enter DecodeIPV4()\n");
 #endif
+
+	mbuf->pkt = pkt; /*ip header start*/
+	mbuf->len = len; /*from ip header to pkt end*/
 
 	if (unlikely(DECODE_OK != DecodeIPV4Packet (mbuf, pkt, len))) {
 		return DECODE_DROP;
@@ -82,18 +86,26 @@ int DecodeIPV4(mbuf_t *mbuf, uint8_t *pkt, uint16_t len)
 #endif
 
 	/* If a fragment, pass off for re-assembly. */
-	ipoffset = IPV4_GET_IPOFFSET(mbuf);
 
-	if(0 == ipoffset && IPV4_GET_MF(mbuf) == 1)
+	if(0 == IPV4_GET_IPOFFSET(mbuf) && IPV4_GET_MF(mbuf) == 1)/*first frag packet*/
 	{
 		PKT_SET_IP_FRAG(mbuf);
 		PKT_SET_FIRST_FRAG(mbuf);
 	}
 
-	if(ipoffset > 0)
+	if(IPV4_GET_IPOFFSET(mbuf) > 0)
 	{
-		PKT_SET_IP_FRAG(mbuf);;
+		PKT_SET_IP_FRAG(mbuf);/*nofirst frag packet*/
 	}
+
+	if(PKT_IS_IP_FRAG(mbuf))
+	{
+		mb = Defrag(mbuf);	
+		if(NULL == mb)
+		{
+			return DECODE_OK;
+		}
+	}		
 
 	/* check what next decoder to invoke */
 	switch (protocol) {

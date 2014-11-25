@@ -60,11 +60,12 @@ oct_rx_process_work(cvmx_wqe_t *wq)
 	memset((void *)m, 0, sizeof(mbuf_t));
 
 	m->magic_flag = MBUF_MAGIC_NUM;
+	m->pkt_space = PKTBUF_HW;
 	m->packet_ptr.u64 = wq->packet_ptr.u64;
 
 	m->input_port = cvmx_wqe_get_port(wq);
 	
-	m->pktlen = cvmx_wqe_get_len(wq);
+	m->pkttotallen = cvmx_wqe_get_len(wq);
 	m->pktptr = pkt_virt;
 
 	cvmx_fpa_free(wq, wqe_pool, 0);

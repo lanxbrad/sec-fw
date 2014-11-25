@@ -9,8 +9,8 @@
 #define DECODE_DONE 2
 
 
-#define PKT_IP_FRAG                     (1<<0)
-#define PKT_FIRST_FRAG                  (1<<1)
+#define PKT_IP_FRAG                     (1<<1)
+#define PKT_FIRST_FRAG                  (1<<2)
 #define PKT_HAS_FLOW                    (1<<8)
 
 

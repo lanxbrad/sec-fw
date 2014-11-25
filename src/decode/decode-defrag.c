@@ -224,8 +224,47 @@ fcb_t *FragFind(frag_bucket_t *fbucket, mbuf_t *mbuf, uint32_t hash)
 
 }
 
+uint32_t Frag_continuity_check(fcb_t *fcb)
+{
+	return SEC_OK;
+}
+
+mbuf_t *Frag_defrag_setup(mbuf_t *head)
+{
+	return NULL;
+}
+
 mbuf_t *Frag_defrag_reasm(fcb_t *fcb)
 {
+	int ihlen;
+	int len;
+	mbuf_t *head = fcb->fragments;
+	mbuf_t *reasm_mb;
+	
+	if(SEC_OK != Frag_continuity_check(fcb))
+	{
+		return NULL;
+	}
+
+	/* Allocate a new buffer for the datagram. */
+	ihlen = IPV4_GET_HLEN(head);
+	len = ihlen + fcb->len;
+
+	if(len > 65535)
+		goto out_oversize;
+
+	reasm_mb = Frag_defrag_setup(head);
+	if(NULL == reasm_mb)
+		goto setup_err;
+
+	
+
+
+	return reasm_mb;
+setup_err:
+	
+out_oversize:
+
 	return NULL;
 }
 

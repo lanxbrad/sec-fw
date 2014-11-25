@@ -32,14 +32,14 @@ typedef struct m_buf_
 	uint32_t magic_flag;         /* mbuf memory magic num*/
 
 	uint16_t pkt_space;          /*pkt is hw or sw buffer*/
-	uint16_t pkttotallen;             /*pkt total len*/
+	uint16_t pkt_totallen;             /*pkt total len*/
 
 	cvmx_buf_ptr_t packet_ptr;   /*copy from wqe packet_ptr*/
 
 	struct m_buf_ *next;         /*for cache chain*/
-	struct m_buf_ *prev;
+	//struct m_buf_ *prev;
 	
-	void *pktptr;                /*pointer to begin of packet from wqe packet_ptr*/
+	void *pkt_ptr;                /*pointer to begin of packet from wqe packet_ptr*/
 	
 	void *ethh;                  /*l2 layer header*/
 	void *vlanh;
@@ -63,13 +63,13 @@ typedef struct m_buf_
 	uint16_t vlan_id;            /*if vlan_idx support, vlan_id*/
 	uint16_t defrag_id;
 
-	uint16_t len;               /*move with decode process*/
-	void *   pkt;                  
+	//uint16_t len;               /*move with decode process*/
+	//void *   pkt;                  
   
-    void *payload;            /*L7 payload pointer*/
+	void *payload;            /*L7 payload pointer*/
 
-	uint32_t offset;             /*offset of ip fragment packet*/
-	uint32_t ip_fraglen;         /*len of ip fragment packet*/
+	int frag_offset;             /*offset of ip fragment packet*/
+	int frag_len;         /*len of ip fragment packet*/
 
 	uint32_t flags;              /*features of packet*/
 

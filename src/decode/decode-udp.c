@@ -40,8 +40,6 @@ static int DecodeUDPPacket(mbuf_t *mbuf, uint8_t *pkt, uint16_t len)
 	mbuf->payload = pkt + UDP_HEADER_LEN;
     mbuf->payload_len = len - UDP_HEADER_LEN;
 
-	mbuf->proto = PROTO_UDP;
-
 	return DECODE_OK;
 }
 

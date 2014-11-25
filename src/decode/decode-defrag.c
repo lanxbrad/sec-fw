@@ -224,21 +224,110 @@ fcb_t *FragFind(frag_bucket_t *fbucket, mbuf_t *mbuf, uint32_t hash)
 
 }
 
-
-void Frag_defrag_process(mbuf_t * mbuf,fcb_t * fcb)
+mbuf_t *Frag_defrag_reasm(fcb_t *fcb)
 {
+	return NULL;
+}
+
+
+
+
+mbuf_t *Frag_defrag_process(mbuf_t * mbuf,fcb_t * fcb)
+{
+	int i;
+	mbuf_t *prev, *next;
 	int offset;
-	int ihl, end;
+	int end;
+
+	if(fcb->last_in & DEFRAG_COMPLETE)
+		goto err;
+	
 	/* Determine the position of this fragment. */
-	ihl = IPV4_GET_HLEN(mbuf);
-	offset = IPV4_GET_IPOFFSET(mbuf);
+	offset = mbuf->frag_offset;
+	end = offset + mbuf->frag_len;
 
-	end = offset + mbuf->len - ihl;
-
-	if(0 == IPV4_GET_MF(mbuf))
+	
+	/* Is this the final fragment? */
+	if(0 == IPV4_GET_MF(mbuf))/*final*/
 	{
-		
+		if( end < fcb->len || (fcb->last_in & DEFRAG_LAST_IN) )/*but last already in, so error*/
+			goto err;
+		fcb->last_in |= DEFRAG_LAST_IN;
+		fcb->len = end;
 	}
+	else/*not final*/
+	{
+		if(end > fcb->len)/*last must be not in*/
+		{
+			if(fcb->last_in & DEFRAG_LAST_IN)/*but last already in, so error*/
+				goto err;
+			fcb->len = end;
+		}
+	}
+
+    /* 
+        * Find out which fragments are in front and at the back of us
+        * in the chain of fragments so far.  We must know where to put
+        * this fragment, right?
+        */
+	prev = fcb->fragments_tail;
+	if(!prev || prev->frag_offset < offset)
+	{
+		next = NULL;
+		goto found;
+	}
+	prev = NULL;
+	for(next = fcb->fragments; next != NULL; next = next->next)
+	{
+		if(next->frag_len >= offset)
+			break;   /*bingo*/
+		prev = next;
+	}
+
+found:
+    /* 
+        * We found where to put this one.  Check for overlap with
+         * preceding fragment, and, if needed, align things so that
+         * any overlaps are eliminated.
+        */
+	if(prev){
+		i = (prev->frag_offset + prev->frag_len) - offset;
+		if(i > 0)    /*overlap with prev*/
+			goto err;
+	}
+
+	if(next){
+		i = next->frag_offset - end;
+		if(i < 0)  /*overlap with next*/
+			goto err;
+	}
+
+	/* Insert this fragment in the chain of fragments. */
+	mbuf->next = next;
+	if(!next)
+		fcb->fragments_tail = mbuf;
+	if(prev)
+		prev->next = mbuf;
+	else
+		fcb->fragments = mbuf;
+
+	fcb->meat += mbuf->frag_len;
+	if(offset == 0)
+		fcb->last_in |= DEFRAG_FIRST_IN;
+
+	if(fcb->last_in == (DEFRAG_FIRST_IN | DEFRAG_LAST_IN) && 
+		fcb->meat == fcb->len)
+	{
+		return Frag_defrag_reasm(fcb);
+	}
+	else
+	{
+		return NULL;  /*cached*/
+	}
+
+err:
+	packet_destroy_all(mbuf);
+	return NULL;
 }
 
 
@@ -250,6 +339,7 @@ void Frag_defrag_process(mbuf_t * mbuf,fcb_t * fcb)
  */
 mbuf_t *Frag_defrag_begin(mbuf_t *mbuf, fcb_t *fcb)
 {
+	mbuf_t *mb;
 	if(SEC_OK != packet_hw2sw(mbuf))
 	{
 		packet_destroy_all(mbuf);
@@ -258,11 +348,12 @@ mbuf_t *Frag_defrag_begin(mbuf_t *mbuf, fcb_t *fcb)
 	
 	FCB_LOCK(fcb);
 
-	Frag_defrag_process(mbuf, fcb);
+	mb = Frag_defrag_process(mbuf, fcb);
 	
 	/*frag reassemble or frag session*/
 	FCB_UNLOCK(fcb);
-	return NULL;
+	
+	return mb;
 }
 
 

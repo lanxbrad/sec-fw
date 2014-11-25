@@ -23,8 +23,8 @@
 
 
 
-#define GET_PKT_LEN(p) ((p)->pktlen)
-#define GET_PKT_DATA(p) ((p)->pktptr)
+#define GET_PKT_LEN(p) ((p)->pkt_totallen)
+#define GET_PKT_DATA(p) ((p)->pkt_ptr)
 
 
 /*Given a packet pkt offset to the start of the ip header in a packet

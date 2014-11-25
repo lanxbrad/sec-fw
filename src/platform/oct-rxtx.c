@@ -65,13 +65,13 @@ oct_rx_process_work(cvmx_wqe_t *wq)
 
 	m->input_port = cvmx_wqe_get_port(wq);
 	
-	m->pkttotallen = cvmx_wqe_get_len(wq);
-	m->pktptr = pkt_virt;
+	m->pkt_totallen = cvmx_wqe_get_len(wq);
+	m->pkt_ptr = pkt_virt;
 
 	cvmx_fpa_free(wq, wqe_pool, 0);
 	
 	STAT_RECV_PC_ADD;
-	STAT_RECV_PB_ADD(m->pktlen);
+	STAT_RECV_PB_ADD(m->pkt_totallen);
 
 	STAT_RECV_OK;
 	return (void *)m;
@@ -99,7 +99,7 @@ void oct_tx_process_mbuf(mbuf_t *mbuf, uint8_t port)
 	cvmx_pko_command_word0_t pko_command;
 	pko_command.u64 = 0;
 	pko_command.s.segs = 1;
-	pko_command.s.total_bytes = mbuf->pktlen;
+	pko_command.s.total_bytes = mbuf->pkt_totallen;
 
 	/* Send the packet */
 	cvmx_pko_return_value_t send_status = cvmx_pko_send_packet_finish(port, queue, pko_command, mbuf->packet_ptr, CVMX_PKO_LOCK_CMD_QUEUE);

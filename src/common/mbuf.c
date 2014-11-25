@@ -54,7 +54,7 @@ void mbuf_free(mbuf_t *mb)
 
 /*
  *   first: free packet
- *   secode: free mbuf
+ *   second: free mbuf
  */
 void packet_destroy_all(mbuf_t *mbuf)
 {
@@ -69,6 +69,15 @@ void packet_destroy_all(mbuf_t *mbuf)
 	
 		cvmx_fpa_free(cvmx_phys_to_ptr(start_of_buffer), buffer_ptr.s.pool, 0);
 	}
+	else if(mbuf->pkt_space == PKTBUF_SW)
+	{
+		MEM_2K_FREE(mbuf->pkt_ptr);
+	}
+	else
+	{
+		printf("pkt buffer region error\n");
+	}
+	
 	/*free mbuf*/
 	MBUF_FREE(mbuf);
 }
@@ -117,21 +126,21 @@ uint32_t packet_hw2sw(mbuf_t *mbuf)
 		return SEC_OK;
 	}
 	
-	pkt_buf_sw = mem_pool_alloc(MEM_POOL_ID_SMALL_BUFFER);
+	pkt_buf_sw = MEM_2K_ALLOC();
 	if(NULL == pkt_buf_sw)
 	{
 		return SEC_NO;
 	}
-	pkt_buf_hw = mbuf->pktptr;
+	pkt_buf_hw = mbuf->pkt_ptr;
 
-	memcpy((void *)pkt_buf_sw, (void *)pkt_buf_hw, mbuf->pktlen);
+	memcpy((void *)pkt_buf_sw, (void *)pkt_buf_hw, mbuf->pkt_totallen);
 
 	cvmx_buffer_ptr.u64 = mbuf->packet_ptr.u64;
 
 	/*need adjuest the mbuf from hw2sw*/
 	mbuf->pkt_space = PKTBUF_SW;
 	
-	mbuf->pktptr = pkt_buf_sw;
+	mbuf->pkt_ptr = pkt_buf_sw;
 
 	oldethh = mbuf->ethh;
 	mbuf->ethh = ((uint8_t *)pkt_buf_sw + ((uint64_t)oldethh - (uint64_t)pkt_buf_hw));

@@ -36,7 +36,6 @@ static int DecodeTCPPacket(mbuf_t *mbuf, uint8_t *pkt, uint16_t len)
 	printf("dst port is %d\n", mbuf->dport);
 #endif
 
-    mbuf->proto = PROTO_TCP;
 
     mbuf->payload = pkt + hlen;
     mbuf->payload_len = len - hlen;

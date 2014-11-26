@@ -13,14 +13,6 @@
 #define DEFRAG_COMPLETE	  (1 << 3)
 
 
-#define FCB_STATUS_IS_NONE(f)       (f->status == DEFRAG_NONE)
-#define FCB_STATUS_IS_FIRST_IN(f)   (f->status & DEFRAG_FIRST_IN)
-#define FCB_STATUS_IS_NOFIRST_IN(f) (f->status & DEFRAG_NOFIRST_IN)
-
-#define FCB_STATUS_SET_NONE(f)       (f->status == DEFRAG_NONE)
-#define FCB_STATUS_SET_FIRST_IN(f)   (f->status |= DEFRAG_FIRST_IN)
-#define FCB_STATUS_SET_NOFIRST_IN(f) (f->status |= DEFRAG_NOFIRST_IN)
-
 
 
 
@@ -99,6 +91,7 @@ typedef struct {
 #define FCB_UNLOCK(fcb)        cvmx_spinlock_unlock(&fcb->lock)
 
 
+#define FRAG_MAX_TIMEOUT    20*oct_cpu_rate   /* 20s */
 
 
 #define FCB_UPDATE_TIMESTAMP(f)  (f->cycle = cvmx_get_cycle())

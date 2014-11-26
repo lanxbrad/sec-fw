@@ -6,118 +6,13 @@
 #include "decode-ipv4.h"
 
 
+CVMX_SHARED uint64_t new_fcb[CPU_HW_RUNNING_MAX] = {0, 0, 0, 0};
+CVMX_SHARED uint64_t del_fcb[CPU_HW_RUNNING_MAX] = {0, 0, 0, 0};
 
 
 
 frag_table_info_t *ip4_frags_table;
 
-
-
-
-#if 0
-/* Build a new IP datagram from all its fragments. */
-
-static int ip_frag_reasm(struct ipq *qp)
-{
-	return 0;
-}
-
-
-
-static uint32_t ip_frag_queue(struct ipq *qp, 
-									mbuf_t *mbuf)
-{
-	mbuf_t *prev, *next;
-	int flags, offset;
-	int ihl, end;
-
-	offset = mbuf->ip4h->ip_off;
-
-	flags = offset & ~IP_OFFSET;
-	offset &= IP_OFFSET;
-	offset <<= 3;		/* offset is in 8-byte chunks */
-
-	ihl = IPV4_GET_HLEN(mbuf);
-
-	/* Determine the position of this fragment. */
-	end = offset + IPV4_GET_IPLEN(mbuf) - ihl;
-
-	/* Is this the final fragment? */
-	if ((flags & IP_MF) == 0) {
-		/* If we already have some bits beyond end
-		 * or have different end, the segment is corrrupted.
-		 */
-		if (end < qp->q.len ||
-		    ((qp->q.last_in & INET_FRAG_LAST_IN) && end != qp->q.len))
-			goto err;
-		qp->q.last_in |= INET_FRAG_LAST_IN;
-		qp->q.len = end;
-	} else {
-		if (end > qp->q.len) {
-			/* Some bits beyond end -> corruption. */
-			if (qp->q.last_in & INET_FRAG_LAST_IN)
-				goto err;
-			qp->q.len = end;
-		}
-	}
-	if (end == offset)
-		goto err;
-
-	/* Find out which fragments are in front and at the back of us
-	 * in the chain of fragments so far.  We must know where to put
-	 * this fragment, right?
-	 */
-
-	prev = NULL;
-	for (next = qp->q.fragments; next != NULL; next = next->next) {
-		if (next->offset >= offset)
-			break;	/* bingo! */
-		prev = next;
-	}
-
-	/* We found where to put this one.  Check for overlap with
-	 * preceding fragment, and, if needed, align things so that
-	 * any overlaps are eliminated.
-	 */
-	if (prev) {
-		int i = (prev->offset + prev->ip_fraglen) - offset;
-		if (i > 0) {
-			goto err;
-		}
-	}
-
-	if (next) {
-		int i = end - next->offset; /* overlap is 'i' bytes */
-		if (i > 0) {
-			goto err;
-		}
-	}
-
-	mbuf->offset = offset;
-	mbuf->ip_fraglen = IPV4_GET_IPLEN(mbuf) - ihl;
-
-	/* Insert this fragment in the chain of fragments. */
-	mbuf->next = next;
-	if (prev)
-		prev->next = mbuf;
-	else
-		qp->q.fragments = mbuf;
-
-	qp->q.meat += mbuf->ip_fraglen;
-
-	if (offset == 0)
-		qp->q.last_in |= INET_FRAG_FIRST_IN;
-
-	if (qp->q.last_in == (INET_FRAG_FIRST_IN | INET_FRAG_LAST_IN) &&
-	    qp->q.meat == qp->q.len)
-	    return ip_frag_reasm(qp, prev);
-	
-err:
-	free(packet);
-	
-	return NULL;
-}
-#endif
 
 
 
@@ -229,17 +124,91 @@ uint32_t Frag_continuity_check(fcb_t *fcb)
 	return SEC_OK;
 }
 
-mbuf_t *Frag_defrag_setup(mbuf_t *head)
+void Frag_defrag_freefrags(fcb_t *fcb)
 {
-	return NULL;
+	mbuf_t *head;
+	mbuf_t *next;
+	head = fcb->fragments;
+	while(head)
+	{
+		next = head->next;
+		packet_destroy_all(head);
+		head = next;
+	}
+	fcb->fragments = NULL;
+	fcb->fragments_tail = NULL;
+}
+
+mbuf_t *Frag_defrag_setup(mbuf_t *head, fcb_t *fcb)
+{
+	mbuf_t *new_mb;
+	void *packet_buffer;
+	void *oldethh;
+	void *vlanh;
+	void *networkh;
+	void *transporth;
+	void *payload;
+	
+	new_mb = MBUF_ALLOC();
+	if(NULL == new_mb)
+	{
+		return NULL;
+	}
+
+	packet_buffer = MEM_8K_ALLOC();
+	if(NULL == packet_buffer)
+	{
+		MBUF_FREE(new_mb);
+		return NULL;
+	}
+
+	new_mb->pkt_space = PKTBUF_SW;
+	new_mb->pkt_ptr = packet_buffer;
+
+	memcpy((void *)packet_buffer, (void *)head->pkt_ptr, head->pkt_totallen);
+
+	oldethh = head->ethh;
+	new_mb->ethh = ((uint8_t *)packet_buffer + ((uint64_t)oldethh - (uint64_t)(head->pkt_ptr)));
+
+	if(head->vlan_idx)
+	{
+		vlanh = head->vlanh;
+		new_mb->vlan_idx = head->vlan_idx;
+		new_mb->vlan_id = head->vlan_id;
+	    new_mb->vlanh = ((uint8_t *)packet_buffer + ((uint64_t)vlanh - (uint64_t)(head->pkt_ptr)));
+	}
+
+	networkh = head->network_header;
+	new_mb->network_header = ((uint8_t *)packet_buffer + ((uint64_t)networkh - (uint64_t)(head->pkt_ptr)));
+
+	transporth = head->transport_header;
+	new_mb->transport_header = ((uint8_t *)packet_buffer + ((uint64_t)transporth - (uint64_t)(head->pkt_ptr)));
+
+	payload = head->payload;
+	new_mb->payload = ((uint8_t *)packet_buffer + ((uint64_t)payload - (uint64_t)(head->pkt_ptr)));
+	
+	memcpy((void *)new_mb->eth_dst, (void *)head->eth_dst, sizeof(new_mb->eth_dst));
+	memcpy((void *)new_mb->eth_src, (void *)head->eth_src, sizeof(new_mb->eth_src));
+	
+	new_mb->ipv4.sip = head->ipv4.sip;
+	new_mb->ipv4.dip = head->ipv4.dip;
+
+	new_mb->sport = head->sport;
+	new_mb->dport = head->dport;
+
+	new_mb->proto = head->proto;
+
+	return new_mb;
 }
 
 mbuf_t *Frag_defrag_reasm(fcb_t *fcb)
 {
 	int ihlen;
 	int len;
-	mbuf_t *head = fcb->fragments;
 	mbuf_t *reasm_mb;
+	mbuf_t *next;
+	mbuf_t *head = fcb->fragments;
+	
 	
 	if(SEC_OK != Frag_continuity_check(fcb))
 	{
@@ -253,10 +222,27 @@ mbuf_t *Frag_defrag_reasm(fcb_t *fcb)
 	if(len > 65535)
 		goto out_oversize;
 
-	reasm_mb = Frag_defrag_setup(head);
+	reasm_mb = Frag_defrag_setup(head, fcb);
 	if(NULL == reasm_mb)
 		goto setup_err;
 
+	next = head->next;
+	while(next)
+	{
+		memcpy((void *)reasm_mb->pkt_ptr, (void *)((uint8_t *)next->pkt_ptr + next->pkt_totallen - next->frag_len), next->frag_len);
+		next = next->next;
+	}
+
+	IPV4_SET_IPLEN(reasm_mb, len);
+	((IPV4Hdr *)(reasm_mb->network_header))->ip_off = 0;
+	IPV4_SET_IPCSUM(reasm_mb, IPV4CalculateChecksum((uint16_t *)((reasm_mb->network_header)), ihlen));
+	reasm_mb->pkt_totallen = len + ((uint64_t)reasm_mb->network_header - (uint64_t)reasm_mb->pkt_ptr);
+
+	fcb->status |= DEFRAG_COMPLETE;
+
+
+	Frag_defrag_freefrags(fcb);
+	
 
 	return reasm_mb;
 setup_err:
@@ -275,7 +261,7 @@ mbuf_t *Frag_defrag_process(mbuf_t * mbuf,fcb_t * fcb)
 	mbuf_t *prev, *next;
 	int offset;
 	int end;
-
+	
 	if(fcb->last_in & DEFRAG_COMPLETE)
 		goto err;
 	
@@ -429,6 +415,61 @@ mbuf_t *Defrag(mbuf_t *mb)
 }
 
 
+void Frag_defrag_timeout(Oct_Timer_Threat *o, void *param)
+{
+	int i;
+	uint64_t current_cycle;
+
+	frag_bucket_t *base;
+	frag_bucket_t *fb;
+	fcb_t *fcb;
+	fcb_t *tfcb;
+	struct hlist_node *n;
+	struct hlist_node *t;
+	struct hlist_head timeout;
+
+	base = (frag_bucket_t *)ip4_frags_table->bucket_base_ptr;
+	
+	current_cycle = cvmx_get_cycle();
+
+	for(i = 0; i < FRAG_BUCKET_NUM; i++)
+	{
+		INIT_HLIST_HEAD(&timeout);
+		fb = &base[i];
+		
+		FCB_TABLE_LOCK(fb);
+
+		hlist_for_each_entry_safe(fcb, t, n, &base[i].hash, list)	
+		{
+			if((current_cycle > fcb->cycle) && ((current_cycle - fcb->cycle) > FRAG_MAX_TIMEOUT))
+			{
+				hlist_del(&fcb->list);
+			#ifdef SEC_DEFRAG_DEBUG
+				printf("delete one fcb 0x%p\n", f);
+			#endif
+				del_fcb[local_cpu_id]++;
+				hlist_add_head(&fcb->list, &timeout);
+			}
+		}
+		
+		FCB_TABLE_UNLOCK(fb);
+
+		hlist_for_each_entry_safe(tfcb, t, n, &timeout, list)	
+		{	
+			hlist_del(&tfcb->list);
+
+			/*TODO: session ageing do something*/
+			Frag_defrag_freefrags(tfcb);
+			fcb_free(tfcb);
+		}
+		
+	}
+
+	return;
+}
+
+
+
 uint32_t FragModule_init()
 {
 	int i;
@@ -462,6 +503,18 @@ uint32_t FragModule_init()
 
 	ip4_frags_table->match = ip4_frag_match;
 	ip4_frags_table->hashfn = ip4_frag_hashfn;
+
+	if(OCT_Timer_Create(0xFFFFFF, 0, 2, TIMER_GROUP, Frag_defrag_timeout, NULL, 0, 1000))/*1s*/
+	{
+		printf("timer create fail\n");
+		return SEC_NO;
+	}
+
+	printf("flow age timer create ok\n");
+	
+	
+
+	
 
 	return SEC_OK;
 }

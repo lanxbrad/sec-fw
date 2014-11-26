@@ -257,8 +257,6 @@ mbuf_t *Frag_defrag_reasm(fcb_t *fcb)
 	if(NULL == reasm_mb)
 		goto setup_err;
 
-	
-
 
 	return reasm_mb;
 setup_err:

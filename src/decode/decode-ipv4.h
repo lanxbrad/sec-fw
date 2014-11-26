@@ -84,9 +84,30 @@ typedef struct IPV4Hdr_
     IPV4_GET_RAW_IPPROTO((IPV4Hdr *)((p)->network_header))
 
 
+#define IPV4_SET_RAW_VER(ip4h, value)     ((ip4h)->ip_verhl = (((ip4h)->ip_verhl & 0x0f) | (value << 4)))
+#define IPV4_SET_RAW_HLEN(ip4h, value)    ((ip4h)->ip_verhl = (((ip4h)->ip_verhl & 0xf0) | (value & 0x0f)))
+#define IPV4_SET_RAW_IPTOS(ip4h, value)   ((ip4h)->ip_tos = value)
+#define IPV4_SET_RAW_IPLEN(ip4h, value)   ((ip4h)->ip_len = value)
+#define IPV4_SET_RAW_IPPROTO(ip4h, value) ((ip4h)->ip_proto = value)
+#define IPV4_SET_RAW_IPCSUM(ip4h, value) ((ip4h)->ip_csum = value)
+
+
+#define IPV4_SET_IPLEN(p, value) \
+	IPV4_SET_RAW_IPLEN((IPV4Hdr *)(p->network_header), value)
+	
+#define IPV4_SET_IPCSUM(p, value) \
+	IPV4_SET_RAW_IPCSUM((IPV4Hdr *)(p->network_header), value)
+
+
+
+
+
+
 
 #define IPV4_IS_FRAGMENT(p) \
 	(IPV4_GET_IPOFFSET(p) >= 0 || IPV4_GET_MF(p) == 1)
+
+
 
 
 #define PROTO_TCP        6  /**< tcp */
@@ -95,7 +116,55 @@ typedef struct IPV4Hdr_
 
 
 
+static inline uint16_t IPV4CalculateChecksum(uint16_t *pkt, uint16_t hlen)
+{
+    uint32_t csum = pkt[0];
 
+    csum += pkt[1] + pkt[2] + pkt[3] + pkt[4] + pkt[6] + pkt[7] + pkt[8] +
+        pkt[9];
+
+    hlen -= 20;
+    pkt += 10;
+
+    if (hlen == 0) {
+        ;
+    } else if (hlen == 4) {
+        csum += pkt[0] + pkt[1];
+    } else if (hlen == 8) {
+        csum += pkt[0] + pkt[1] + pkt[2] + pkt[3];
+    } else if (hlen == 12) {
+        csum += pkt[0] + pkt[1] + pkt[2] + pkt[3] + pkt[4] + pkt[5];
+    } else if (hlen == 16) {
+        csum += pkt[0] + pkt[1] + pkt[2] + pkt[3] + pkt[4] + pkt[5] + pkt[6] +
+            pkt[7];
+    } else if (hlen == 20) {
+        csum += pkt[0] + pkt[1] + pkt[2] + pkt[3] + pkt[4] + pkt[5] + pkt[6] +
+            pkt[7] + pkt[8] + pkt[9];
+    } else if (hlen == 24) {
+        csum += pkt[0] + pkt[1] + pkt[2] + pkt[3] + pkt[4] + pkt[5] + pkt[6] +
+            pkt[7] + pkt[8] + pkt[9] + pkt[10] + pkt[11];
+    } else if (hlen == 28) {
+        csum += pkt[0] + pkt[1] + pkt[2] + pkt[3] + pkt[4] + pkt[5] + pkt[6] +
+            pkt[7] + pkt[8] + pkt[9] + pkt[10] + pkt[11] + pkt[12] + pkt[13];
+    } else if (hlen == 32) {
+        csum += pkt[0] + pkt[1] + pkt[2] + pkt[3] + pkt[4] + pkt[5] + pkt[6] +
+            pkt[7] + pkt[8] + pkt[9] + pkt[10] + pkt[11] + pkt[12] + pkt[13] +
+            pkt[14] + pkt[15];
+    } else if (hlen == 36) {
+        csum += pkt[0] + pkt[1] + pkt[2] + pkt[3] + pkt[4] + pkt[5] + pkt[6] +
+            pkt[7] + pkt[8] + pkt[9] + pkt[10] + pkt[11] + pkt[12] + pkt[13] +
+            pkt[14] + pkt[15] + pkt[16] + pkt[17];
+    } else if (hlen == 40) {
+        csum += pkt[0] + pkt[1] + pkt[2] + pkt[3] + pkt[4] + pkt[5] + pkt[6] +
+            pkt[7] + pkt[8] + pkt[9] + pkt[10] + pkt[11] + pkt[12] + pkt[13] +
+            pkt[14] + pkt[15] + pkt[16] + pkt[17] + pkt[18] + pkt[19];
+    }
+
+    csum = (csum >> 16) + (csum & 0x0000FFFF);
+    csum += (csum >> 16);
+
+    return (uint16_t) ~csum;
+}
 
 
 

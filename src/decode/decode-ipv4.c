@@ -65,7 +65,7 @@ int DecodeIPV4(mbuf_t *mbuf, uint8_t *pkt, uint16_t len)
 {
 	uint8_t protocol;
 	int ihl;
-	mbuf_t *mb;
+	mbuf_t *nmbuf;
 
 #ifdef SEC_IPV4_DEBUG
 	printf("=========>enter DecodeIPV4()\n");
@@ -82,36 +82,53 @@ int DecodeIPV4(mbuf_t *mbuf, uint8_t *pkt, uint16_t len)
 	printf("protocol is %d\n", protocol);
 #endif
 
+	nmbuf = mbuf;/*maybe cache , so switch it*/
+
 	/* If a fragment, pass off for re-assembly. */
 	if(IPV4_IS_FRAGMENT(mbuf))/*first frag packet*/
 	{
+		printf("this is a fragment\n");
 		ihl = IPV4_GET_HLEN(mbuf);
-		mbuf->frag_offset = IPV4_GET_IPOFFSET(mbuf);
+		mbuf->defrag_id = IPV4_GET_IPID(mbuf);
+		mbuf->frag_offset = IPV4_GET_IPOFFSET(mbuf) << 3;
 		mbuf->frag_len = len - ihl;
+		printf("frag offset is %d, frag len is %d\n", mbuf->frag_offset, mbuf->frag_len);
 		if(0 == mbuf->frag_len)
 		{
 			return DECODE_DROP;
 		}
 		
-		mb = Defrag(mbuf);	
-		if(NULL == mb)
+		nmbuf = Defrag(mbuf);	
+		if(NULL == nmbuf)
 		{
 			return DECODE_OK;
 		}
 	}
 	
+
 	/* check what next decoder to invoke */
-	switch (protocol) {
+	switch (nmbuf->proto) {
 		case PROTO_TCP:
 			STAT_IPV4_RECV_OK;
-			return DecodeTCP(mbuf, pkt + IPV4_GET_HLEN(mbuf), IPV4_GET_IPLEN(mbuf) - IPV4_GET_HLEN(mbuf));
+			if(DECODE_OK != DecodeTCP(nmbuf, 
+									(void *)((uint8_t *)(nmbuf->network_header)+ IPV4_GET_HLEN(nmbuf)), 
+									IPV4_GET_IPLEN(nmbuf) - IPV4_GET_HLEN(nmbuf))){
+				packet_destroy_all(nmbuf);
+			}
+			return DECODE_OK;	
 		case PROTO_UDP:
 			STAT_IPV4_RECV_OK;
-			return DecodeUDP(mbuf, pkt + IPV4_GET_HLEN(mbuf), IPV4_GET_IPLEN(mbuf) - IPV4_GET_HLEN(mbuf));
+			if(DECODE_OK != DecodeUDP(nmbuf, 
+								(void *)((uint8_t *)(nmbuf->network_header)+ IPV4_GET_HLEN(nmbuf)), 
+								IPV4_GET_IPLEN(nmbuf) - IPV4_GET_HLEN(nmbuf))){
+				packet_destroy_all(nmbuf);
+			}
+			return DECODE_OK;
 		default:
-			printf("unsupport protocol %d\n",IPV4_GET_IPPROTO(mbuf));
+			printf("unsupport protocol %d\n",IPV4_GET_IPPROTO(nmbuf));
 			STAT_IPV4_UNSUPPORT;
-			return DECODE_DROP;
+			packet_destroy_all(nmbuf);
+			return DECODE_OK;
 	}
 
 	return DECODE_OK;

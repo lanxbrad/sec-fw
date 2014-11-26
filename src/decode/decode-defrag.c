@@ -1,7 +1,7 @@
 #include <sec-common.h>
 #include <jhash.h>
 #include <mbuf.h>
-
+#include <sec-debug.h>
 #include "decode-defrag.h"
 #include "decode-ipv4.h"
 
@@ -39,7 +39,7 @@ static inline void fcb_free(fcb_t *fcb)
 	{
 		return;
 	}
-	if(MEM_POOL_ID_HOST_MBUF != mscb->pool_id)
+	if(FPA_POOL_ID_HOST_MBUF != mscb->pool_id)
 	{
 		return;
 	}
@@ -65,7 +65,8 @@ fcb_t *fcb_create(mbuf_t *mb)
 	fcb->dip = mb->ipv4.dip;
 	fcb->id  = mb->defrag_id;
 
-
+	
+	
 	return fcb;
 }
 
@@ -97,7 +98,7 @@ fcb_t *FragFind(frag_bucket_t *fbucket, mbuf_t *mbuf, uint32_t hash)
 	fcb_t *fcb;
 	struct hlist_node *n;
 	
-#ifdef SEC_FRAG_DEBUG
+#ifdef SEC_DEFRAG_DEBUG
 	printf("============>enter FragFind\n");
 #endif
 
@@ -112,7 +113,7 @@ fcb_t *FragFind(frag_bucket_t *fbucket, mbuf_t *mbuf, uint32_t hash)
 			return fcb;
 		}
 	}
-#ifdef SEC_FRAG_DEBUG
+#ifdef SEC_DEFRAG_DEBUG
 	printf("frag match is fail\n");
 #endif
 	return NULL;
@@ -154,6 +155,7 @@ mbuf_t *Frag_defrag_setup(mbuf_t *head, fcb_t *fcb)
 	{
 		return NULL;
 	}
+	memset((void *)new_mb, 0, sizeof(mbuf_t));
 
 	packet_buffer = MEM_8K_ALLOC();
 	if(NULL == packet_buffer)
@@ -165,27 +167,37 @@ mbuf_t *Frag_defrag_setup(mbuf_t *head, fcb_t *fcb)
 	new_mb->pkt_space = PKTBUF_SW;
 	new_mb->pkt_ptr = packet_buffer;
 
-	memcpy((void *)packet_buffer, (void *)head->pkt_ptr, head->pkt_totallen);
-
-	oldethh = head->ethh;
-	new_mb->ethh = ((uint8_t *)packet_buffer + ((uint64_t)oldethh - (uint64_t)(head->pkt_ptr)));
+	if(NULL != head->ethh)
+	{
+		oldethh = head->ethh;
+		new_mb->ethh = (void *)((uint8_t *)packet_buffer + ((uint64_t)oldethh - (uint64_t)(head->pkt_ptr)));
+	}
 
 	if(head->vlan_idx)
 	{
 		vlanh = head->vlanh;
 		new_mb->vlan_idx = head->vlan_idx;
 		new_mb->vlan_id = head->vlan_id;
-	    new_mb->vlanh = ((uint8_t *)packet_buffer + ((uint64_t)vlanh - (uint64_t)(head->pkt_ptr)));
+	    new_mb->vlanh = (void *)((uint8_t *)packet_buffer + ((uint64_t)vlanh - (uint64_t)(head->pkt_ptr)));
 	}
 
-	networkh = head->network_header;
-	new_mb->network_header = ((uint8_t *)packet_buffer + ((uint64_t)networkh - (uint64_t)(head->pkt_ptr)));
+	if(NULL != head->network_header)
+	{
+		networkh = head->network_header;
+		new_mb->network_header = (void *)((uint8_t *)packet_buffer + ((uint64_t)networkh - (uint64_t)(head->pkt_ptr)));
+	}
 
-	transporth = head->transport_header;
-	new_mb->transport_header = ((uint8_t *)packet_buffer + ((uint64_t)transporth - (uint64_t)(head->pkt_ptr)));
+	if(NULL != head->transport_header)
+	{
+		transporth = head->transport_header;
+		new_mb->transport_header = (void *)((uint8_t *)packet_buffer + ((uint64_t)transporth - (uint64_t)(head->pkt_ptr)));
+	}
 
-	payload = head->payload;
-	new_mb->payload = ((uint8_t *)packet_buffer + ((uint64_t)payload - (uint64_t)(head->pkt_ptr)));
+	if(NULL != head->payload)
+	{
+		payload = head->payload;
+		new_mb->payload = (void *)((uint8_t *)packet_buffer + ((uint64_t)payload - (uint64_t)(head->pkt_ptr)));
+	}
 	
 	memcpy((void *)new_mb->eth_dst, (void *)head->eth_dst, sizeof(new_mb->eth_dst));
 	memcpy((void *)new_mb->eth_src, (void *)head->eth_src, sizeof(new_mb->eth_src));
@@ -226,17 +238,19 @@ mbuf_t *Frag_defrag_reasm(fcb_t *fcb)
 	if(NULL == reasm_mb)
 		goto setup_err;
 
+	memcpy((void *)reasm_mb->pkt_ptr, (void *)head->pkt_ptr, head->pkt_totallen);
+	reasm_mb->pkt_totallen += head->pkt_totallen;
 	next = head->next;
 	while(next)
 	{
-		memcpy((void *)reasm_mb->pkt_ptr, (void *)((uint8_t *)next->pkt_ptr + next->pkt_totallen - next->frag_len), next->frag_len);
+		memcpy((void *)((uint8_t *)reasm_mb->pkt_ptr + reasm_mb->pkt_totallen), (void *)((uint8_t *)next->pkt_ptr + next->pkt_totallen - next->frag_len), next->frag_len);
+		reasm_mb->pkt_totallen += next->frag_len;
 		next = next->next;
 	}
 
 	IPV4_SET_IPLEN(reasm_mb, len);
 	((IPV4Hdr *)(reasm_mb->network_header))->ip_off = 0;
 	IPV4_SET_IPCSUM(reasm_mb, IPV4CalculateChecksum((uint16_t *)((reasm_mb->network_header)), ihlen));
-	reasm_mb->pkt_totallen = len + ((uint64_t)reasm_mb->network_header - (uint64_t)reasm_mb->pkt_ptr);
 
 	fcb->status |= DEFRAG_COMPLETE;
 
@@ -341,6 +355,7 @@ found:
 	if(fcb->last_in == (DEFRAG_FIRST_IN | DEFRAG_LAST_IN) && 
 		fcb->meat == fcb->len)
 	{
+		printf("all in begin to reasm\n");
 		return Frag_defrag_reasm(fcb);
 	}
 	else
@@ -389,7 +404,9 @@ mbuf_t *Defrag(mbuf_t *mb)
 	fcb_t *fcb;
 	
 	hash = ip4_frags_table->hashfn(mb);
-	
+
+	printf("frag hash is %d\n", hash);
+
 	base = (frag_bucket_t *)ip4_frags_table->bucket_base_ptr;
 	fb = &base[hash];
 
@@ -403,10 +420,12 @@ mbuf_t *Defrag(mbuf_t *mb)
 		if(NULL == fcb)
 		{
 			FCB_TABLE_UNLOCK(fb);
+			packet_destroy_all(mb);
 			return NULL;
 		}
 
-		fcb_insert(fb, fcb);		
+		FCB_UPDATE_TIMESTAMP(fcb);
+		fcb_insert(fb, fcb);
 	}
 
 	FCB_TABLE_UNLOCK(fb);
@@ -445,7 +464,7 @@ void Frag_defrag_timeout(Oct_Timer_Threat *o, void *param)
 			{
 				hlist_del(&fcb->list);
 			#ifdef SEC_DEFRAG_DEBUG
-				printf("delete one fcb 0x%p\n", f);
+				printf("delete one fcb %p\n", fcb);
 			#endif
 				del_fcb[local_cpu_id]++;
 				hlist_add_head(&fcb->list, &timeout);
@@ -510,12 +529,8 @@ uint32_t FragModule_init()
 		return SEC_NO;
 	}
 
-	printf("flow age timer create ok\n");
+	printf("frag age timer create ok\n");
 	
-	
-
-	
-
 	return SEC_OK;
 }
 

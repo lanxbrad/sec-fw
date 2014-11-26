@@ -9,8 +9,8 @@
 
 
 #define DEFRAG_FIRST_IN	  (1 << 0)
-#define DEFRAG_LAST_IN	  (1 << 2)
-#define DEFRAG_COMPLETE	  (1 << 3)
+#define DEFRAG_LAST_IN	  (1 << 1)
+#define DEFRAG_COMPLETE	  (1 << 2)
 
 
 

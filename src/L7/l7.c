@@ -7,7 +7,18 @@ void l7_deliver(mbuf_t *m)
 	printf("l7 enter\n");
 #endif
 	//PACKET_DESTROY_ALL(m);
-	oct_tx_process_mbuf(m, m->input_port);
+	//oct_tx_process_mbuf(m, m->input_port);
+	
+	//packet_destroy_all(m);
+
+	if(m->pkt_space == PKTBUF_SW)
+		packet_destroy_all(m);
+	else if(m->pkt_space == PKTBUF_HW)
+		oct_tx_process_mbuf(m, m->input_port);
+	else
+		printf("pkt space error\n");
+	
+
 	return; 
 }
 

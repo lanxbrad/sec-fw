@@ -105,7 +105,7 @@ typedef struct IPV4Hdr_
 
 
 #define IPV4_IS_FRAGMENT(p) \
-	(IPV4_GET_IPOFFSET(p) >= 0 || IPV4_GET_MF(p) == 1)
+	(IPV4_GET_IPOFFSET(p) > 0 || IPV4_GET_MF(p) == 1)
 
 
 

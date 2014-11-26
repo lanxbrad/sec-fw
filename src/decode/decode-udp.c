@@ -49,7 +49,7 @@ static int DecodeUDPPacket(mbuf_t *mbuf, uint8_t *pkt, uint16_t len)
 int DecodeUDP(mbuf_t *mbuf, uint8_t *pkt, uint16_t len)
 {
 #ifdef SEC_UDP_DEBUG
-	printf("=========>enter DecodeTCP\n");
+	printf("=========>enter DecodeUDP\n");
 #endif
 
 	
@@ -58,21 +58,6 @@ int DecodeUDP(mbuf_t *mbuf, uint8_t *pkt, uint16_t len)
 		return DECODE_DROP;
 	}
 
-#if 0
-	if(!PKT_IS_IP_FRAG(mbuf) || PKT_IS_FIRST_FRAG(mbuf))/*own udp header, can be decoded*/
-	{
-		if (unlikely(DECODE_OK != DecodeUDPPacket(mbuf, pkt, len))) 
-		{
-			return DECODE_DROP;
-		}
-	}
-
-	if(PKT_IS_IP_FRAG(mbuf))/*need be defraged */
-	{
-		Defrag(mbuf);	
-	}
-#endif
-	
 	
 	STAT_UDP_RECV_OK;
 

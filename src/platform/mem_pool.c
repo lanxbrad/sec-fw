@@ -21,6 +21,7 @@ void *mem_pool_alloc(int pool_id)
 	if(MEM_POOL_ID_SMALL_BUFFER == pool_id || MEM_POOL_ID_LARGE_BUFFER == pool_id)
 	{
 		index = cvmx_atomic_fetch_and_add32_nosync(&mp->mpc.global_index, 1);
+		index = index & (MEM_POOL_INTERNAL_NUM - 1);
 
 		cvmx_spinlock_lock(&mp->mpc.msc[index].chain_lock);
 		if(list_empty(&mp->mpc.msc[index].head))
@@ -30,10 +31,16 @@ void *mem_pool_alloc(int pool_id)
 		}
 		l = mp->mpc.msc[index].head.next;
 		list_del(l);
+		mp->mpc.msc[index].freenum--;
 		cvmx_spinlock_unlock(&mp->mpc.msc[index].chain_lock);
 		
 		mscb = container_of(l, Mem_Slice_Ctrl_B, list);
-
+		if(mscb->ref != 0)
+		{
+			printf("mscb ref alloc error %d, %p\n", mscb->ref, mscb);
+			return NULL;
+		}
+		mscb->ref = 1;
 		return (void *)((uint8_t *)mscb + sizeof(Mem_Slice_Ctrl_B));
 	}
 	else
@@ -70,10 +77,18 @@ void mem_pool_free(void *buf)
 		printf("buf has been destroyed!\n");
 	}
 
+	if(mscb->ref != 1)
+	{
+		printf("mscb ref free error %d, %p\n", mscb->ref, mscb);
+		return;
+	}
+	mscb->ref = 0;
+
 	mp = mem_pool[pool_id];
 
 	cvmx_spinlock_lock(&mp->mpc.msc[subpool_id].chain_lock);
 	list_add(&mscb->list, &mp->mpc.msc[subpool_id].head);
+	mp->mpc.msc[subpool_id].freenum++;
 	cvmx_spinlock_unlock(&mp->mpc.msc[subpool_id].chain_lock);
 
 	return;
@@ -111,6 +126,7 @@ int mem_pool_sw_slice_inject(int pool_id)
 			list_add(&mscb->list, &mpc->mpc.msc[i].head);
 			start_address += mpc->slicesize;
 		}
+		mpc->mpc.msc[i].freenum = num_perchain;
 	}
 
 	return SEC_OK;

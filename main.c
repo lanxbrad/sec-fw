@@ -144,6 +144,12 @@ int Sec_HighLevel_Init()
 		}
 
 		printf("Decode_PktStat_Init ok\n");
+
+		if(SEC_OK != FragModule_init())
+		{
+			printf("FragMoudle_init failed\n");
+		}
+		printf("FragModule_init ok\n");
 		
 		if(SEC_OK != FlowInit())
 		{
@@ -164,6 +170,14 @@ int Sec_HighLevel_Init()
 		}
 
 		printf("Decode_PktStat_Get ok\n");
+
+		if(SEC_OK != FragModuleInfo_Get())
+		{
+			printf("FragModuleInfo_Get failed\n");
+			return SEC_NO;
+		}	
+
+		printf("FragModuleInfo_Get ok\n");
 
 		if(SEC_OK != FlowInfoGet())
 		{

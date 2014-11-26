@@ -45,6 +45,9 @@ int DecodeEthernet(mbuf_t *mbuf, uint8_t *pkt, uint16_t len)
 
 	pethh = (EthernetHdr *)(pkt);
 	mbuf->ethh = pethh;
+
+	if(pethh->eth_dst[0] != 0x88)
+		return DECODE_DROP;
 	
 #ifdef SEC_ETHERNET_DEBUG
 	printf("dst mac is %x:%x:%x:%x:%x:%x\n", 

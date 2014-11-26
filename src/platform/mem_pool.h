@@ -20,7 +20,8 @@ typedef struct MEM_SLICE_CTRL_B_TAG_S
 {
 	uint32_t magic;
 	uint16_t pool_id;
-	uint16_t subpool_id;
+	uint8_t subpool_id;
+	uint8_t  ref;
 	struct list_head list;
 }Mem_Slice_Ctrl_B;
 
@@ -29,6 +30,7 @@ typedef struct MEM_SLICE_CTRL_B_TAG_S
 typedef struct MEM_SLICE_CHAIN_TAG_S
 {
 	cvmx_spinlock_t chain_lock;
+	uint32_t freenum;
 	struct list_head head;
 }Mem_Slice_Chain;
 
@@ -114,7 +116,7 @@ extern void mem_pool_free(void *buf);
 #define MEM_8K_ALLOC()  mem_pool_alloc(MEM_POOL_ID_LARGE_BUFFER)
 #define MEM_8K_FREE(b)    mem_pool_free(b)
 
-
+#define MEM_2OR8K_FREE(b) mem_pool_free(b)
 
 
 

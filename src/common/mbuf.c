@@ -151,14 +151,23 @@ uint32_t packet_hw2sw(mbuf_t *mbuf)
 		mbuf->vlanh = ((uint8_t *)pkt_buf_sw + ((uint64_t)vlanh - (uint64_t)pkt_buf_hw));
 	}
 
-	networkh = mbuf->network_header;
-	mbuf->network_header = ((uint8_t *)pkt_buf_sw + ((uint64_t)networkh - (uint64_t)pkt_buf_hw));
+	if(NULL != mbuf->network_header)
+	{
+		networkh = mbuf->network_header;
+		mbuf->network_header = ((uint8_t *)pkt_buf_sw + ((uint64_t)networkh - (uint64_t)pkt_buf_hw));
+	}
 
-	transporth = mbuf->transport_header;
-	mbuf->transport_header = ((uint8_t *)pkt_buf_sw + ((uint64_t)transporth - (uint64_t)pkt_buf_hw));
+	if(NULL != mbuf->transport_header)
+	{
+		transporth = mbuf->transport_header;
+		mbuf->transport_header = ((uint8_t *)pkt_buf_sw + ((uint64_t)transporth - (uint64_t)pkt_buf_hw));
+	}
 
-	payload = mbuf->payload;
-	mbuf->payload = ((uint8_t *)pkt_buf_sw + ((uint64_t)payload - (uint64_t)pkt_buf_hw));
+	if(NULL != mbuf->payload)
+	{
+		payload = mbuf->payload;
+		mbuf->payload = ((uint8_t *)pkt_buf_sw + ((uint64_t)payload - (uint64_t)pkt_buf_hw));
+	}
 
 	mbuf->packet_ptr.u64 = 0;
 

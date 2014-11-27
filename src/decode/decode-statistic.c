@@ -32,11 +32,18 @@ int Decode_PktStat_Get()
 {
 	int i;
 	void *start;
-	start = (void *)cvmx_bootmem_find_named_block("pkt-statistic");
-	if( NULL == pktstat )
+
+	const cvmx_bootmem_named_block_desc_t *block_desc = cvmx_bootmem_find_named_block("pkt-statistic"); 
+	if (block_desc)
 	{
+		start = (void *)(block_desc->base_addr);
+	}
+	else
+	{
+		printf("oct_sched_Get error \n");
 		return SEC_NO;
 	}
+	
 	
 	for( i = 0; i < CPU_HW_RUNNING_MAX; i++)
 	{

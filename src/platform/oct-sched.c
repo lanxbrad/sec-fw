@@ -33,8 +33,12 @@ int oct_sched_init(void)
 
 int oct_sched_Get(void)
 {
-	sched_tbl = (oct_sched_t *)cvmx_bootmem_find_named_block(OCT_SCHED_TABLE_NAME); 
-	if(NULL == sched_tbl)
+	const cvmx_bootmem_named_block_desc_t *block_desc = cvmx_bootmem_find_named_block(OCT_SCHED_TABLE_NAME); 
+	if (block_desc)
+	{
+		sched_tbl = (oct_sched_t *)(block_desc->base_addr);
+	}
+	else
 	{
 		printf("oct_sched_Get error \n");
 		return SEC_NO;

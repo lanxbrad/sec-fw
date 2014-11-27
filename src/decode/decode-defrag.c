@@ -165,7 +165,7 @@ mbuf_t *Frag_defrag_setup(mbuf_t *head, fcb_t *fcb)
 	new_mb->network_header = head->network_header;
 	new_mb->transport_header = head->transport_header;
 	new_mb->payload = head->payload;
-	packet_header_ptr_adjust(new_mb, packet_buffer, head->pkt_ptr);
+	packet_header_ptr_adjust(new_mb, head->pkt_ptr, packet_buffer);
 
 	
 	memcpy((void *)new_mb->eth_dst, (void *)head->eth_dst, sizeof(new_mb->eth_dst));

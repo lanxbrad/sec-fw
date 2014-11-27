@@ -340,12 +340,18 @@ int FlowInit(void)
 
 int FlowInfoGet()
 {
-	flow_table = (flow_table_info_t *)cvmx_bootmem_find_named_block(FLOW_HASH_TABLE_NAME);
-	if(NULL == flow_table)
+
+	const cvmx_bootmem_named_block_desc_t *block_desc = cvmx_bootmem_find_named_block(FLOW_HASH_TABLE_NAME); 
+	if (block_desc)
 	{
-		printf("FlowInfoGet fail\n");
+		flow_table = (flow_table_info_t *)(block_desc->base_addr);
+	}
+	else
+	{
+		printf("FlowInfoGet error \n");
 		return SEC_NO;
 	}
+	
 
 	return SEC_OK;
 }

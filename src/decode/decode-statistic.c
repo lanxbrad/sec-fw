@@ -13,7 +13,7 @@ int Decode_PktStat_Init()
 {
 	int i;
 	void *start;
-	start = (void *)cvmx_bootmem_alloc_named(sizeof(pkt_stat) * CPU_HW_RUNNING_MAX, 128, "pkt-statistic");
+	start = (void *)cvmx_bootmem_alloc_named(sizeof(pkt_stat) * CPU_HW_RUNNING_MAX, 128, PKT_STAT_MEM_NAME);
 	if( NULL == start )
 	{
 		return SEC_NO;
@@ -33,14 +33,14 @@ int Decode_PktStat_Get()
 	int i;
 	void *start;
 
-	const cvmx_bootmem_named_block_desc_t *block_desc = cvmx_bootmem_find_named_block("pkt-statistic"); 
+	const cvmx_bootmem_named_block_desc_t *block_desc = cvmx_bootmem_find_named_block(PKT_STAT_MEM_NAME); 
 	if (block_desc)
 	{
 		start = (void *)(block_desc->base_addr);
 	}
 	else
 	{
-		printf("oct_sched_Get error \n");
+		printf("Decode_PktStat_Get error \n");
 		return SEC_NO;
 	}
 	

@@ -502,14 +502,20 @@ uint32_t FragModule_init()
 }
 
 
-int FragModuleInfo_Get()
+uint32_t FragModuleInfo_Get()
 {
-	ip4_frags_table = (frag_table_info_t *)cvmx_bootmem_find_named_block(FRAG_HASH_TABLE_NAME);
-	if(NULL == ip4_frags_table)
+	
+	const cvmx_bootmem_named_block_desc_t *block_desc = cvmx_bootmem_find_named_block(FRAG_HASH_TABLE_NAME); 
+	if (block_desc)
 	{
-		printf("FlowInfoGet fail\n");
+		ip4_frags_table = (frag_table_info_t *)(block_desc->base_addr);
+	}
+	else
+	{
+		printf("FragModuleInfo_Get error \n");
 		return SEC_NO;
 	}
+
 
 	return SEC_OK;
 }

@@ -72,6 +72,9 @@ typedef struct
 }pkt_stat;
 
 
+#define PKT_STAT_MEM_NAME "pkt-statistic"
+
+
 extern pkt_stat *pktstat[];
 
 extern int local_cpu_id;

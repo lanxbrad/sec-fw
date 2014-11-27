@@ -31,7 +31,6 @@ typedef struct
 
 
 
-
 typedef union { 
 	uint64_t        u64;
 	struct { 
@@ -39,11 +38,6 @@ typedef union {
 		uint64_t    ptr   : 36;   /* Pointer of byte for TX-DONE */
 	}s;
 }cvmx_pko_command_word2_t;
-
-
-
-
-
 
 
 
@@ -56,8 +50,14 @@ oct_packet_free(cvmx_wqe_t * wq, int wqepool)
 }
 
 
+extern uint32_t oct_tx_entries;
+
+
 
 extern void oct_tx_process_mbuf(mbuf_t *mbuf, uint8_t port);
+extern int oct_rxtx_init(void);
+extern int oct_rxtx_get(void);
+extern void oct_tx_done_check();
 
 
 #endif

@@ -24,9 +24,6 @@ oct_softx_stat_t *oct_stx[CPU_HW_RUNNING_MAX];
 
 
 
-
-
-
 extern CVMX_SHARED int wqe_pool;
 
 
@@ -91,12 +88,43 @@ oct_rx_process_work(cvmx_wqe_t *wq)
 
 }
 
-/*
+
 void oct_tx_done_check()
 {
+	int port;
+	uint16_t consumer;
+	uint16_t producer;
+	oct_pko_pend_tx_done_t *pend_tx_done;
+	oct_softx_stat_t *oct_stx_local = oct_stx[local_cpu_id];
+	
+	for( port = 0; port < OCT_PHY_PORT_MAX; port++ )
+	{
+		if(oct_stx_local->tx_done[port].tx_entries)
+		{
+			consumer = oct_stx_local->tx_done[port].consumer;
+			producer = oct_stx_local->tx_done[port].producer;
+
+			while(consumer != producer)
+			{
+				pend_tx_done = &(oct_stx_local->tx_done[port].pend_tx_done[consumer]);
+				if( 0xFF == pend_tx_done->mem_ref ) {
+					break;
+				}
+
+				/*Free the packet*/
+				PACKET_DESTROY_ALL(pend_tx_done->mb);
+				
+				consumer = (consumer + 1) & (OCT_PKO_TX_DESC_NUM - 1);
+				oct_stx_local->tx_done[port].tx_entries--;
+				oct_tx_entries--;
+			}
+			oct_stx_local->tx_done[port].consumer = consumer;	
+		}
+	}
+	
 	return;
 }
-*/
+
 
 
 static inline uint8_t *
@@ -107,7 +135,7 @@ oct_pend_tx_done_add(tx_done_t *tdt, void *mb)
 
 	mem_ref = &tdt->pend_tx_done[producer].mem_ref;
 
-	*mem_ref = 0xff;
+	*mem_ref = 0xFF;
 	tdt->pend_tx_done[producer].mb = mb;
 
 	producer = (producer + 1) & (OCT_PKO_TX_DESC_NUM - 1);
@@ -270,3 +298,4 @@ int oct_rxtx_get(void)
 
 	return SEC_OK;
 }
+

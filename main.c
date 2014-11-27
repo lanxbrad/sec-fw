@@ -54,7 +54,9 @@
 #include <oct-common.h>
 #include <mem_pool.h>
 #include <decode-statistic.h>
+#include <decode-defrag.h>
 #include <oct-init.h>
+#include <oct-rxtx.h>
 #include <oct-sched.h>
 #include <flow.h>
 
@@ -98,6 +100,13 @@ int Sec_LowLevel_Init()
 		
 		printf("oct_sched_init ok\n");
 
+		if(SEC_OK != oct_rxtx_init())
+		{
+			return SEC_NO;
+		}
+
+		printf("oct_rxtx_init ok\n");
+
 		wd_watchdog_init();
 
 		printf("wd_watchdog_init ok\n");
@@ -113,14 +122,22 @@ int Sec_LowLevel_Init()
 			printf("mem pool info get failed!\n");
 			return SEC_NO;
 		}
-
 		printf("mem pool info get ok!\n");
 
 		if(SEC_OK != oct_sched_Get())
 		{
+			printf("oct_sched_Get fail\n");
 			return SEC_NO;
 		}
 		printf("oct_sched_Get ok\n");
+
+		if(SEC_OK != oct_rxtx_get())
+		{
+			printf("oct_rxtx_get fail\n");
+			return SEC_NO;
+		}
+		printf("oct_rxtx_get ok\n");
+		
 	}
 
 	register_watchdog();
@@ -202,6 +219,11 @@ void mainloop()
 	int grp;
 	cvmx_wqe_t *work;
 	while(1){
+
+		if(unlikely(oct_tx_entries)) {
+			oct_tx_done_check();
+		}
+		
 		work = cvmx_pow_work_request_sync(CVMX_POW_WAIT);
 		if (NULL != work)
 		{

@@ -1,4 +1,4 @@
-
+#include <oct-common.h>
 #include <sec-util.h>
 #include <sec-common.h>
 
@@ -276,29 +276,57 @@ int Mem_Pool_Init(void)
 int Mem_Pool_Get()
 {
 	Mem_Pool_Cfg *mpc;
-	
-	mpc = (Mem_Pool_Cfg *)cvmx_bootmem_find_named_block(MEM_POOL_NAME_HOST_MBUF); 
-	if(NULL == mpc)
-		return SEC_NO;
-	
-	mem_pool[MEM_POOL_ID_HOST_MBUF] = mpc;
+	const cvmx_bootmem_named_block_desc_t *block_desc; 
 
-	mpc = (Mem_Pool_Cfg *)cvmx_bootmem_find_named_block(MEM_POOL_NAME_FLOW_NODE); 
-	if(NULL == mpc)
-		return SEC_NO;
-	
-	mem_pool[MEM_POOL_ID_FLOW_NODE] = mpc;
 
-	mpc = (Mem_Pool_Cfg *)cvmx_bootmem_find_named_block(MEM_POOL_NAME_SMALL_BUFFER); 
-	if(NULL == mpc)
+	block_desc = cvmx_bootmem_find_named_block(MEM_POOL_NAME_HOST_MBUF); 
+	if (block_desc)
+	{
+		mpc = (Mem_Pool_Cfg *)(block_desc->base_addr);
+		mem_pool[MEM_POOL_ID_HOST_MBUF] = mpc;
+	}
+	else
+	{
+		printf("oct_sched_Get error \n");
 		return SEC_NO;
+	}
 	
-	mem_pool[MEM_POOL_ID_SMALL_BUFFER] = mpc;
-
-	mpc = (Mem_Pool_Cfg *)cvmx_bootmem_find_named_block(MEM_POOL_NAME_LARGE_BUFFER); 
-	if(NULL == mpc)
+	block_desc = cvmx_bootmem_find_named_block(MEM_POOL_NAME_FLOW_NODE); 
+	if (block_desc)
+	{
+		mpc = (Mem_Pool_Cfg *)(block_desc->base_addr);
+		mem_pool[MEM_POOL_ID_FLOW_NODE] = mpc;
+	}
+	else
+	{
+		printf("oct_sched_Get error \n");
 		return SEC_NO;
-	mem_pool[MEM_POOL_ID_LARGE_BUFFER] = mpc;
+	}
+
+	
+	block_desc = cvmx_bootmem_find_named_block(MEM_POOL_NAME_SMALL_BUFFER); 
+	if (block_desc)
+	{
+		mpc = (Mem_Pool_Cfg *)(block_desc->base_addr);
+		mem_pool[MEM_POOL_ID_SMALL_BUFFER] = mpc;
+	}
+	else
+	{
+		printf("oct_sched_Get error \n");
+		return SEC_NO;
+	}
+
+	block_desc = cvmx_bootmem_find_named_block(MEM_POOL_NAME_LARGE_BUFFER); 
+	if (block_desc)
+	{
+		mpc = (Mem_Pool_Cfg *)(block_desc->base_addr);
+		mem_pool[MEM_POOL_ID_LARGE_BUFFER] = mpc;
+	}
+	else
+	{
+		printf("oct_sched_Get error \n");
+		return SEC_NO;
+	}
 
 	return SEC_OK;
 }

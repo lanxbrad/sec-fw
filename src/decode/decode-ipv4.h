@@ -14,7 +14,7 @@
 
 #define IPV4_HEADER_LEN           20    /**< Header length */
 
-
+#define IPV4_PKTLEN_MAX    65535
 
 
 typedef struct IPV4Hdr_

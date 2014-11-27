@@ -83,6 +83,5 @@ int DecodeEthernet(mbuf_t *mbuf, uint8_t *pkt, uint16_t len)
 	}
 
 	return DECODE_OK;
-
 }
 

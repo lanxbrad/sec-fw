@@ -37,7 +37,6 @@ typedef struct m_buf_
 	cvmx_buf_ptr_t packet_ptr;   /*copy from wqe packet_ptr*/
 
 	struct m_buf_ *next;         /*for cache chain*/
-	//struct m_buf_ *prev;
 	
 	void *pkt_ptr;                /*pointer to begin of packet from wqe packet_ptr*/
 	
@@ -61,15 +60,12 @@ typedef struct m_buf_
 	uint16_t payload_len;        /*L7 payload_len */
 
 	uint16_t vlan_id;            /*if vlan_idx support, vlan_id*/
-	uint16_t defrag_id;
-
-	//uint16_t len;               /*move with decode process*/
-	//void *   pkt;                  
+	uint16_t defrag_id;  
   
 	void *payload;            /*L7 payload pointer*/
 
 	int frag_offset;             /*offset of ip fragment packet*/
-	int frag_len;         /*len of ip fragment packet*/
+	int frag_len;              /*len of ip fragment packet*/
 
 	uint32_t flags;              /*features of packet*/
 
@@ -86,8 +82,7 @@ typedef struct m_buf_
 #define PKTBUF_SW    2
 
 
-#define MBUF_ALLOC()  mbuf_alloc()
-#define MBUF_FREE(m)   mbuf_free(m)
+
 
 
 static inline void mbuf_size_judge(void)
@@ -97,6 +92,45 @@ static inline void mbuf_size_judge(void)
 	return;
 }
 
+static inline void packet_header_ptr_adjust(mbuf_t *mb, void *old_pkt, void *new_pkt)
+{
+	void *oldethh;
+	void *vlanh;
+	void *networkh;
+	void *transporth;
+	void *payload;
+
+	if(NULL != mb->ethh)
+	{
+		oldethh = mb->ethh;
+		mb->ethh = (void *)((uint8_t *)new_pkt + ((uint64_t)oldethh - (uint64_t)old_pkt));
+	}
+
+	if(mb->vlan_idx)
+	{
+		vlanh = mb->vlanh;
+		mb->vlanh = (void *)((uint8_t *)new_pkt + ((uint64_t)vlanh - (uint64_t)old_pkt));
+	}
+
+	if(NULL != mb->network_header)
+	{
+		networkh = mb->network_header;
+		mb->network_header = (void *)((uint8_t *)new_pkt + ((uint64_t)networkh - (uint64_t)old_pkt));
+	}
+
+	if(NULL != mb->transport_header)
+	{
+		transporth = mb->transport_header;
+		mb->transport_header = (void *)((uint8_t *)new_pkt + ((uint64_t)transporth - (uint64_t)old_pkt));
+	}
+
+	if(NULL != mb->payload)
+	{
+		payload = mb->payload;
+		mb->payload = (void *)((uint8_t *)new_pkt + ((uint64_t)payload - (uint64_t)old_pkt));
+	}
+
+}
 
 
 extern mbuf_t *mbuf_alloc();
@@ -106,8 +140,15 @@ extern void packet_destroy_data(mbuf_t *mbuf);
 extern uint32_t packet_hw2sw(mbuf_t *mbuf);
 
 
+#define MBUF_ALLOC()  mbuf_alloc()
+#define MBUF_FREE(m)   mbuf_free(m)
+
+
 #define PACKET_DESTROY_ALL(m)   packet_destroy_all(m)
 #define PACKET_DESTROY_DATA(m)  packet_destroy_data(m)
+
+#define PACKET_HW2SW(m) packet_hw2sw(m)
+
 
 
 #endif

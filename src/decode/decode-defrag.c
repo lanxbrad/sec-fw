@@ -51,7 +51,7 @@ static inline void fcb_free(fcb_t *fcb)
 
 
 
-fcb_t *fcb_create(mbuf_t *mb)
+static inline fcb_t *fcb_create(mbuf_t *mb)
 {
 	fcb_t *fcb = fcb_alloc();
 	if(NULL == fcb)
@@ -65,16 +65,14 @@ fcb_t *fcb_create(mbuf_t *mb)
 	fcb->dip = mb->ipv4.dip;
 	fcb->id  = mb->defrag_id;
 
-	
-	
 	return fcb;
 }
-
 
 static inline void fcb_insert(frag_bucket_t *fb, fcb_t *fcb)
 {
 	hlist_add_head(&fcb->list, &fb->hash);
 }
+
 
 
 uint32_t ip4_frag_hashfn(mbuf_t *mb)
@@ -106,7 +104,7 @@ fcb_t *FragFind(frag_bucket_t *fbucket, mbuf_t *mbuf, uint32_t hash)
 	{
 		if(ip4_frags_table->match(fcb, mbuf))
 		{
-		#ifdef SEC_FRAG_DEBUG
+		#ifdef SEC_DEFRAG_DEBUG
 			printf("frag match is ok\n");
 		#endif
 			FCB_UPDATE_TIMESTAMP(fcb);
@@ -120,10 +118,6 @@ fcb_t *FragFind(frag_bucket_t *fbucket, mbuf_t *mbuf, uint32_t hash)
 
 }
 
-uint32_t Frag_continuity_check(fcb_t *fcb)
-{
-	return SEC_OK;
-}
 
 void Frag_defrag_freefrags(fcb_t *fcb)
 {
@@ -144,60 +138,35 @@ mbuf_t *Frag_defrag_setup(mbuf_t *head, fcb_t *fcb)
 {
 	mbuf_t *new_mb;
 	void *packet_buffer;
-	void *oldethh;
-	void *vlanh;
-	void *networkh;
-	void *transporth;
-	void *payload;
 	
 	new_mb = MBUF_ALLOC();
 	if(NULL == new_mb)
 	{
 		return NULL;
 	}
-	memset((void *)new_mb, 0, sizeof(mbuf_t));
 
-	packet_buffer = MEM_8K_ALLOC();
+	packet_buffer = MEM_8K_ALLOC(fcb->total_fraglen + 
+			((uint64_t)(head->network_header) - (uint64_t)(head->pkt_ptr) + IPV4_GET_HLEN(head)));
 	if(NULL == packet_buffer)
 	{
 		MBUF_FREE(new_mb);
 		return NULL;
 	}
 
+	memset((void *)new_mb, 0, sizeof(mbuf_t));
+
 	new_mb->pkt_space = PKTBUF_SW;
 	new_mb->pkt_ptr = packet_buffer;
 
-	if(NULL != head->ethh)
-	{
-		oldethh = head->ethh;
-		new_mb->ethh = (void *)((uint8_t *)packet_buffer + ((uint64_t)oldethh - (uint64_t)(head->pkt_ptr)));
-	}
 
-	if(head->vlan_idx)
-	{
-		vlanh = head->vlanh;
-		new_mb->vlan_idx = head->vlan_idx;
-		new_mb->vlan_id = head->vlan_id;
-	    new_mb->vlanh = (void *)((uint8_t *)packet_buffer + ((uint64_t)vlanh - (uint64_t)(head->pkt_ptr)));
-	}
+	new_mb->ethh = head->ethh;
+	new_mb->vlan_idx = head->vlan_idx;
+	new_mb->vlan_id = head->vlan_id;
+	new_mb->network_header = head->network_header;
+	new_mb->transport_header = head->transport_header;
+	new_mb->payload = head->payload;
+	packet_header_ptr_adjust(new_mb, packet_buffer, head->pkt_ptr);
 
-	if(NULL != head->network_header)
-	{
-		networkh = head->network_header;
-		new_mb->network_header = (void *)((uint8_t *)packet_buffer + ((uint64_t)networkh - (uint64_t)(head->pkt_ptr)));
-	}
-
-	if(NULL != head->transport_header)
-	{
-		transporth = head->transport_header;
-		new_mb->transport_header = (void *)((uint8_t *)packet_buffer + ((uint64_t)transporth - (uint64_t)(head->pkt_ptr)));
-	}
-
-	if(NULL != head->payload)
-	{
-		payload = head->payload;
-		new_mb->payload = (void *)((uint8_t *)packet_buffer + ((uint64_t)payload - (uint64_t)(head->pkt_ptr)));
-	}
 	
 	memcpy((void *)new_mb->eth_dst, (void *)head->eth_dst, sizeof(new_mb->eth_dst));
 	memcpy((void *)new_mb->eth_src, (void *)head->eth_src, sizeof(new_mb->eth_src));
@@ -220,18 +189,12 @@ mbuf_t *Frag_defrag_reasm(fcb_t *fcb)
 	mbuf_t *reasm_mb;
 	mbuf_t *next;
 	mbuf_t *head = fcb->fragments;
-	
-	
-	if(SEC_OK != Frag_continuity_check(fcb))
-	{
-		return NULL;
-	}
 
 	/* Allocate a new buffer for the datagram. */
 	ihlen = IPV4_GET_HLEN(head);
-	len = ihlen + fcb->len;
+	len = ihlen + fcb->total_fraglen;
 
-	if(len > 65535)
+	if(len > IPV4_PKTLEN_MAX)
 		goto out_oversize;
 
 	reasm_mb = Frag_defrag_setup(head, fcb);
@@ -248,12 +211,12 @@ mbuf_t *Frag_defrag_reasm(fcb_t *fcb)
 		next = next->next;
 	}
 
+
 	IPV4_SET_IPLEN(reasm_mb, len);
 	((IPV4Hdr *)(reasm_mb->network_header))->ip_off = 0;
 	IPV4_SET_IPCSUM(reasm_mb, IPV4CalculateChecksum((uint16_t *)((reasm_mb->network_header)), ihlen));
 
 	fcb->status |= DEFRAG_COMPLETE;
-
 
 	Frag_defrag_freefrags(fcb);
 	
@@ -287,18 +250,18 @@ mbuf_t *Frag_defrag_process(mbuf_t * mbuf,fcb_t * fcb)
 	/* Is this the final fragment? */
 	if(0 == IPV4_GET_MF(mbuf))/*final*/
 	{
-		if( end < fcb->len || (fcb->last_in & DEFRAG_LAST_IN) )/*but last already in, so error*/
+		if( end < fcb->total_fraglen || (fcb->last_in & DEFRAG_LAST_IN) )/*but last already in, so error*/
 			goto err;
 		fcb->last_in |= DEFRAG_LAST_IN;
-		fcb->len = end;
+		fcb->total_fraglen = end;
 	}
 	else/*not final*/
 	{
-		if(end > fcb->len)/*last must be not in*/
+		if(end > fcb->total_fraglen)/*last must be not in*/
 		{
 			if(fcb->last_in & DEFRAG_LAST_IN)/*but last already in, so error*/
 				goto err;
-			fcb->len = end;
+			fcb->total_fraglen = end;
 		}
 	}
 
@@ -353,9 +316,11 @@ found:
 		fcb->last_in |= DEFRAG_FIRST_IN;
 
 	if(fcb->last_in == (DEFRAG_FIRST_IN | DEFRAG_LAST_IN) && 
-		fcb->meat == fcb->len)
+		fcb->meat == fcb->total_fraglen)
 	{
+	#ifdef SEC_DEFRAG_DEBUG
 		printf("all in begin to reasm\n");
+	#endif
 		return Frag_defrag_reasm(fcb);
 	}
 	else
@@ -364,7 +329,7 @@ found:
 	}
 
 err:
-	packet_destroy_all(mbuf);
+	PACKET_DESTROY_ALL(mbuf);
 	return NULL;
 }
 
@@ -378,9 +343,9 @@ err:
 mbuf_t *Frag_defrag_begin(mbuf_t *mbuf, fcb_t *fcb)
 {
 	mbuf_t *mb;
-	if(SEC_OK != packet_hw2sw(mbuf))
+	if(SEC_OK != PACKET_HW2SW(mbuf))
 	{
-		packet_destroy_all(mbuf);
+		PACKET_DESTROY_ALL(mbuf);
 		return NULL;
 	}
 	
@@ -405,7 +370,9 @@ mbuf_t *Defrag(mbuf_t *mb)
 	
 	hash = ip4_frags_table->hashfn(mb);
 
+#ifdef SEC_DEFRAG_DEBUG
 	printf("frag hash is %d\n", hash);
+#endif
 
 	base = (frag_bucket_t *)ip4_frags_table->bucket_base_ptr;
 	fb = &base[hash];
@@ -420,7 +387,7 @@ mbuf_t *Defrag(mbuf_t *mb)
 		if(NULL == fcb)
 		{
 			FCB_TABLE_UNLOCK(fb);
-			packet_destroy_all(mb);
+			PACKET_DESTROY_ALL(mb);
 			return NULL;
 		}
 

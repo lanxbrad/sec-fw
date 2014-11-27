@@ -110,23 +110,23 @@ void packet_destory_rawdata(cvmx_buf_ptr_t buffer_ptr)
 }
 
 
+
+
+
+
 uint32_t packet_hw2sw(mbuf_t *mbuf)
 {
 	void *pkt_buf_sw;
 	void *pkt_buf_hw;
 	cvmx_buf_ptr_t cvmx_buffer_ptr;
-	void *oldethh;
-	void *vlanh;
-	void *networkh;
-	void *transporth;
-	void *payload;
+
 
 	if(PKTBUF_SW == mbuf->pkt_space)
 	{
 		return SEC_OK;
 	}
 	
-	pkt_buf_sw = MEM_2K_ALLOC();
+	pkt_buf_sw = MEM_2K_ALLOC(mbuf->pkt_totallen);
 	if(NULL == pkt_buf_sw)
 	{
 		return SEC_NO;
@@ -142,32 +142,7 @@ uint32_t packet_hw2sw(mbuf_t *mbuf)
 	
 	mbuf->pkt_ptr = pkt_buf_sw;
 
-	oldethh = mbuf->ethh;
-	mbuf->ethh = ((uint8_t *)pkt_buf_sw + ((uint64_t)oldethh - (uint64_t)pkt_buf_hw));
-
-	if(mbuf->vlan_idx)
-	{
-		vlanh = mbuf->vlanh;
-		mbuf->vlanh = ((uint8_t *)pkt_buf_sw + ((uint64_t)vlanh - (uint64_t)pkt_buf_hw));
-	}
-
-	if(NULL != mbuf->network_header)
-	{
-		networkh = mbuf->network_header;
-		mbuf->network_header = ((uint8_t *)pkt_buf_sw + ((uint64_t)networkh - (uint64_t)pkt_buf_hw));
-	}
-
-	if(NULL != mbuf->transport_header)
-	{
-		transporth = mbuf->transport_header;
-		mbuf->transport_header = ((uint8_t *)pkt_buf_sw + ((uint64_t)transporth - (uint64_t)pkt_buf_hw));
-	}
-
-	if(NULL != mbuf->payload)
-	{
-		payload = mbuf->payload;
-		mbuf->payload = ((uint8_t *)pkt_buf_sw + ((uint64_t)payload - (uint64_t)pkt_buf_hw));
-	}
+	packet_header_ptr_adjust(mbuf, pkt_buf_hw, pkt_buf_sw);
 
 	mbuf->packet_ptr.u64 = 0;
 

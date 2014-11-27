@@ -11,15 +11,22 @@ Mem_Pool_Cfg *mem_pool[MEM_POOL_ID_MAX];
 
 
 
-void *mem_pool_alloc(int pool_id)
+void *mem_pool_alloc(int pool_id, uint32_t alloc_size)
 {
 	int index;
-	Mem_Pool_Cfg *mp = mem_pool[pool_id];
+	Mem_Pool_Cfg *mp; 
 	struct list_head *l;
 	Mem_Slice_Ctrl_B *mscb;
 
 	if(MEM_POOL_ID_SMALL_BUFFER == pool_id || MEM_POOL_ID_LARGE_BUFFER == pool_id)
 	{
+		mp = mem_pool[pool_id];
+		
+		if(alloc_size > mp->datasize)
+		{
+			return NULL;
+		}
+			
 		index = cvmx_atomic_fetch_and_add32_nosync(&mp->mpc.global_index, 1);
 		index = index & (MEM_POOL_INTERNAL_NUM - 1);
 
@@ -228,6 +235,7 @@ int Mem_Pool_Init(void)
 	
 	mpc->slicesize = MEM_POOL_SMALL_BUFFER_SIZE;
 	mpc->slicenum = MEM_POOL_SMALL_BUFFER_NUM;
+	mpc->datasize = MEM_POOL_SMALL_BUFFER_SIZE - MEM_POOL_SLICE_CTRL_SIZE;
 	mpc->start = (uint8_t *)mpc + sizeof(Mem_Pool_Cfg);
 	mpc->totalsize = MEM_POOL_SMALL_BUFFER_NUM * MEM_POOL_SMALL_BUFFER_SIZE;
 	mem_pool[MEM_POOL_ID_SMALL_BUFFER] = mpc;
@@ -247,6 +255,7 @@ int Mem_Pool_Init(void)
 	
 	mpc->slicesize = MEM_POOL_LARGE_BUFFER_SIZE;
 	mpc->slicenum = MEM_POOL_LARGE_BUFFER_NUM;
+	mpc->datasize = MEM_POOL_LARGE_BUFFER_SIZE - MEM_POOL_SLICE_CTRL_SIZE;
 	mpc->start = (uint8_t *)mpc + sizeof(Mem_Pool_Cfg);
 	mpc->totalsize = MEM_POOL_LARGE_BUFFER_NUM * MEM_POOL_LARGE_BUFFER_SIZE;
 	mem_pool[MEM_POOL_ID_LARGE_BUFFER] = mpc;

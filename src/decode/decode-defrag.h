@@ -40,7 +40,7 @@ typedef struct {
 	
 	uint16_t          status;
 	
-	int                  len;    /* total length of orig datagram */
+	int            total_fraglen;    /* total length of orig datagram */
 	int     	        meat;
 	uint8_t          last_in;    /* first/last segment arrived? */
 }fcb_t;
@@ -105,6 +105,8 @@ static inline void fcb_size_judge(void)
 
 	return;
 }
+
+
 
 
 

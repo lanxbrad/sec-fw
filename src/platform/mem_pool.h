@@ -48,12 +48,13 @@ typedef struct MEM_POOL_CFG_TAG_S
 	uint32_t totalsize;
 	uint32_t slicesize;
 	uint32_t slicenum;
+	uint32_t datasize;
 	Mem_Pool_Ctrl mpc;
 }CACHE_ALIGNED Mem_Pool_Cfg;
 
 
-
-#define MEM_POOL_CFG_SIZE  sizeof(Mem_Pool_Cfg)
+#define MEM_POOL_SLICE_CTRL_SIZE       sizeof(Mem_Slice_Ctrl_B)
+#define MEM_POOL_CFG_SIZE              sizeof(Mem_Pool_Cfg)
 
 
 #define MEM_POOL_HOST_MBUF_SIZE       256
@@ -105,15 +106,15 @@ static inline void mem_pool_fpa_slice_free(void *buf, int pool_id)
 
 
 
-extern void *mem_pool_alloc(int pool_id);
+extern void *mem_pool_alloc(int pool_id, uint32_t size);
 extern void mem_pool_free(void *buf);
 
 
 
-#define MEM_2K_ALLOC()   mem_pool_alloc(MEM_POOL_ID_SMALL_BUFFER)
+#define MEM_2K_ALLOC(size)   mem_pool_alloc(MEM_POOL_ID_SMALL_BUFFER, size)
 #define MEM_2K_FREE(b)   mem_pool_free(b)
 
-#define MEM_8K_ALLOC()  mem_pool_alloc(MEM_POOL_ID_LARGE_BUFFER)
+#define MEM_8K_ALLOC(size)  mem_pool_alloc(MEM_POOL_ID_LARGE_BUFFER, size)
 #define MEM_8K_FREE(b)    mem_pool_free(b)
 
 #define MEM_2OR8K_FREE(b) mem_pool_free(b)

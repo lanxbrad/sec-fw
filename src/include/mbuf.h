@@ -81,8 +81,13 @@ typedef struct m_buf_
 #define PKTBUF_HW    1
 #define PKTBUF_SW    2
 
+#define PKTBUF_IS_HW(m) (PKTBUF_HW == m->pkt_space)
+#define PKTBUF_IS_SW(m) (PKTBUF_SW == m->pkt_space)
 
+#define PKTBUF_SET_HW(m) (m->pkt_space = PKTBUF_HW)
+#define PKTBUF_SET_SW(m) (m->pkt_space = PKTBUF_SW)
 
+#define PKTBUF_SPACE_GET(m) (m->pkt_space)
 
 
 static inline void mbuf_size_judge(void)

@@ -127,7 +127,7 @@ void Frag_defrag_freefrags(fcb_t *fcb)
 	while(head)
 	{
 		next = head->next;
-		packet_destroy_all(head);
+		PACKET_DESTROY_ALL(head);
 		head = next;
 	}
 	fcb->fragments = NULL;
@@ -155,7 +155,7 @@ mbuf_t *Frag_defrag_setup(mbuf_t *head, fcb_t *fcb)
 
 	memset((void *)new_mb, 0, sizeof(mbuf_t));
 
-	new_mb->pkt_space = PKTBUF_SW;
+	PKTBUF_SET_SW(new_mb);
 	new_mb->pkt_ptr = packet_buffer;
 
 

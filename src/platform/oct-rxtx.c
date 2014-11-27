@@ -17,7 +17,19 @@
 #include <oct-port.h>
 
 
+uint32_t oct_tx_entries = 0;
+oct_softx_stat_t *oct_stx[CPU_HW_RUNNING_MAX];
+
+
+
+
+
+
+
+
 extern CVMX_SHARED int wqe_pool;
+
+
 
 
 /*
@@ -60,7 +72,8 @@ oct_rx_process_work(cvmx_wqe_t *wq)
 	memset((void *)m, 0, sizeof(mbuf_t));
 
 	m->magic_flag = MBUF_MAGIC_NUM;
-	m->pkt_space = PKTBUF_HW;
+	PKTBUF_SET_HW(m);
+	
 	m->packet_ptr.u64 = wq->packet_ptr.u64;
 
 	m->input_port = cvmx_wqe_get_port(wq);
@@ -78,11 +91,49 @@ oct_rx_process_work(cvmx_wqe_t *wq)
 
 }
 
+/*
+void oct_tx_done_check()
+{
+	return;
+}
+*/
+
+
+static inline uint8_t *
+oct_pend_tx_done_add(tx_done_t *tdt, void *mb)
+{
+	uint8_t *mem_ref = NULL;
+	uint16_t producer = tdt->producer;
+
+	mem_ref = &tdt->pend_tx_done[producer].mem_ref;
+
+	*mem_ref = 0xff;
+	tdt->pend_tx_done[producer].mb = mb;
+
+	producer = (producer + 1) & (OCT_PKO_TX_DESC_NUM - 1);
+
+	tdt->tx_entries++;
+	oct_tx_entries++;
+	tdt->producer = producer;
+
+	return mem_ref;
+}
+
+
+static inline void
+oct_pend_tx_done_remove(tx_done_t *tdt)
+{
+	tdt->producer = (tdt->producer - 1) & (OCT_PKO_TX_DESC_NUM - 1);
+	tdt->tx_entries--;
+	oct_tx_entries--;
+	return;
+}
 
 
 void oct_tx_process_mbuf(mbuf_t *mbuf, uint8_t port)
 {
 	uint64_t queue;
+	cvmx_pko_return_value_t send_status;
 	
 	if(port > OCT_PHY_PORT_MAX)
 	{
@@ -95,24 +146,122 @@ void oct_tx_process_mbuf(mbuf_t *mbuf, uint8_t port)
 
 	cvmx_pko_send_packet_prepare(port, queue, CVMX_PKO_LOCK_CMD_QUEUE);
 
-	/* Build a PKO pointer to this packet */
-	cvmx_pko_command_word0_t pko_command;
-	pko_command.u64 = 0;
-	pko_command.s.segs = 1;
-	pko_command.s.total_bytes = mbuf->pkt_totallen;
 
-	/* Send the packet */
-	cvmx_pko_return_value_t send_status = cvmx_pko_send_packet_finish(port, queue, pko_command, mbuf->packet_ptr, CVMX_PKO_LOCK_CMD_QUEUE);
-	if (send_status != CVMX_PKO_SUCCESS)
-    {
-        printf("Failed to send packet using cvmx_pko_send_packet2\n");
-        PACKET_DESTROY_DATA(mbuf);
-    }
+	if(PKTBUF_IS_HW(mbuf))
+	{
+		/* Build a PKO pointer to this packet */
+		cvmx_pko_command_word0_t pko_command;
+		pko_command.u64 = 0;
+		pko_command.s.segs = 1;
+		pko_command.s.total_bytes = mbuf->pkt_totallen;
 
-	MBUF_FREE(mbuf);
+		/* Send the packet */
+		send_status = cvmx_pko_send_packet_finish(port, queue, pko_command, mbuf->packet_ptr, CVMX_PKO_LOCK_CMD_QUEUE);
+		if (send_status != CVMX_PKO_SUCCESS)
+	    {
+	        printf("Failed to send packet using cvmx_pko_send_packet2\n");
+	        PACKET_DESTROY_DATA(mbuf);
+	    }
+
+		MBUF_FREE(mbuf);
+	}
+	else if(PKTBUF_IS_SW(mbuf))
+	{
+		uint8_t *dont_free_cookie = NULL;
+		tx_done_t *tx_done = &(oct_stx[local_cpu_id]->tx_done[port]);
+		if(tx_done->tx_entries < (OCT_PKO_TX_DESC_NUM - 1))
+		{
+			dont_free_cookie = oct_pend_tx_done_add(tx_done, (void *)mbuf);			
+		}
+		else
+		{
+			PACKET_DESTROY_ALL(mbuf);
+			return;
+		}
+		/*command word0*/
+		cvmx_pko_command_word0_t pko_command;
+		pko_command.u64 = 0;
+		
+		pko_command.s.segs = 1;
+		pko_command.s.total_bytes = mbuf->pkt_totallen;
+
+		pko_command.s.rsp = 1;
+		pko_command.s.dontfree = 1;
+
+		/*command word1*/
+		cvmx_buf_ptr_t packet;
+		packet.u64 = 0;
+		packet.s.size = mbuf->pkt_totallen;
+		packet.s.addr = mbuf->pkt_ptr;
+
+		/*command word2*/
+		cvmx_pko_command_word2_t tx_ptr_word;
+		tx_ptr_word.u64 = 0;
+		tx_ptr_word.s.ptr = (uint64_t)cvmx_ptr_to_phys(dont_free_cookie);
+
+		/* Send the packet */
+		send_status = cvmx_pko_send_packet_finish3(port, queue, pko_command, packet, tx_ptr_word.u64, CVMX_PKO_LOCK_CMD_QUEUE);
+		if(send_status != CVMX_PKO_SUCCESS)
+		{
+			if(dont_free_cookie)
+			{
+				oct_pend_tx_done_remove(tx_done);
+			}
+
+			printf("Failed to send packet using cvmx_pko_send_packet3\n");
+	        PACKET_DESTROY_ALL(mbuf);
+			return;
+		}
+	}
+	else
+	{
+		printf("pkt space %d is wrong, please check it\n", PKTBUF_SPACE_GET(mbuf));
+	}
+	
 }
 
 
 
 
 
+
+int oct_rxtx_init(void)
+{
+	int i;
+	
+	void *ptr = cvmx_bootmem_alloc_named(sizeof(oct_softx_stat_t) * CPU_HW_RUNNING_MAX, 
+										CACHE_LINE_SIZE, 
+										OCT_TX_DESC_NAME);
+	if(NULL == ptr)
+	{
+		return SEC_NO;
+	}
+
+	memset(ptr, 0, sizeof(oct_softx_stat_t) * CPU_HW_RUNNING_MAX);
+
+	for( i = 0; i < CPU_HW_RUNNING_MAX; i++ )
+	{
+		oct_stx[i] = (oct_softx_stat_t *)((uint8_t *)ptr + sizeof(oct_softx_stat_t) * i);
+	}
+
+	return SEC_OK;
+}
+
+
+
+int oct_rxtx_get(void)
+{
+	int i;
+	void *ptr = cvmx_bootmem_find_named_block(OCT_TX_DESC_NAME);
+	if(NULL == ptr)
+	{
+		return SEC_NO;
+	}
+
+	for( i = 0; i < CPU_HW_RUNNING_MAX; i++ )
+	{
+		oct_stx[i] = (oct_softx_stat_t *)((uint8_t *)ptr + sizeof(oct_softx_stat_t) * i);
+	}
+
+	return SEC_OK;
+}

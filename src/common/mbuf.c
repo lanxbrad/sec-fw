@@ -62,14 +62,14 @@ void packet_destroy_all(mbuf_t *mbuf)
 	uint64_t start_of_buffer;
 
 	/*free packet, find start of packet buffer*/
-	if(mbuf->pkt_space == PKTBUF_HW)
+	if(PKTBUF_IS_HW(mbuf))
 	{
 		buffer_ptr = mbuf->packet_ptr;
 		start_of_buffer = ((buffer_ptr.s.addr >> 7) - buffer_ptr.s.back) << 7;
 	
 		cvmx_fpa_free(cvmx_phys_to_ptr(start_of_buffer), buffer_ptr.s.pool, 0);
 	}
-	else if(mbuf->pkt_space == PKTBUF_SW)
+	else if(PKTBUF_IS_SW(mbuf))
 	{
 		MEM_2K_FREE(mbuf->pkt_ptr);
 	}
@@ -90,7 +90,7 @@ void packet_destroy_data(mbuf_t *mbuf)
 	uint64_t start_of_buffer;
 
 	/*free packet, find start of packet buffer*/
-	if(PKTBUF_HW == mbuf->pkt_space)
+	if(PKTBUF_IS_HW(mbuf))
 	{
 		buffer_ptr = mbuf->packet_ptr;
 		start_of_buffer = ((buffer_ptr.s.addr >> 7) - buffer_ptr.s.back) << 7;
@@ -121,7 +121,7 @@ uint32_t packet_hw2sw(mbuf_t *mbuf)
 	cvmx_buf_ptr_t cvmx_buffer_ptr;
 
 
-	if(PKTBUF_SW == mbuf->pkt_space)
+	if(PKTBUF_IS_SW(mbuf))
 	{
 		return SEC_OK;
 	}
@@ -138,7 +138,7 @@ uint32_t packet_hw2sw(mbuf_t *mbuf)
 	cvmx_buffer_ptr.u64 = mbuf->packet_ptr.u64;
 
 	/*need adjuest the mbuf from hw2sw*/
-	mbuf->pkt_space = PKTBUF_SW;
+	PKTBUF_SET_SW(mbuf);
 	
 	mbuf->pkt_ptr = pkt_buf_sw;
 

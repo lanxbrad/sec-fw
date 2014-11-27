@@ -192,7 +192,7 @@ void oct_tx_process_mbuf(mbuf_t *mbuf, uint8_t port)
 		cvmx_buf_ptr_t packet;
 		packet.u64 = 0;
 		packet.s.size = mbuf->pkt_totallen;
-		packet.s.addr = mbuf->pkt_ptr;
+		packet.s.addr = (uint64_t)mbuf->pkt_ptr;
 
 		/*command word2*/
 		cvmx_pko_command_word2_t tx_ptr_word;
@@ -252,8 +252,13 @@ int oct_rxtx_init(void)
 int oct_rxtx_get(void)
 {
 	int i;
-	void *ptr = cvmx_bootmem_find_named_block(OCT_TX_DESC_NAME);
-	if(NULL == ptr)
+	void *ptr;
+	const cvmx_bootmem_named_block_desc_t *block_desc = cvmx_bootmem_find_named_block(OCT_TX_DESC_NAME);
+	if (block_desc)
+	{
+		ptr = cvmx_phys_to_ptr(block_desc->base_addr);
+	}
+	else
 	{
 		return SEC_NO;
 	}

@@ -145,6 +145,8 @@ mbuf_t *Frag_defrag_setup(mbuf_t *head, fcb_t *fcb)
 		return NULL;
 	}
 
+	
+
 	packet_buffer = MEM_8K_ALLOC(fcb->total_fraglen + 
 			((uint64_t)(head->network_header) - (uint64_t)(head->pkt_ptr) + IPV4_GET_HLEN(head)));
 	if(NULL == packet_buffer)
@@ -158,7 +160,7 @@ mbuf_t *Frag_defrag_setup(mbuf_t *head, fcb_t *fcb)
 	PKTBUF_SET_SW(new_mb);
 	new_mb->pkt_ptr = packet_buffer;
 
-
+	
 	new_mb->ethh = head->ethh;
 	new_mb->vlan_idx = head->vlan_idx;
 	new_mb->vlan_id = head->vlan_id;
@@ -167,6 +169,8 @@ mbuf_t *Frag_defrag_setup(mbuf_t *head, fcb_t *fcb)
 	new_mb->payload = head->payload;
 	packet_header_ptr_adjust(new_mb, head->pkt_ptr, packet_buffer);
 
+	new_mb->magic_flag = MBUF_MAGIC_NUM;
+	new_mb->input_port = head->input_port;
 	
 	memcpy((void *)new_mb->eth_dst, (void *)head->eth_dst, sizeof(new_mb->eth_dst));
 	memcpy((void *)new_mb->eth_src, (void *)head->eth_src, sizeof(new_mb->eth_src));
@@ -423,7 +427,8 @@ void Frag_defrag_timeout(Oct_Timer_Threat *o, void *param)
 		INIT_HLIST_HEAD(&timeout);
 		fb = &base[i];
 		
-		FCB_TABLE_LOCK(fb);
+		if(FCB_TABLE_TRYLOCK(fb) != 0)
+			continue;
 
 		hlist_for_each_entry_safe(fcb, t, n, &base[i].hash, list)	
 		{

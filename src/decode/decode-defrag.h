@@ -82,11 +82,13 @@ typedef struct {
 #define FRAG_HASH_TABLE_NAME   "Frag_Hash_Table"
 
 #define FCB_TABLE_INITLOCK(fb) cvmx_spinlock_init(&fb->bkt_lock)
+#define FCB_TABLE_TRYLOCK(fb)  cvmx_spinlock_trylock(&fb->bkt_lock)
 #define FCB_TABLE_LOCK(fb)     cvmx_spinlock_lock(&fb->bkt_lock)
 #define FCB_TABLE_UNLOCK(fb)   cvmx_spinlock_unlock(&fb->bkt_lock)
 
 
 #define FCB_INITLOCK(fcb)      cvmx_spinlock_init(&fcb->lock)
+#define FCB_TRYLOCK(fcb)       cvmx_spinlock_trylock(&fcb->lock)
 #define FCB_LOCK(fcb)          cvmx_spinlock_lock(&fcb->lock)
 #define FCB_UNLOCK(fcb)        cvmx_spinlock_unlock(&fcb->lock)
 

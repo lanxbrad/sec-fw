@@ -13,7 +13,7 @@
 #include <flow.h>
 
 
-static void inline packet_recycle(mbuf_t *mbuf)
+static inline void packet_recycle(mbuf_t *mbuf)
 {
 	FlowDeReference((flow_item_t **)&(mbuf->flow));
 }

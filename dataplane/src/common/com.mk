@@ -17,10 +17,10 @@ LIBCOMMON_OBJ_$(d)  :=  \
 
 INCLUDE_DIR := \
 	-I$(d) \
-	-I$(OCTEON_ROOT)/sec-fw/src/include \
-	-I$(OCTEON_ROOT)/sec-fw/src/decode \
-	-I$(OCTEON_ROOT)/sec-fw/src/platform \
-	-I$(OCTEON_ROOT)/sec-fw/src/flow
+	-I$(OCTEON_ROOT)/sec-fw/dataplane/src/include \
+	-I$(OCTEON_ROOT)/sec-fw/dataplane/src/decode \
+	-I$(OCTEON_ROOT)/sec-fw/dataplane/src/platform \
+	-I$(OCTEON_ROOT)/sec-fw/dataplane/src/flow
 	
 
 

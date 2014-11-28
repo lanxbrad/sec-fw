@@ -61,19 +61,19 @@ include $(OCTEON_ROOT)/common.mk
 
 
 
-dir := $(OCTEON_ROOT)/sec-fw/src/decode
+dir := $(OCTEON_ROOT)/sec-fw/dataplane/src/decode
 include $(dir)/decode.mk
 
-dir := $(OCTEON_ROOT)/sec-fw/src/flow
+dir := $(OCTEON_ROOT)/sec-fw/dataplane/src/flow
 include $(dir)/flow.mk
 
-dir := $(OCTEON_ROOT)/sec-fw/src/L7
+dir := $(OCTEON_ROOT)/sec-fw/dataplane/src/L7
 include $(dir)/l7.mk
 
-dir := $(OCTEON_ROOT)/sec-fw/src/common
+dir := $(OCTEON_ROOT)/sec-fw/dataplane/src/common
 include $(dir)/com.mk
 
-dir := $(OCTEON_ROOT)/sec-fw/src/platform
+dir := $(OCTEON_ROOT)/sec-fw/dataplane/src/platform
 include $(dir)/oct.mk
 
 dir := $(OCTEON_ROOT)/executive
@@ -88,10 +88,10 @@ TARGET := secd$(PREFIX)
 OBJS = $(OBJ_DIR)/main.o
 
 INCLUDE_DIR := \
-	-I$(OCTEON_ROOT)/sec-fw/src/include \
-	-I$(OCTEON_ROOT)/sec-fw/src/decode \
-	-I$(OCTEON_ROOT)/sec-fw/src/platform \
-	-I$(OCTEON_ROOT)/sec-fw/src/flow
+	-I$(OCTEON_ROOT)/sec-fw/dataplane/src/include \
+	-I$(OCTEON_ROOT)/sec-fw/dataplane/src/decode \
+	-I$(OCTEON_ROOT)/sec-fw/dataplane/src/platform \
+	-I$(OCTEON_ROOT)/sec-fw/dataplane/src/flow
 		
 
 CFLAGS_LOCAL = -g -O2 -W -Wall -Wno-unused-parameter $(INCLUDE_DIR) -lpthread

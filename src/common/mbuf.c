@@ -13,6 +13,10 @@
 #include <flow.h>
 
 
+static void inline packet_recycle(mbuf_t *mbuf)
+{
+	FlowDeReference((flow_item_t **)&(mbuf->flow));
+}
 
 
 mbuf_t *mbuf_alloc()
@@ -33,6 +37,9 @@ mbuf_t *mbuf_alloc()
 
 void mbuf_free(mbuf_t *mb)
 {
+
+	packet_recycle(mb);
+
 	Mem_Slice_Ctrl_B *mscb = (Mem_Slice_Ctrl_B *)((uint8_t *)mb - sizeof(Mem_Slice_Ctrl_B));
 	if(MEM_POOL_MAGIC_NUM != mscb->magic)
 	{
@@ -61,8 +68,7 @@ void packet_destroy_all(mbuf_t *mbuf)
 	cvmx_buf_ptr_t buffer_ptr;
 	uint64_t start_of_buffer;
 
-	FlowDeReference((flow_item_t **)&(mbuf->flow));
-
+	
 	/*free packet, find start of packet buffer*/
 	if(PKTBUF_IS_HW(mbuf))
 	{

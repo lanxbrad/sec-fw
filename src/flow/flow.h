@@ -47,6 +47,7 @@ typedef struct flow_item_tag_s
 	struct hlist_node	list;
 	cvmx_spinlock_t     item_lock;
 	uint64_t cycle;
+	int32_t use_cnt;
 
 	ipv4_tuple_t ipv4;
 
@@ -78,7 +79,7 @@ typedef struct flow_item_tag_s
 
 
 
-static void flow_item_size_judge(void)
+static inline void flow_item_size_judge(void)
 {
 	BUILD_BUG_ON((sizeof(flow_item_t) + sizeof(Mem_Slice_Ctrl_B)) > 256);
 
@@ -86,9 +87,63 @@ static void flow_item_size_judge(void)
 }
 
 
-#define FLOW_TABLE_LOCK(f)     cvmx_spinlock_lock(&f->lock)
-#define FLOW_TABLE_UNLOCK(f)   cvmx_spinlock_unlock(&f->lock)
+#define FLOW_TABLE_LOCK(b)     cvmx_spinlock_lock(&b->lock)
 
+/*  trylock: 
+  *  return 0 lock
+  *  return 1 unlock
+  */
+#define FLOW_TABLE_TRYLOCK(b)  cvmx_spinlock_trylock(&b->lock)
+#define FLOW_TABLE_UNLOCK(b)   cvmx_spinlock_unlock(&b->lock)
+
+#define FLOW_ITEM_LOCK(f)      cvmx_spinlock_lock(&f->item_lock)
+#define FLOW_ITEM_TRYLOCK(f)   cvmx_spinlock_trylock(&f->item_lock)
+#define FLOW_ITEM_UNLOCK(f)    cvmx_spinlock_unlock(&f->item_lock)
+
+
+/**
+ *  \brief increase the use count of a flow
+ *
+ *  \param f flow to decrease use count for
+ */
+static inline void FlowIncrUsecnt(flow_item_t *f)
+{
+    if (f == NULL)
+        return;
+
+    (void) cvmx_atomic_add32(&f->use_cnt, 1);
+}
+
+/**
+ *  \brief decrease the use count of a flow
+ *
+ *  \param f flow to decrease use count for
+ */
+static inline void FlowDecrUsecnt(flow_item_t *f)
+{
+    if (f == NULL)
+        return;
+
+    (void) cvmx_atomic_add32(&f->use_cnt, -1);
+}
+
+
+static inline void FlowReference(flow_item_t **d, flow_item_t *f) {
+    if (likely(f != NULL)) {
+        if (*d == f)
+            return;
+		
+        FlowIncrUsecnt(f);
+        *d = f;
+    }
+}
+
+static inline void FlowDeReference(flow_item_t **d) {
+    if (likely(*d != NULL)) {
+        FlowDecrUsecnt(*d);
+        *d = NULL;
+    }
+}
 
 
 extern int FlowInit(void);

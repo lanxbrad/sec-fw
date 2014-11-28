@@ -143,34 +143,36 @@ flow_item_t *FlowAdd(flow_bucket_t *fb, unsigned int hash, mbuf_t *mbuf)
 	newf->protocol = mbuf->proto;
 	FLOW_UPDATE_TIMESTAMP(newf);
 	
+	FLOW_ITEM_LOCK(newf);     /*lock it*/
+	
 	/*now scan and add, if exist, free new and return old*/
 	FLOW_TABLE_LOCK(fb);
+	
 	flow = FlowFind(fb, mbuf, hash);
-	if(NULL == flow)/*not exist, add new*/
+
+	if(NULL == flow)         /*not exist, add new*/
 	{
 		FlowInsert(fb, newf);
 		FLOW_TABLE_UNLOCK(fb);
 		new_flow[local_cpu_id]++;
 		return newf;
 	}
-	else/*exist, free new and return old*/
+	else                     /*exist, free new and return old*/
 	{
+		FLOW_ITEM_LOCK(flow);      /*lock it*/
 		FLOW_TABLE_UNLOCK(fb);
+		
 		flow_item_free(newf);
 		
 		return flow;
 	}
-
 }
 
 
 /*update flow node info*/
 static inline void FlowUpdate(flow_item_t *f, mbuf_t *m)
 {
-	cvmx_spinlock_lock(&f->item_lock);
-	
-	
-	cvmx_spinlock_unlock(&f->item_lock);
+	return;
 }
 
 
@@ -190,16 +192,18 @@ flow_item_t *FlowGetFlowFromHash(mbuf_t *mbuf)
 	printf("hash value is %d\n", hash);
 #endif
 
-	cvmx_spinlock_lock(&fb->lock);
+	FLOW_TABLE_LOCK(fb);
 	flow = FlowFind(fb, mbuf, hash);
-	cvmx_spinlock_unlock(&fb->lock);
 
 	if(NULL != flow)/*find , lock it and return*/
 	{
+		FLOW_ITEM_LOCK(flow);   
+		FLOW_TABLE_UNLOCK(fb);
 		return flow;
 	}
-	else/*not find, create a new node and add it*/
+	else            /*not find, create a new node and insert it*/
 	{
+		FLOW_TABLE_UNLOCK(fb);
 		return FlowAdd(fb, hash, mbuf);
 	}
 }
@@ -215,7 +219,7 @@ void FlowHandlePacket(mbuf_t *m)
 
 	flow_item_t *f;
 
-	f = FlowGetFlowFromHash(m);
+	f = FlowGetFlowFromHash(m);  /*return a locked flow item*/
 	if(NULL == f)
 	{
 		/*flow failed, destroy packet*/
@@ -223,11 +227,13 @@ void FlowHandlePacket(mbuf_t *m)
 		return;
 	}
 
+	/* Point the Packet at the Flow */
+    FlowReference((flow_item_t **)&m->flow, f);
+
 	/*TODO:  update info in the flow*/
 	FlowUpdate(f, m);
 
-	/* set the flow in the packet */
-	m->flow = (void *)f;
+	FLOW_ITEM_UNLOCK(f); /*unlock flow node*/
 	
 	m->flags |= PKT_HAS_FLOW;
 
@@ -237,6 +243,20 @@ void FlowHandlePacket(mbuf_t *m)
 }
 
 
+uint32_t FlowTimeOut(flow_item_t *f, uint64_t current_cycle)
+{
+	if(cvmx_atomic_get32(&f->use_cnt) > 0)
+	{
+		return 0;
+	}
+
+	if((current_cycle > f->cycle) && ((current_cycle - f->cycle) > FLOW_MAX_TIMEOUT))
+	{
+		return 1;
+	}
+
+	return 0;
+}
 
 
 void FlowAgeTimeoutCB(Oct_Timer_Threat *o, void *param)
@@ -245,6 +265,7 @@ void FlowAgeTimeoutCB(Oct_Timer_Threat *o, void *param)
 	uint64_t current_cycle;
 
 	flow_bucket_t *base;
+	flow_bucket_t *fb;
 	flow_item_t *f;
 	flow_item_t *tf;
 	struct hlist_node *n;
@@ -259,22 +280,33 @@ void FlowAgeTimeoutCB(Oct_Timer_Threat *o, void *param)
 	{
 		INIT_HLIST_HEAD(&timeout);
 		
-		cvmx_spinlock_lock(&base[i].lock);
-
-		hlist_for_each_entry_safe(f, t, n, &base[i].hash, list)	
+		fb = &base[i];
+		if(FLOW_TABLE_TRYLOCK(fb) != 0)
+			continue;
+		
+		hlist_for_each_entry_safe(f, t, n, &fb->hash, list)	
 		{
-			if((current_cycle > f->cycle) && ((current_cycle - f->cycle) > FLOW_MAX_TIMEOUT))
+			if(FLOW_ITEM_TRYLOCK(f) != 0)
+				continue;
+			
+			if(FlowTimeOut(f, current_cycle))
 			{
 				hlist_del(&f->list);
 			#ifdef SEC_FLOW_DEBUG
 				printf("delete one flow node 0x%p\n", f);
 			#endif
+
+				FLOW_ITEM_UNLOCK(f);  /* no one is referring to this flow, use_cnt 0, removed from hash*/
 				del_flow[local_cpu_id]++;
 				hlist_add_head(&f->list, &timeout);
 			}
+			else
+			{
+				FLOW_ITEM_UNLOCK(f);
+			}
 		}
 		
-		cvmx_spinlock_unlock(&base[i].lock);
+		FLOW_TABLE_UNLOCK(fb);
 
 		hlist_for_each_entry_safe(tf, t, n, &timeout, list)	
 		{	

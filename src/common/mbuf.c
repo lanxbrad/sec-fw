@@ -10,7 +10,7 @@
  *
  ********************************************************************************/
 #include <mbuf.h>
-
+#include <flow.h>
 
 
 
@@ -61,6 +61,8 @@ void packet_destroy_all(mbuf_t *mbuf)
 	cvmx_buf_ptr_t buffer_ptr;
 	uint64_t start_of_buffer;
 
+	FlowDeReference((flow_item_t **)&(mbuf->flow));
+
 	/*free packet, find start of packet buffer*/
 	if(PKTBUF_IS_HW(mbuf))
 	{
@@ -71,7 +73,7 @@ void packet_destroy_all(mbuf_t *mbuf)
 	}
 	else if(PKTBUF_IS_SW(mbuf))
 	{
-		MEM_2K_FREE(mbuf->pkt_ptr);
+		MEM_2OR8K_FREE(mbuf->pkt_ptr);
 	}
 	else
 	{

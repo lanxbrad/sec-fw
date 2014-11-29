@@ -9,16 +9,12 @@ srv:FORCE
 	$(Q) $(CC) -o $(PROJ_DIR)/bin/$@ $(PROG_SRV_LDFLAGS) 
 
 
-PROG_CLIENT_LDFLAGS += -L$(PROJ_DIR)/third
+PROG_CLIENT_LDFLAGS += 
 
-client_start:FORCE
+cli:FORCE
 	@echo [LD] $@
 	$(Q) $(CC) -o $(PROJ_DIR)/bin/$@ $(PROG_CLIENT_LDFLAGS)
 
-client_end:FORCE
-	@echo [LD] $@
-	$(Q) $(CC) -o $(PROJ_DIR)/bin/$@ $(PROG_CLIENT_LDFLAGS)
-	
 
 
-.PHONY:srv FORCE
+.PHONY:srv cli FORCE

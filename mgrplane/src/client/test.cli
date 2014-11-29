@@ -52,3 +52,6 @@ enable privileged-mode
 
 // Leave the database
 quit
+
+// Show test info
+show test info

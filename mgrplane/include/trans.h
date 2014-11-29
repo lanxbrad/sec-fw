@@ -3,9 +3,6 @@
 
 
 #include "common.h"
-
-#include "srv.h"
-
 #include "message.h"
 
 

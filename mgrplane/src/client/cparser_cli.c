@@ -42,12 +42,20 @@
 #include "cparser_token.h"
 #include "cparser_tree.h"
 
+
+#include "message.h"
+#include "cli_trans.h"
+
 /** Zeroize a data structure */
-#define BZERO_OUTPUT memset(output, 0, sizeof(output)); output_ptr = output
+#define BZERO_OUTPUT  memset(output, 0, sizeof(output)); output_ptr = output
 
 extern char output[2000], *output_ptr;
 
 int num_passed = 0, num_failed =0;
+
+int debug = 0;
+
+extern int interactive;
 
 /**
  * Feed a string into the parser (skipping line buffering) 
@@ -118,7 +126,7 @@ void parser_config(cparser_t *parser)
     parser->cfg.ch_del = 127;
     parser->cfg.ch_help = '?';
     parser->cfg.flags = (debug ? CPARSER_FLAGS_DEBUG : 0);
-    strcpy(parser->cfg.prompt, "CLI>> ");
+    strcpy(parser->cfg.prompt, "CLI>");
     parser->cfg.fd = STDOUT_FILENO;
     cparser_io_config(parser);
 }
@@ -140,7 +148,7 @@ main (int argc, char *argv[])
 {
     cparser_t parser;
     char *config_file = NULL;
-    int ch, debug = 0;
+    int ch;
 
     memset(&parser, 0, sizeof(parser));
 
@@ -150,7 +158,7 @@ main (int argc, char *argv[])
                 printf("pid = %d\n", getpid());
                 break;
             case 'i':
-                interactive = 1;
+				
                 break;
             case 'c':
                 config_file = optarg;
@@ -161,6 +169,12 @@ main (int argc, char *argv[])
         }
     }
 
+
+	init_msg_pack_handle();
+	init_msg_header();
+
+	open_cli2server_socket();
+
     parser_config(&parser);
 
     if (CPARSER_OK != cparser_init(&parser.cfg, &parser)) {
@@ -168,7 +182,6 @@ main (int argc, char *argv[])
 		return -1;
     }
 	
-    
     if (config_file) {
         (void)cparser_load_cmd(&parser, config_file);
     }
@@ -185,7 +198,7 @@ oldmain (int argc, char *argv[])
 {
     cparser_t parser;
     char *config_file = NULL;
-    int ch, debug = 0, n;
+    int ch, n;
     cparser_result_t rc;
 
     memset(&parser, 0, sizeof(parser));

@@ -7,10 +7,18 @@ extern "C" {
 
 #include "common.h"
 
+#define SERV_LOCAL 0x7f000001
+#define SERV_CLI_PORT  10001
+
+
+
 #define RCP_MAX_DATA_BLOCK_PER_MESSAGE 255
 #define MAX_INFO_BUF_SIZE 1000
 #define BUFSIZE  2048
 #define MAX_BUF	1530
+
+
+#define MSG_VALID_FLAG 0x88
 
 
 typedef enum
@@ -29,7 +37,6 @@ typedef enum _msg_block_type_e {
 
 
 
-#define MSG_VALID_FLAG 0x8888
 
 typedef struct tag_RCP_BLOCK_IPV4_FIVE_TUPLE {
 	uint8_t protocol;
@@ -81,8 +88,8 @@ struct rcp_msg_params_s {
   */
 struct msg_header_info_s {
 	cmd_type_t cmd;
-	uint16_t flag;
-	uint16_t msg_type;
+	uint8_t flag;
+	uint8_t msg_type;
 	uint16_t msg_code;
 	uint8_t msg_block_type;
 };
@@ -91,12 +98,12 @@ struct msg_header_info_s {
 
 /* Message header */
 typedef struct tag_MESSAGE_HEAD {
-	uint16_t flag;           /*magic*/
-	uint16_t msg_type;     /*cmd type*/
+	uint8_t flag;
+	uint8_t msg_type;
 	uint16_t msg_code;
-	uint16_t msg_id;
-	uint16_t length;
+	uint32_t msg_id;
 	uint8_t more_flag;
+	uint8_t length;
 	uint8_t blocktype;
 	uint8_t data_block_num;
 	uint8_t payload[0];
@@ -123,13 +130,20 @@ struct cmd_process_handle_s {
 };
 
 
+
+extern struct msg_header_info_s cmd_msg_headers[];
+extern struct msg_pack_handle_s cmd_msg_handles[];
 extern struct cmd_process_handle_s cmd_process_handles[];
+
 extern int param_to_pkt(cmd_type_t cmd, void *from, uint8_t *sbuf, int *sn_p, void *param_p);
 extern int init_msg_pack_handle(void);
 extern int32_t init_cmd_process_handle(void);
 extern int mgmt_process_cmd(uint8_t * from, uint32_t length, uint32_t fd);
 
 extern int register_cmd_process_handle(cmd_type_t cmd, cmd_proc_handle_t cmd_handle);
+extern int init_msg_header(void);
+
+
 
 #ifdef __cplusplus
 }

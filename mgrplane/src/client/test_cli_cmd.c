@@ -40,7 +40,7 @@
 #include "cparser.h"
 #include "cparser_token.h"
 
-
+int interactive = 0;
 #define PRINTF(args...)                                 \
     if (interactive) {                                  \
         printf(args);                                   \

@@ -1,4 +1,3 @@
-#include "srv.h"
 #include "trans.h"
 #include "common.h"
 
@@ -9,7 +8,7 @@ int main(int argc, char *argv[])
 
 	printf("server init done.\n");
 
-	printf("now server running....");
+	printf("now server running....\n");
 	server_run();
 	
 	return 0;

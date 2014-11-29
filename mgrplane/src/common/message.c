@@ -2,7 +2,7 @@
 
 struct msg_header_info_s cmd_msg_headers[MAX_COMMAND_TYPE + 1];
 struct msg_pack_handle_s cmd_msg_handles[MAX_COMMAND_TYPE + 1];
-struct cmd_process_handle_s cmd_process_handles[MAX_COMMAND_TYPE];
+struct cmd_process_handle_s cmd_process_handles[MAX_COMMAND_TYPE + 1];
 
 /*
   *	get data block length
@@ -241,7 +241,7 @@ int init_msg_pack_handle(void)
 /*
   *	register the command msg header info
   */
-int register_msg_header(uint16_t flag, cmd_type_t cmd, uint8_t msg_type, uint16_t msg_code, uint8_t msg_block_type)
+int register_msg_header(uint8_t flag, cmd_type_t cmd, uint8_t msg_type, uint16_t msg_code, uint8_t msg_block_type)
 {
 	int rv;
 
@@ -264,7 +264,6 @@ int init_msg_header(void)
 {
 	memset(cmd_msg_headers, 0, sizeof(struct msg_header_info_s) * (MAX_COMMAND_TYPE + 1));
 
-	
 	register_msg_header(MSG_VALID_FLAG, TEST_COMMAND, MSG_TYPE_CLI_OCTEN, MSG_CODE_SHOW_TEST_COMMAND, BLOCK_TYPE_START);
 	register_msg_header(MSG_VALID_FLAG, TEST_COMMAND_ACK, MSG_TYPE_CLI_OCTEN, MSG_CODE_SHOW_TEST_COMMAND, BLOCK_TYPE_START);
 

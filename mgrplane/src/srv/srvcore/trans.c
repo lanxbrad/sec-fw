@@ -79,19 +79,22 @@ int recv_tcp_client_packet(int32_t fd, uint8_t * rbuf, uint32_t * rlen_p)
 	int32_t data_len;
 
 	*rlen_p = 0;
-
+	LOG("begin recv....\n");
 	/* first receive the rcp header */
 	len = recv(fd, rbuf, MESSAGE_HEADER_LENGTH, 0);
 	if (len != MESSAGE_HEADER_LENGTH) {
 		LOG("tcpclient socket %d receive rcp header failed\n", fd);
 		return 1;
 	}
+	LOG("recv data len: %d\n", len);
+
 
 	*rlen_p = MESSAGE_HEADER_LENGTH;
 	m_head = (MESSAGE_HEAD *) rbuf;
 
 	total_len = (m_head->length) << 2;
 	data_len = total_len - MESSAGE_HEADER_LENGTH;
+	LOG("total_len is %d, data_len is %d\n",total_len, data_len);
 
 	/* get the data block */
 	if (data_len) {
@@ -140,7 +143,7 @@ int tcp_server_socket_create(void)
 	memset((void *)&server_addr, 0, sizeof(server_addr));
 	server_addr.sin_family = AF_INET;
 	server_addr.sin_addr.s_addr = htonl(INADDR_ANY);
-	server_addr.sin_port = htons(SERVPORT);
+	server_addr.sin_port = htons(SERV_CLI_PORT);
 
 	setsockopt(listenfd, SOL_SOCKET, SO_REUSEADDR, (const void *)&opt, sizeof(int));
 
@@ -183,6 +186,7 @@ int server_init(void)
 	
 	/* initialize the rcp message handle */
 	init_msg_pack_handle();
+	init_msg_header();
 	init_cmd_process_handle();
 
 	
@@ -202,7 +206,7 @@ int server_init(void)
 void server_run(void)
 {
 	fd_set trfds;
-	int retval,  ret, i;
+	int retval, ret, i;
 	int conn_fd;
 	struct sockaddr_in addr;
 	struct timeval tv;

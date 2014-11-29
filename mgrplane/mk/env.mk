@@ -1,9 +1,11 @@
-PLATFORM = HOST
+PLATFORM = MIPS
 
 
 
 ifeq ($(PLATFORM), HOST)
 	CROSS_COMPILE =
+else
+	CROSS_COMPILE = mips64-octeon-linux-gnu-
 endif
 
 

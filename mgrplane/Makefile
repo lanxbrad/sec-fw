@@ -21,7 +21,7 @@ all: $(SRC_DIRS) $(PROGS)
 
 
 $(SRC_DIRS):
-	@mkdir -p $(TOP)/bin
+	@mkdir -p $(TOP)/bin $(TOP)/lib
 	$(Q) $(MAKE) $(MAKE_DEBUG) --directory=$@
 
 $(TOP)/bin/srv: $(SRV_DIRS)

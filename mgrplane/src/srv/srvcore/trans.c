@@ -6,6 +6,9 @@
 #include "trans.h"
 #include "message.h"
 
+#include "pow.h"
+
+
 fd_set rfds;
 int maxfd = 0;
 int listenfd = -1;
@@ -193,6 +196,14 @@ int server_init(void)
 
 	fd = tcp_server_socket_create();
 	add_fd(TCP_SERVER, fd, NULL); 
+
+
+	if(pow_init() < 0)
+	{
+		printf("pow init failed\n");
+		exit(1);
+	}
+	
 
 	return 0;
 }

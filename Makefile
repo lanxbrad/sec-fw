@@ -91,8 +91,11 @@ INCLUDE_DIR := \
 	-I$(OCTEON_ROOT)/sec-fw/dataplane/src/include \
 	-I$(OCTEON_ROOT)/sec-fw/dataplane/src/decode \
 	-I$(OCTEON_ROOT)/sec-fw/dataplane/src/platform \
-	-I$(OCTEON_ROOT)/sec-fw/dataplane/src/flow
-		
+	-I$(OCTEON_ROOT)/sec-fw/dataplane/src/flow \
+	-I$(OCTEON_ROOT)/sec-fw/dataplane/src/common \
+	-I$(OCTEON_ROOT)/sec-fw/include
+
+
 
 CFLAGS_LOCAL = -g -O2 -W -Wall -Wno-unused-parameter $(INCLUDE_DIR) -lpthread
 

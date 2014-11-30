@@ -236,6 +236,9 @@ int init_msg_pack_handle(void)
 	register_msg_pack_handle(TEST_COMMAND, pack_null);
 	register_msg_pack_handle(TEST_COMMAND_ACK, pack_show_test_info);
 
+	register_msg_pack_handle(SHOW_DP_BUILD_TIME, pack_null);
+	register_msg_pack_handle(SHOW_DP_BUILD_TIME_ACK, pack_show_test_info);
+
 	return 0;
 }
 /*
@@ -249,11 +252,13 @@ int register_msg_header(uint8_t flag, cmd_type_t cmd, uint8_t msg_type, uint16_t
 	rv = __cmd_is_valid(cmd);
 	if (rv)
 		return rv;
+	
 	cmd_msg_headers[cmd].flag = flag;
 	cmd_msg_headers[cmd].cmd = cmd;
 	cmd_msg_headers[cmd].msg_type = msg_type;
 	cmd_msg_headers[cmd].msg_code = msg_code;
 	cmd_msg_headers[cmd].msg_block_type = msg_block_type;
+	
 	return 0;
 }
 
@@ -264,8 +269,11 @@ int init_msg_header(void)
 {
 	memset(cmd_msg_headers, 0, sizeof(struct msg_header_info_s) * (MAX_COMMAND_TYPE + 1));
 
-	register_msg_header(MSG_VALID_FLAG, TEST_COMMAND, MSG_TYPE_CLI_OCTEN, MSG_CODE_SHOW_TEST_COMMAND, BLOCK_TYPE_START);
-	register_msg_header(MSG_VALID_FLAG, TEST_COMMAND_ACK, MSG_TYPE_CLI_OCTEN, MSG_CODE_SHOW_TEST_COMMAND, BLOCK_TYPE_START);
+	register_msg_header(MSG_VALID_FLAG, TEST_COMMAND, MSG_TYPE_CLI_OCTEON, MSG_CODE_SHOW_TEST_COMMAND, BLOCK_TYPE_START);
+	register_msg_header(MSG_VALID_FLAG, TEST_COMMAND_ACK, MSG_TYPE_CLI_OCTEON, MSG_CODE_SHOW_TEST_COMMAND_ACK, BLOCK_TYPE_START);
+
+	register_msg_header(MSG_VALID_FLAG, SHOW_DP_BUILD_TIME, MSG_TYPE_CLI_OCTEON, MSG_CODE_SHOW_DP_BUILD_TIME, BLOCK_TYPE_START);
+	register_msg_header(MSG_VALID_FLAG, SHOW_DP_BUILD_TIME_ACK, MSG_TYPE_CLI_OCTEON, MSG_CODE_SHOW_DP_BUILD_TIME_ACK, BLOCK_TYPE_START);
 
 	return 0;
 }

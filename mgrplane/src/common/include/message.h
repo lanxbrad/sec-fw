@@ -25,6 +25,9 @@ typedef enum
 {
 	TEST_COMMAND = 0,
 	TEST_COMMAND_ACK,
+
+	SHOW_DP_BUILD_TIME,
+	SHOW_DP_BUILD_TIME_ACK,
 	
 	MAX_COMMAND_TYPE,
 }cmd_type_t;
@@ -56,7 +59,7 @@ typedef struct TAG_RCP_DATA_BLOCK {
 
 
 typedef enum _msg_type_e {
-	MSG_TYPE_CLI_OCTEN = 0x1, 
+	MSG_TYPE_CLI_OCTEON = 0x1, 
 	MSG_TYPE_CLI_DEBUG = 0x2,
 	MSG_TYPE_CLI_LOG = 0x3,
 	MSG_TYPE_CLI_SNMP = 0x4,
@@ -65,8 +68,12 @@ typedef enum _msg_type_e {
 
 typedef enum _msg_code_e { 
 	MSG_CODE_START = 0,
+	
 	MSG_CODE_SHOW_TEST_COMMAND = 0x101,
-	MSG_CODE_SHOW_TEST_COMMAND_ACK = 0x102,
+	MSG_CODE_SHOW_TEST_COMMAND_ACK,
+
+	MSG_CODE_SHOW_DP_BUILD_TIME,
+	MSG_CODE_SHOW_DP_BUILD_TIME_ACK,
 }msg_code_e;
 
 

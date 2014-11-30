@@ -11,6 +11,7 @@ LIBRARY_COMMON := $(OBJ_DIR)/libcommon.a
 
 
 LIBCOMMON_OBJ_$(d)  :=  \
+	$(OBJ_DIR)/dp_cmd.o \
 	$(OBJ_DIR)/mbuf.o \
 	$(OBJ_DIR)/watchdog.o
 	
@@ -20,7 +21,8 @@ INCLUDE_DIR := \
 	-I$(OCTEON_ROOT)/sec-fw/dataplane/src/include \
 	-I$(OCTEON_ROOT)/sec-fw/dataplane/src/decode \
 	-I$(OCTEON_ROOT)/sec-fw/dataplane/src/platform \
-	-I$(OCTEON_ROOT)/sec-fw/dataplane/src/flow
+	-I$(OCTEON_ROOT)/sec-fw/dataplane/src/flow \
+	-I$(OCTEON_ROOT)/sec-fw/include
 	
 
 

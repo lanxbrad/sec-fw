@@ -55,3 +55,6 @@ quit
 
 // Show test info
 show test info
+
+// Show dp build time
+show dp build time

@@ -59,7 +59,7 @@
 #include <oct-rxtx.h>
 #include <oct-sched.h>
 #include <flow.h>
-
+#include <dp_cmd.h>
 
 
 extern flow_item_t *flow_item_alloc();
@@ -247,6 +247,7 @@ void mainloop()
 			else if( FROM_LINUX_GROUP == grp )
 			{
 				printf("receive packet from linux!\n");
+				oct_rx_process_command(work);
 			}
 			else
 			{

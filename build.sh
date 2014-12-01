@@ -83,7 +83,7 @@ build_all(){
 
 mkdir -p bin
 
-if [ $# > 0 ]; then
+if [ $# -gt 0 ]; then
 	if [ "$1" = 'clean' ]; then
 		clean_up	
 	elif [ "$1" = 'dataplane' ]; then

@@ -68,20 +68,22 @@ void mem_pool_free(void *buf)
 
 	if(mscb->magic != MEM_POOL_MAGIC_NUM)
 	{
-		printf("buf has been destroyed!\n");
+		printf("buf %p has been destroyed!\n", mscb);
 		return;
 	}
 
 	pool_id = mscb->pool_id;
 	if(pool_id >= MEM_POOL_ID_MAX)
 	{
-		printf("buf has been destroyed!\n");
+		printf("buf %p has been destroyed!\n", mscb);
+		return;
 	}
 
 	subpool_id = mscb->subpool_id;
 	if(subpool_id >= MEM_POOL_INTERNAL_NUM)
 	{
-		printf("buf has been destroyed!\n");
+		printf("buf %p has been destroyed!\n", mscb);
+		return;
 	}
 
 	if(mscb->ref != 1)

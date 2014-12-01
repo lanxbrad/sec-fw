@@ -9,10 +9,10 @@ echo "+                                                 +"
 echo "---------------------------------------------------"
 
 PROG_SECD="secd-linux_64" 
-rm $PROG_SECD
+rm -f $PROG_SECD
 make OCTEON_TARGET=linux_64
 if [ $? -eq 0 ]; then
-	echo "Dataplane build success!"
+	echo "Dataplane build done!"
 else
 	echo "Error! Dataplane build failed!"
 	exit 
@@ -24,7 +24,7 @@ if [ ! -f "$PROG_SECD" ]; then
 fi
 
 cp $PROG_SECD bin/
-echo "Dataplane build done....."
+echo "Dataplane build success....."
 
 echo "---------------------------------------------------"
 echo "+                                                 +"
@@ -42,7 +42,7 @@ pwd
 make
 
 if [ $? -eq 0 ]; then
-	echo "Mgrplane build success!"
+	echo "Mgrplane build done!"
 else
 	echo "Error! Mgrplane build failed!"
 fi
@@ -61,4 +61,4 @@ fi
 cp $PROG_CLI ../bin/
 cp $PROG_SRV ../bin/
 
-echo "Mgrplane build done....."
+echo "Mgrplane build success....."

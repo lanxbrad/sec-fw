@@ -13,7 +13,8 @@ LIBRARY_COMMON := $(OBJ_DIR)/libcommon.a
 LIBCOMMON_OBJ_$(d)  :=  \
 	$(OBJ_DIR)/dp_cmd.o \
 	$(OBJ_DIR)/mbuf.o \
-	$(OBJ_DIR)/watchdog.o
+	$(OBJ_DIR)/watchdog.o \
+	$(OBJ_DIR)/sos_malloc.o
 	
 
 INCLUDE_DIR := \

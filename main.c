@@ -266,10 +266,6 @@ void mainloop()
 
 
 
-
-
-
-
 /**
  * Main entry point
  *

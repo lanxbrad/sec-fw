@@ -1,5 +1,9 @@
 #/bin/sh
 
+PROG_SECD="secd-linux_64" 
+
+PROG_CLI="bin/cli"
+PROG_SRV="bin/srv"
 
 clean_up()
 {
@@ -18,7 +22,6 @@ build_dataplane(){
 	echo "+                                                 +"
 	echo "---------------------------------------------------"
 
-	PROG_SECD="secd-linux_64" 
 	rm -f $PROG_SECD
 	make OCTEON_TARGET=linux_64
 	if [ $? -eq 0 ]; then
@@ -43,9 +46,6 @@ build_mgrplane(){
 	echo "+            Sec Fw Mgrplane                      +"
 	echo "+                                                 +"
 	echo "---------------------------------------------------"
-
-	PROG_CLI="bin/cli"
-	PROG_SRV="bin/srv"
 
 	cd ./mgrplane 
 
@@ -74,6 +74,7 @@ build_mgrplane(){
 	cp $PROG_SRV ../bin/
 
 	echo "Mgrplane build success....."
+	cd ..
 }
 
 build_all(){
@@ -81,19 +82,61 @@ build_all(){
 	build_mgrplane
 }
 
-mkdir -p bin
-
-if [ $# -gt 0 ]; then
-	if [ "$1" = 'clean' ]; then
-		clean_up	
-	elif [ "$1" = 'dataplane' ]; then
-		build_dataplane
-	elif [ "$1" = 'mgrplane' ]; then
-		build_mgrplane
+prog_build_check(){
+	if [ ! -f "bin/secd-linux_64" ]; then
+		echo "bin/secd-linux_64 not exist"
+		exit 
+	else
+		echo "bin/secd-linux_64 ok!"
 	fi
-else
-	build_all
-fi
+
+	if [ ! -f "bin/cli" ]; then
+		echo "bin/cli not exist" 
+		exit
+	else
+		echo "bin/cli ok!"
+	fi
+
+	if [ ! -f "bin/srv" ]; then
+		echo "bin/srv not exist"
+		exit
+	else
+		echo "bin/srv ok!"
+	fi
+}
+
+
+build_start(){
+
+	if [ ! -d bin ]; then
+		mkdir bin
+	fi
+
+	if [ $# -gt 0 ]; then
+		if [ "$1" = 'clean' ]; then
+			clean_up	
+		elif [ "$1" = 'dataplane' ]; then
+			build_dataplane
+		elif [ "$1" = 'mgrplane' ]; then
+			build_mgrplane
+		fi
+	else
+		build_all
+	fi
+
+}
+
+make_package(){
+	cp version/scripts/startup.sh bin/
+	tar czf sec-fw.tar.gz bin
+}
+
+build_start
+
+prog_build_check
+
+make_package
+
 
 
 

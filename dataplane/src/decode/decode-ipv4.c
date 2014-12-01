@@ -87,6 +87,7 @@ int DecodeIPV4(mbuf_t *mbuf, uint8_t *pkt, uint16_t len)
 		printf("this is a fragment\n");
 	#endif
 	
+	
 		ihl = IPV4_GET_HLEN(mbuf);
 		mbuf->defrag_id = IPV4_GET_IPID(mbuf);
 		mbuf->frag_offset = IPV4_GET_IPOFFSET(mbuf) << 3;
@@ -98,6 +99,7 @@ int DecodeIPV4(mbuf_t *mbuf, uint8_t *pkt, uint16_t len)
 	
 		if(0 == mbuf->frag_len)
 		{
+			STAT_FRAG_LEN_ERR;
 			return DECODE_DROP;
 		}
 		

@@ -17,6 +17,8 @@
 #include <oct-init.h>
 #include "flow.h"
 #include "tluhash.h"
+#include "decode-statistic.h"
+
 
 
 extern void l7_deliver(mbuf_t *m);
@@ -27,10 +29,6 @@ CVMX_SHARED uint64_t del_flow[CPU_HW_RUNNING_MAX] = {0, 0, 0, 0};
 
 
 flow_table_info_t *flow_table;
-
-
-
-
 
 
 static inline flow_item_t *flow_item_alloc()
@@ -224,6 +222,7 @@ void FlowHandlePacket(mbuf_t *m)
 	{
 		/*flow failed, destroy packet*/
 		PACKET_DESTROY_ALL(m);
+		STAT_FLOW_GETNODE_ERR;
 		return;
 	}
 
@@ -236,6 +235,8 @@ void FlowHandlePacket(mbuf_t *m)
 	FLOW_ITEM_UNLOCK(f); /*unlock flow node*/
 	
 	m->flags |= PKT_HAS_FLOW;
+
+	STAT_FLOW_PROC_OK;
 
 	l7_deliver(m);
 

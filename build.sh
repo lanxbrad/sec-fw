@@ -129,6 +129,11 @@ build_start(){
 make_package(){
 	cp version/scripts/startup.sh bin/
 	tar czf sec-fw.tar.gz bin
+	if [ $? -eq 0 ]; then
+		echo "Package make ok!"
+	else
+		echo "Error! Package make failed!"
+	fi
 }
 
 build_start

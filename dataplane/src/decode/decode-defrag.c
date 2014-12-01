@@ -4,6 +4,8 @@
 #include <sec-debug.h>
 #include "decode-defrag.h"
 #include "decode-ipv4.h"
+#include "decode-statistic.h"
+
 
 
 CVMX_SHARED uint64_t new_fcb[CPU_HW_RUNNING_MAX] = {0, 0, 0, 0};
@@ -224,12 +226,11 @@ mbuf_t *Frag_defrag_reasm(fcb_t *fcb)
 
 	Frag_defrag_freefrags(fcb);
 	
-
+	STAT_FRAG_REASM_OK;
 	return reasm_mb;
 setup_err:
-	
 out_oversize:
-
+	
 	return NULL;
 }
 
@@ -329,11 +330,13 @@ found:
 	}
 	else
 	{
+		STAT_FRAG_CACHE_OK;
 		return NULL;  /*cached*/
 	}
 
 err:
 	PACKET_DESTROY_ALL(mbuf);
+	STAT_FRAG_DEFRAG_ERR;
 	return NULL;
 }
 
@@ -350,6 +353,7 @@ mbuf_t *Frag_defrag_begin(mbuf_t *mbuf, fcb_t *fcb)
 	if(SEC_OK != PACKET_HW2SW(mbuf))
 	{
 		PACKET_DESTROY_ALL(mbuf);
+		STAT_FRAG_HW2SW_ERR;
 		return NULL;
 	}
 	
@@ -392,6 +396,7 @@ mbuf_t *Defrag(mbuf_t *mb)
 		{
 			FCB_TABLE_UNLOCK(fb);
 			PACKET_DESTROY_ALL(mb);
+			STAT_FRAG_FCB_NO;
 			return NULL;
 		}
 

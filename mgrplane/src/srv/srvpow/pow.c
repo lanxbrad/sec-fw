@@ -60,7 +60,7 @@ int32_t pow_send_fn( comm_info_t *info, void *data, uint32_t size )
     sll.sll_ifindex = info->pow.ifindex;
 	len = sendto( info->pow.fd, data, size, 0, (struct sockaddr *)&sll, sizeof( sll ) );
 	printf("send len is %d, %d\n", len, errno);
-	printf("errno  %02d is: %s/n", errno, strerror(errno));
+	printf("errno  %d is: %s\n", errno, strerror(errno));
 	
 	if ( len == -1 ){
 		
@@ -86,7 +86,8 @@ int32_t pow_recv_fn ( comm_info_t *info, void *data, uint32_t *size )
 	}
 	memset(_data,0,MAX_RECV_LEN); 
 	len = recvfrom( info->pow.fd, _data, *size, 0, NULL, NULL);
-	
+	printf("recv len is %d, %d\n", len, errno);
+	printf("errno  %d is: %s\n", errno, strerror(errno));
 	memcpy(data, _data+14, len-14);
 	free(_data);
 

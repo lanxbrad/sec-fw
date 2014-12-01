@@ -1,4 +1,5 @@
 #include "dp_cmd.h"
+#include "decode-statistic.h"
 
 uint16_t oct_rx_command_get(cvmx_wqe_t *work)
 {
@@ -31,6 +32,175 @@ void dp_show_build_time(cvmx_wqe_t *wq, void *data)
 	len = strlen(out);
 
 	oct_send_response(wq, ((rpc_msg_t *)data)->opcode, out, len);
+}
+
+void dp_show_pkt_stat(cvmx_wqe_t *wq, void *data)
+{
+	char out[1024];
+	uint32_t len = 0;
+	int i;
+	uint32_t totallen = 0;
+	uint8_t *ptr;
+	memset((void *)out, 0, sizeof(out));
+
+	ptr = (uint8_t *)&out;
+
+	len = sprintf((void *)ptr, "packet statistic:\n");
+	ptr += len;
+	totallen += len;
+	
+	len = sprintf((void *)ptr, "----------------------------------\n");
+	ptr += len;
+	totallen += len;
+	
+	len = sprintf((void *)ptr, "\n");
+	ptr += len;
+	totallen += len;
+	
+	len = sprintf((void *)ptr, "recv_count:\n");
+	ptr += len;
+	totallen += len;
+	
+	len = sprintf((void *)ptr, "----------------------------------\n");
+	ptr += len;
+	totallen += len;
+
+	uint64_t x = 0;
+	for(i = 0; i < CPU_HW_RUNNING_MAX; i++)
+	{
+		x += pktstat[i]->rc.recv_packet_count;
+	}
+
+	len = sprintf((void *)ptr, "recv_packet_count: %ld\n", x);
+	ptr += len;
+	totallen += len;
+
+	x = 0;
+	for(i = 0; i < CPU_HW_RUNNING_MAX; i++)
+	{
+		x += pktstat[i]->rc.recv_packet_bytes;
+	}
+
+	len = sprintf((void *)ptr, "recv_packet_bytes: %ld\n", x);
+	ptr += len;
+	totallen += len;
+
+	x = 0;
+	for(i = 0; i < CPU_HW_RUNNING_MAX; i++)
+	{
+		x += pktstat[i]->rc.recv_packet_count_sum;
+	}
+
+	len = sprintf((void *)ptr, "recv_packet_count_sum: %ld\n", x);
+	ptr += len;
+	totallen += len;
+
+	x = 0;
+	for(i = 0; i < CPU_HW_RUNNING_MAX; i++)
+	{
+		x += pktstat[i]->rc.recv_packet_bytes_sum;
+	}
+
+	len = sprintf((void *)ptr, "recv_packet_bytes_sum: %ld\n", x);
+	ptr += len;
+	totallen += len;
+
+	len = sprintf((void *)ptr, "----------------------------------\n");
+	ptr += len;
+	totallen += len;
+
+	
+	len = sprintf((void *)ptr, "\n");
+	ptr += len;
+	totallen += len;
+	
+	len = sprintf((void *)ptr, "rx_stat:\n");
+	ptr += len;
+	totallen += len;
+	
+	len = sprintf((void *)ptr, "----------------------------------\n");
+	ptr += len;
+	totallen += len;
+
+	x = 0;
+	for(i = 0; i < CPU_HW_RUNNING_MAX; i++)
+	{
+		x += pktstat[i]->rxstat.rx_err;
+	}
+
+	len = sprintf((void *)ptr, "rx_err: %ld\n", x);
+	ptr += len;
+	totallen += len;
+
+	x = 0;
+	for(i = 0; i < CPU_HW_RUNNING_MAX; i++)
+	{
+		x += pktstat[i]->rxstat.addr_err;
+	}
+
+	len = sprintf((void *)ptr, "addr_err: %ld\n", x);
+	ptr += len;
+	totallen += len;
+
+	x = 0;
+	for(i = 0; i < CPU_HW_RUNNING_MAX; i++)
+	{
+		x += pktstat[i]->rxstat.rx_ok;
+	}
+
+	len = sprintf((void *)ptr, "rx_ok: %ld\n", x);
+	ptr += len;
+	totallen += len;
+
+	len = sprintf((void *)ptr, "----------------------------------\n");
+	ptr += len;
+	totallen += len;
+
+	
+	len = sprintf((void *)ptr, "\n");
+	ptr += len;
+	totallen += len;
+	
+	len = sprintf((void *)ptr, "ether_stat:\n");
+	ptr += len;
+	totallen += len;
+
+	len = sprintf((void *)ptr, "----------------------------------\n");
+	ptr += len;
+	totallen += len;
+
+	x = 0;
+	for(i = 0; i < CPU_HW_RUNNING_MAX; i++)
+	{
+		x += pktstat[i]->l2stat.headerlen_err;
+	}
+
+	len = sprintf((void *)ptr, "headerlen_err: %ld\n", x);
+	ptr += len;
+	totallen += len;
+
+	x = 0;
+	for(i = 0; i < CPU_HW_RUNNING_MAX; i++)
+	{
+		x += pktstat[i]->l2stat.unsupport;
+	}
+
+	len = sprintf((void *)ptr, "unsupport: %ld\n", x);
+	ptr += len;
+	totallen += len;
+
+	x = 0;
+	for(i = 0; i < CPU_HW_RUNNING_MAX; i++)
+	{
+		x += pktstat[i]->l2stat.rx_ok;
+	}
+
+	len = sprintf((void *)ptr, "rx_ok: %ld\n", x);
+	ptr += len;
+	totallen += len;
+	printf("total len is %d\n",totallen);
+	
+	oct_send_response(wq, ((rpc_msg_t *)data)->opcode, out, totallen);
 }
 
 
@@ -78,6 +248,16 @@ void oct_rx_process_command(cvmx_wqe_t *wq)
 		case COMMAND_SHOW_BUILD_TIME:
 		{
 			dp_show_build_time(wq, data);
+			break;
+		}
+		case COMMAND_SHOW_PKT_STAT:
+		{
+			dp_show_pkt_stat(wq, data);
+			break;
+		}
+		default:
+		{
+			printf("unsupport command\n");
 			break;
 		}
 	}

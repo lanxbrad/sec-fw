@@ -39,10 +39,6 @@ int open_cli2server_socket(void)
 int process_cli_show_cmd(char *rbuf, char *sbuf, int sn)
 {
 	unsigned int len, total_len, data_len, more_flag = 0;
-	//int rn;
-	//int rps_num = 0;
-	//int response_end = 0;
-	//int request_again = 0;
 	MESSAGE_HEAD *msg_header = NULL;
 
 	if (g_rcp_fd <= 0) {

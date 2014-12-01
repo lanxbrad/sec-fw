@@ -167,6 +167,7 @@ void oct_tx_process_mbuf(mbuf_t *mbuf, uint8_t port)
 	{
 		printf("Send port is invalid");
 		PACKET_DESTROY_ALL(mbuf);
+		STAT_TX_SEND_PORT_ERR;
 		return;
 	}
 
@@ -188,6 +189,7 @@ void oct_tx_process_mbuf(mbuf_t *mbuf, uint8_t port)
 		if (send_status != CVMX_PKO_SUCCESS)
 	    {
 	        printf("Failed to send packet using cvmx_pko_send_packet2\n");
+			STAT_TX_HW_SEND_ERR;
 	        PACKET_DESTROY_DATA(mbuf);
 	    }
 
@@ -204,6 +206,7 @@ void oct_tx_process_mbuf(mbuf_t *mbuf, uint8_t port)
 		else
 		{
 			PACKET_DESTROY_ALL(mbuf);
+			STAT_TX_SW_DESC_ERR;
 			return;
 		}
 		/*command word0*/
@@ -237,7 +240,9 @@ void oct_tx_process_mbuf(mbuf_t *mbuf, uint8_t port)
 			}
 
 			printf("Failed to send packet using cvmx_pko_send_packet3\n");
+			
 	        PACKET_DESTROY_ALL(mbuf);
+			STAT_TX_SW_SEND_ERR;
 			return;
 		}
 	}
@@ -245,6 +250,8 @@ void oct_tx_process_mbuf(mbuf_t *mbuf, uint8_t port)
 	{
 		printf("pkt space %d is wrong, please check it\n", PKTBUF_SPACE_GET(mbuf));
 	}
+
+	STAT_TX_SEND_OVER;
 	
 }
 

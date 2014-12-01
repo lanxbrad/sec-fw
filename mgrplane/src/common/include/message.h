@@ -28,6 +28,9 @@ typedef enum
 
 	SHOW_DP_BUILD_TIME,
 	SHOW_DP_BUILD_TIME_ACK,
+
+	SHOW_DP_PKT_STAT,
+	SHOW_DP_PKT_STAT_ACK,
 	
 	MAX_COMMAND_TYPE,
 }cmd_type_t;
@@ -74,6 +77,9 @@ typedef enum _msg_code_e {
 
 	MSG_CODE_SHOW_DP_BUILD_TIME,
 	MSG_CODE_SHOW_DP_BUILD_TIME_ACK,
+
+	MSG_CODE_SHOW_DP_PKT_STAT,
+	MSG_CODE_SHOW_DP_PKT_STAT_ACK,
 }msg_code_e;
 
 

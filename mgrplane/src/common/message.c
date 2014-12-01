@@ -119,7 +119,7 @@ int pack_null(cmd_type_t cmd, void *para_p, void *sbuf, int *len_p)
 
 
 
-int pack_show_test_info(cmd_type_t cmd, void *para_p, void *sbuf, int *len_p)
+int pack_show_info(cmd_type_t cmd, void *para_p, void *sbuf, int *len_p)
 {
 	int rv;
 	char *ptr = (char *)sbuf;
@@ -234,10 +234,13 @@ int init_msg_pack_handle(void)
 	memset(cmd_msg_handles, 0, sizeof(struct msg_pack_handle_s) * (MAX_COMMAND_TYPE + 1));
 	
 	register_msg_pack_handle(TEST_COMMAND, pack_null);
-	register_msg_pack_handle(TEST_COMMAND_ACK, pack_show_test_info);
+	register_msg_pack_handle(TEST_COMMAND_ACK, pack_show_info);
 
 	register_msg_pack_handle(SHOW_DP_BUILD_TIME, pack_null);
-	register_msg_pack_handle(SHOW_DP_BUILD_TIME_ACK, pack_show_test_info);
+	register_msg_pack_handle(SHOW_DP_BUILD_TIME_ACK, pack_show_info);
+
+	register_msg_pack_handle(SHOW_DP_PKT_STAT, pack_null);
+	register_msg_pack_handle(SHOW_DP_PKT_STAT_ACK, pack_show_info);
 
 	return 0;
 }
@@ -274,6 +277,9 @@ int init_msg_header(void)
 
 	register_msg_header(MSG_VALID_FLAG, SHOW_DP_BUILD_TIME, MSG_TYPE_CLI_OCTEON, MSG_CODE_SHOW_DP_BUILD_TIME, BLOCK_TYPE_START);
 	register_msg_header(MSG_VALID_FLAG, SHOW_DP_BUILD_TIME_ACK, MSG_TYPE_CLI_OCTEON, MSG_CODE_SHOW_DP_BUILD_TIME_ACK, BLOCK_TYPE_START);
+
+	register_msg_header(MSG_VALID_FLAG, SHOW_DP_PKT_STAT, MSG_TYPE_CLI_OCTEON, MSG_CODE_SHOW_DP_PKT_STAT, BLOCK_TYPE_START);
+	register_msg_header(MSG_VALID_FLAG, SHOW_DP_PKT_STAT_ACK, MSG_TYPE_CLI_OCTEON, MSG_CODE_SHOW_DP_PKT_STAT_ACK, BLOCK_TYPE_START);
 
 	return 0;
 }

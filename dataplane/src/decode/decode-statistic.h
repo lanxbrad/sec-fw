@@ -45,6 +45,16 @@ struct ipv4_stat
 	uint64_t rx_ok;
 };
 
+struct frag_stat
+{
+	uint64_t fraglen_err;
+	uint64_t fcb_no;
+	uint64_t hw2sw_err;
+	uint64_t defrag_err;
+	uint64_t cache_ok;
+	uint64_t reasm_ok;
+};
+
 struct udp_stat
 {
 	uint64_t headerlen_err;
@@ -59,16 +69,33 @@ struct tcp_stat
 	uint64_t rx_ok;
 };
 
+struct flow_stat
+{
+	uint64_t getnode_err;
+	uint64_t proc_ok;
+};
+
+struct tx_stat
+{
+	uint64_t port_err;
+	uint64_t hw_send_err;
+	uint64_t sw_desc_err;
+	uint64_t sw_send_err;
+	uint64_t send_over;
+};
 
 typedef struct
 {
 	struct recv_count rc;
-	struct rx_stat rxstat;
+	struct rx_stat    rxstat;
 	struct ether_stat l2stat;
-	struct vlan_stat vlanstat;
-	struct ipv4_stat ipv4stat;
-	struct udp_stat  udpstat;
-	struct tcp_stat  tcpstat;
+	struct vlan_stat  vlanstat;
+	struct ipv4_stat  ipv4stat;
+	struct frag_stat  fragstat;
+	struct udp_stat   udpstat;
+	struct tcp_stat   tcpstat;
+	struct flow_stat  flowstat;
+	struct tx_stat    txstat;
 }pkt_stat;
 
 
@@ -103,6 +130,13 @@ extern int local_cpu_id;
 #define STAT_IPV4_UNSUPPORT      do { pktstat[local_cpu_id]->ipv4stat.unsupport++;} while(0)
 #define STAT_IPV4_RECV_OK        do { pktstat[local_cpu_id]->ipv4stat.rx_ok++;} while(0)
 
+#define STAT_FRAG_LEN_ERR        do { pktstat[local_cpu_id]->fragstat.fraglen_err++; } while(0)
+#define STAT_FRAG_FCB_NO         do { pktstat[local_cpu_id]->fragstat.fcb_no++; } while(0)
+#define STAT_FRAG_HW2SW_ERR      do { pktstat[local_cpu_id]->fragstat.hw2sw_err++; } while(0)
+#define STAT_FRAG_DEFRAG_ERR     do { pktstat[local_cpu_id]->fragstat.defrag_err++; } while(0)
+#define STAT_FRAG_REASM_OK       do { pktstat[local_cpu_id]->fragstat.reasm_ok++; } while(0)
+#define STAT_FRAG_CACHE_OK       do { pktstat[local_cpu_id]->fragstat.cache_ok++; } while(0)
+
 
 #define STAT_UDP_HEADER_ERR      do { pktstat[local_cpu_id]->udpstat.headerlen_err++;} while(0)
 #define STAT_UDP_LEN_ERR         do { pktstat[local_cpu_id]->udpstat.pktlen_err++;} while(0)
@@ -112,6 +146,16 @@ extern int local_cpu_id;
 #define STAT_TCP_HEADER_ERR      do { pktstat[local_cpu_id]->tcpstat.headerlen_err++;} while(0)
 #define STAT_TCP_LEN_ERR         do { pktstat[local_cpu_id]->tcpstat.pktlen_err++;} while(0)
 #define STAT_TCP_RECV_OK         do { pktstat[local_cpu_id]->tcpstat.rx_ok++;} while(0)
+
+
+#define STAT_FLOW_GETNODE_ERR    do { pktstat[local_cpu_id]->flowstat.getnode_err++;} while(0)
+#define STAT_FLOW_PROC_OK        do { pktstat[local_cpu_id]->flowstat.proc_ok++;} while(0)
+
+#define STAT_TX_SEND_PORT_ERR    do { pktstat[local_cpu_id]->txstat.port_err++;} while(0)
+#define STAT_TX_HW_SEND_ERR      do { pktstat[local_cpu_id]->txstat.hw_send_err++;} while(0)
+#define STAT_TX_SW_DESC_ERR      do { pktstat[local_cpu_id]->txstat.sw_desc_err++;} while(0)
+#define STAT_TX_SW_SEND_ERR      do { pktstat[local_cpu_id]->txstat.sw_send_err++;} while(0)
+#define STAT_TX_SEND_OVER        do { pktstat[local_cpu_id]->txstat.send_over++;} while(0)
 
 
 

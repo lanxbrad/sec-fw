@@ -121,6 +121,8 @@ extern void mem_pool_free(void *buf);
 
 
 
+extern Mem_Pool_Cfg *mem_pool[];
+
 extern int Mem_Pool_Init(void);
 extern int Mem_Pool_Get(void);
 

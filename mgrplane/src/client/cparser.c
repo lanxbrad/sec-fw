@@ -650,6 +650,8 @@ cparser_run (cparser_t *parser)
         cparser_input(parser, ch, ch_type);
     } /* while not done */
 
+	parser->cfg.prints(parser, "\n");
+	
     parser->cfg.io_cleanup(parser);
 
     return CPARSER_OK;

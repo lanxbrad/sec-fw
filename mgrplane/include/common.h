@@ -21,8 +21,16 @@ extern "C" {
 
 #define DEBUG_PRINT
 
+extern int debugprint;
+
 #ifdef DEBUG_PRINT
-#define LOG(str...)  printf(str)
+#define LOG(str...)   \
+{				      \
+	if(debugprint)    \
+	{				  \
+		printf(str);  \
+	}                 \
+}
 #else
 #define LOG(str...)
 #endif

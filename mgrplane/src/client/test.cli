@@ -67,3 +67,6 @@ show interface <UINT:id>
 
 // Show FPA stat
 show fpa
+
+// Show mem pool
+show mem pool

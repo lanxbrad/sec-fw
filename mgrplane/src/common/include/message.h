@@ -31,6 +31,9 @@ typedef enum
 
 	SHOW_DP_PKT_STAT,
 	SHOW_DP_PKT_STAT_ACK,
+
+	SHOW_MEM_POOL,
+	SHOW_MEM_POOL_ACK,
 	
 	MAX_COMMAND_TYPE,
 }cmd_type_t;
@@ -80,6 +83,9 @@ typedef enum _msg_code_e {
 
 	MSG_CODE_SHOW_DP_PKT_STAT,
 	MSG_CODE_SHOW_DP_PKT_STAT_ACK,
+
+	MSG_CODE_SHOW_MEM_POOL,
+	MSG_CODE_SHOW_MEM_POOL_ACK,
 }msg_code_e;
 
 

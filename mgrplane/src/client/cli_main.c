@@ -118,18 +118,18 @@ main (int argc, char *argv[])
 
     memset(&parser, 0, sizeof(parser));
 
-    while (-1 != (ch = getopt(argc, argv, "pic:d"))) {
+    while (-1 != (ch = getopt(argc, argv, "pdc:x"))) {
         switch (ch) {
             case 'p':
                 printf("pid = %d\n", getpid());
                 break;
-            case 'i':
-				
+            case 'd':
+				debugprint = 1;
                 break;
             case 'c':
                 config_file = optarg;
                 break;
-            case 'd':
+            case 'x':
                 debug = 1;
                 break;
         }

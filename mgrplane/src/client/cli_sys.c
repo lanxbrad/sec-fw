@@ -12,7 +12,6 @@
 #include "cli_trans.h"
 
 
-
 cparser_result_t
 cparser_cmd_show_test_info (cparser_context_t *context)
 {

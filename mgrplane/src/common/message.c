@@ -1,5 +1,9 @@
 #include "message.h"
 
+
+int debugprint = 0;
+
+
 struct msg_header_info_s cmd_msg_headers[MAX_COMMAND_TYPE + 1];
 struct msg_pack_handle_s cmd_msg_handles[MAX_COMMAND_TYPE + 1];
 struct cmd_process_handle_s cmd_process_handles[MAX_COMMAND_TYPE + 1];
@@ -241,6 +245,9 @@ int init_msg_pack_handle(void)
 
 	register_msg_pack_handle(SHOW_DP_PKT_STAT, pack_null);
 	register_msg_pack_handle(SHOW_DP_PKT_STAT_ACK, pack_show_info);
+
+	register_msg_pack_handle(SHOW_MEM_POOL, pack_null);
+	register_msg_pack_handle(SHOW_MEM_POOL_ACK, pack_show_info);
 
 	return 0;
 }

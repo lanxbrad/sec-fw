@@ -5,8 +5,12 @@ PROG_SECD="secd-linux_64"
 PROG_CLI="bin/cli"
 PROG_SRV="bin/srv"
 
+action=$1
+argc=$#
+
 clean_up()
 {
+	echo "clean_up"
 	rm -rf secd-linux_64
 	rm -rf ./bin
 	rm -rf ./obj-linux_64-octeon3
@@ -78,6 +82,7 @@ build_mgrplane(){
 }
 
 build_all(){
+	echo "build_all"
 	build_dataplane
 	build_mgrplane
 }
@@ -111,13 +116,13 @@ build_start(){
 	if [ ! -d bin ]; then
 		mkdir bin
 	fi
-
-	if [ $# -gt 0 ]; then
-		if [ "$1" = 'clean' ]; then
+	
+	if [ $argc -gt 0 ]; then
+		if [ $action = "clean" ]; then
 			clean_up	
-		elif [ "$1" = 'dataplane' ]; then
+		elif [ $action = 'dataplane' ]; then
 			build_dataplane
-		elif [ "$1" = 'mgrplane' ]; then
+		elif [ $action = 'mgrplane' ]; then
 			build_mgrplane
 		fi
 	else
@@ -135,6 +140,7 @@ make_package(){
 		echo "Error! Package make failed!"
 	fi
 }
+
 
 build_start
 

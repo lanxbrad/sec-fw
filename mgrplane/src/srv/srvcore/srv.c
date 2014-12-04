@@ -10,11 +10,10 @@ int main(int argc, char *argv[])
 	
 	while ((ch = getopt(argc, argv, "d:h")) != -1) {
 		switch (ch) {
-		case 'k':
+		case 'd':
 			debugprint = 1;
 			break;
 		}
-
 	}
 
 	if (!debugprint) {

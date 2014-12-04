@@ -17,8 +17,10 @@ cparser_cmd_commit_rule_all(cparser_context_t *context)
 {
 	assert(context);
 
-	int sn;
+	int sn,rn;
 	cmd_type_t cmd;
+	CLI_RESULT *blocks;
+	int rv = 0;
 	struct rcp_msg_params_s rcp_para;
 	memset(&rcp_para, 0, sizeof(struct rcp_msg_params_s));
 
@@ -34,7 +36,14 @@ cparser_cmd_commit_rule_all(cparser_context_t *context)
 	cmd_msg_handles[cmd].pack(cmd, &rcp_para, send_buf, &sn);
 	LOG("after pack the message\n");
 
-	process_cli_show_cmd(recv_buf, send_buf, sn);
+	process_message(sn, &rn);
+	if (rn <= 0) {
+		LOG("%s error\n", __FUNCTION__);
+	}
+
+	blocks = (CLI_RESULT *) (recv_buf + MESSAGE_HEADER_LENGTH);
+	rv = blocks[0].result_code;
+	sec_error_print(rv, NULL);
 
 
 	return CPARSER_OK;
@@ -64,7 +73,7 @@ cparser_cmd_show_rule(cparser_context_t *context)
 
 
 cparser_result_t
-cparser_cmd_set_rule_smac_smac_dmac_dmac_sip_sip_mask_sip_mask_dip_dip_mask_dip_mask_sport_start_sport_start_sport_end_sport_end_dport_start_dport_start_dport_end_dport_end_proto_start_proto_start_proto_end_proto_end_action
+cparser_cmd_add_rule_smac_smac_dmac_dmac_sip_sip_mask_sip_mask_dip_dip_mask_dip_mask_sport_start_sport_start_sport_end_sport_end_dport_start_dport_start_dport_end_dport_end_proto_start_proto_start_proto_end_proto_end_action
 		(cparser_context_t *context, 
 			cparser_macaddr_t *smac,
 			cparser_macaddr_t *dmac,
@@ -82,15 +91,17 @@ cparser_cmd_set_rule_smac_smac_dmac_dmac_sip_sip_mask_sip_mask_dip_dip_mask_dip_
 {
 	assert(context);
 
-	int sn;
+	int sn, rn;
 	cmd_type_t cmd;
 	struct rcp_msg_params_s rcp_para;
+	CLI_RESULT *blocks;
+	int rv = 0;
 	
 	memset(&rcp_para, 0, sizeof(struct rcp_msg_params_s));
 
 	memset(send_buf, 0, sizeof(send_buf));
 	memset(recv_buf, 0, sizeof(recv_buf));
-	cmd = SET_ACL_RULE;
+	cmd = ADD_ACL_RULE;
 	
 	rcp_para.nparam = 1;
 	rcp_para.more_flag = 0;
@@ -168,9 +179,17 @@ cparser_cmd_set_rule_smac_smac_dmac_dmac_sip_sip_mask_sip_mask_dip_dip_mask_dip_
 	cmd_msg_handles[cmd].pack(cmd, &rcp_para, send_buf, &sn);
 	LOG("after pack the message\n");
 
-	process_cli_show_cmd(recv_buf, send_buf, sn);
+	process_message(sn, &rn);
+	if (rn <= 0) {
+		LOG("%s error\n", __FUNCTION__);
+	}
 
-	return CPARSER_OK;
+	blocks = (CLI_RESULT *) (recv_buf + MESSAGE_HEADER_LENGTH);
+	rv = blocks[0].result_code;
+	sec_error_print(rv, NULL);
+
+	return rv;
+	
 }
 
 

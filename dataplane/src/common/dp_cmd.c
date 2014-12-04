@@ -305,15 +305,9 @@ void dp_show_mem_pool(cvmx_wqe_t *wq, void *data)
 	ptr += len;
 	totallen += len;
 
-	len = sprintf((void *)ptr, "start: %p    totalsize: %d\n", sos_mem_pool->current_start, sos_mem_pool->current_size);
+	len = sprintf((void *)ptr, "cur_start: %p    cur_size: %d\n", sos_mem_pool->current_start, sos_mem_pool->current_size);
 	ptr += len;
 	totallen += len;
-
-
-
-
-
-	
 
 	printf("total len is %d\n",totallen);
 	

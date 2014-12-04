@@ -148,6 +148,23 @@ int sos_mem_init(void)
 	return SEC_OK;	
 }
 
+int sos_mem_get(void)
+{
+	const cvmx_bootmem_named_block_desc_t *block_desc; 
+
+	block_desc = cvmx_bootmem_find_named_block( SOS_MEM_POOL_NAME ); 
+	if (block_desc)
+	{
+		sos_mem_pool = (sos_mem_pool_region_t *)(block_desc->base_addr);
+		return SEC_OK;
+	}
+	else
+	{
+		printf("sos_mem_get error \n");
+		return SEC_NO;
+	}
+}
+
 
 static inline int get_best_size(uint32_t size)
 {

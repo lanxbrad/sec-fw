@@ -72,7 +72,7 @@ show fpa
 show mem pool
 
 // Set rule SMAC DMAC SIP DIP SPORT DPORT PROTOCOL TIME_START TIME_END ACTION
-set rule smac <MACADDR:smac> dmac <MACADDR:dmac> sip <IPV4ADDR:sip> mask <UINT:sip_mask> dip <IPV4ADDR:dip> mask <UINT:dip_mask> sport_start <UINT:sport_start> sport_end <UINT:sport_end> dport_start <UINT:dport_start> dport_end <UINT:dport_end> proto_start <UINT:proto_start> proto_end <UINT:proto_end> <LIST:fw,drop:action>
+add rule smac <MACADDR:smac> dmac <MACADDR:dmac> sip <IPV4ADDR:sip> mask <UINT:sip_mask> dip <IPV4ADDR:dip> mask <UINT:dip_mask> sport_start <UINT:sport_start> sport_end <UINT:sport_end> dport_start <UINT:dport_start> dport_end <UINT:dport_end> proto_start <UINT:proto_start> proto_end <UINT:proto_end> <LIST:fw,drop:action>
 
 // Show rule
 show rule

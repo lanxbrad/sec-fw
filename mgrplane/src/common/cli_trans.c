@@ -35,6 +35,33 @@ int open_cli2server_socket(void)
 	return 0;
 }
 
+int process_message(int sn, int *rn_p)
+{
+	unsigned int len = 0;
+	int rn;
+
+	if (g_rcp_fd <= 0) {
+		open_cli2server_socket();
+		if (g_rcp_fd <= 0) {
+			LOG("Error:can not connect to server,make sure server is running\n");
+			return 1;
+		}
+	}
+	if (send(g_rcp_fd, send_buf, sn, 0) < 0) {
+		exit(1);
+	}
+
+	if ((rn = recvfrom(g_rcp_fd, recv_buf, BUFSIZE - 1, 0, NULL, &len)) > 0) {
+		recv_buf[rn] = 0;
+	}
+	*rn_p = rn;
+	if (rn < 0) {
+		exit(1);
+	}
+	
+	return 0;
+}
+
 
 int process_cli_show_cmd(char *rbuf, char *sbuf, int sn)
 {
@@ -83,6 +110,42 @@ int process_cli_show_cmd(char *rbuf, char *sbuf, int sn)
 	return 0;
 }
 
+static char *_sec_error(int errcode, char *buf)
+{
+	static char sbuf[11] = { 0 };
+
+	if (buf == NULL)
+		buf = sbuf;
+
+	switch (errcode) {
+	case RCP_RESULT_OK:
+		return ("Ok.");
+	default:
+		if (errcode < 0 || RCP_RESULT_CODE_MAX <= errcode) {
+			return ("Failed.");
+		} else {				/* generate numberic error code */
+			sprintf(buf, "Error #%3d", errcode);
+			return (buf);
+		}
+	}
+
+	return NULL;
+}
+
+
+
+char *sec_error(int errcode)
+{
+	return _sec_error(errcode, NULL);
+}
+
+void sec_error_print(int errcode, char *prefix)
+{
+	if (prefix == NULL)
+		fprintf(stderr, "%s\n", sec_error(errcode));
+	else
+		fprintf(stderr, "%s:%s\n", prefix, sec_error(errcode));
+}
 
 
 

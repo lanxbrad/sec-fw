@@ -1,7 +1,7 @@
 #include "message.h"
 
 
-int debugprint = 0;
+int debugprint = 1;
 
 
 struct msg_header_info_s cmd_msg_headers[MAX_COMMAND_TYPE + 1];
@@ -22,6 +22,9 @@ static int __get_data_block_length(int block_type, int *block_length_p)
 		break;
 	case BLOCK_ACL_RULE_TUPLE:
 		*block_length_p = sizeof(RCP_BLOCK_ACL_RULE_TUPLE);
+		break;
+	case BLOCK_RESULT_CODE:
+		*block_length_p = sizeof(CLI_RESULT);
 		break;
 	default: 
 		*block_length_p = 0;
@@ -105,6 +108,8 @@ int pack_acl_rule(cmd_type_t cmd, void *para_p, void *sbuf, int *len_p)
 	int rv;
 	
 	char *ptr = (char *)sbuf;
+	int block_index;
+	int block_length;
 	MESSAGE_HEAD msg_header;
 	struct rcp_msg_params_s *lpara_p = (struct rcp_msg_params_s *)para_p;
 
@@ -120,12 +125,43 @@ int pack_acl_rule(cmd_type_t cmd, void *para_p, void *sbuf, int *len_p)
 	memcpy(ptr, &msg_header, MESSAGE_HEADER_LENGTH);
 	*len_p = MESSAGE_HEADER_LENGTH;
 	ptr += MESSAGE_HEADER_LENGTH;
+	
 	LOG("cmd=%d, nparam=%d\n", cmd, lpara_p->nparam);
 
+	/* copy the data block to sbuf */
+	block_length = sizeof(RCP_BLOCK_ACL_RULE_TUPLE);
+	for (block_index = 0; block_index < lpara_p->nparam; block_index++) {
+		memcpy(ptr, &(lpara_p->params_list.params[block_index].Ipv4FiveTuple), block_length);
+		ptr += block_length;
+		*len_p += block_length;
+	}
 	
-	/*TODO: add block data here*/
-	printf("there should be put data\n");
+	return 0;
+}
+
+int pack_result_code(cmd_type_t cmd, void *para_p, void *sbuf, int *len_p)
+{
+	int rv;
+	int block_index;
+	int block_length;
+	char *ptr = (char *)sbuf;
+	MESSAGE_HEAD msg_header;
 	
+	struct rcp_msg_params_s *lpara_p = (struct rcp_msg_params_s *)para_p;
+	rv = __cmd_is_valid(cmd);
+	if (rv)
+		return rv;
+	
+	encap_msg_header(cmd, lpara_p, &msg_header);
+	memcpy(ptr, &msg_header, MESSAGE_HEADER_LENGTH);
+	*len_p = MESSAGE_HEADER_LENGTH;
+	ptr += MESSAGE_HEADER_LENGTH;
+	block_length = sizeof(RCP_BLOCK_RESULT);
+	for (block_index = 0; block_index < lpara_p->nparam; block_index++) {
+		memcpy(ptr, &(lpara_p->params_list.params[block_index].ResultCode), block_length);
+		ptr += block_length;
+		*len_p += block_length;
+	}
 	return 0;
 }
 
@@ -283,8 +319,8 @@ int init_msg_pack_handle(void)
 	register_msg_pack_handle(SHOW_ACL_RULE, pack_null);
 	register_msg_pack_handle(SHOW_ACL_RULE_ACK, pack_show_info);
 
-	register_msg_pack_handle(SET_ACL_RULE, pack_acl_rule);
-	register_msg_pack_handle(SET_ACL_RULE_ACK, pack_show_info);
+	register_msg_pack_handle(ADD_ACL_RULE, pack_acl_rule);
+	register_msg_pack_handle(ADD_ACL_RULE_ACK, pack_result_code);
 
 	register_msg_pack_handle(DEL_ACL_RULE, pack_null);
 	register_msg_pack_handle(DEL_ACL_RULE_ACK, pack_show_info);
@@ -337,8 +373,8 @@ int init_msg_header(void)
 	register_msg_header(MSG_VALID_FLAG, SHOW_ACL_RULE, MSG_TYPE_CLI_OCTEON, MSG_CODE_SHOW_ACL_RULE, BLOCK_ACL_RULE_TUPLE);
 	register_msg_header(MSG_VALID_FLAG, SHOW_ACL_RULE_ACK, MSG_TYPE_CLI_OCTEON, MSG_CODE_SHOW_ACL_RULE_ACK, BLOCK_ACL_RULE_TUPLE);
 	
-	register_msg_header(MSG_VALID_FLAG, SET_ACL_RULE, MSG_TYPE_CLI_OCTEON, MSG_CODE_SET_ACL_RULE, BLOCK_ACL_RULE_TUPLE);
-	register_msg_header(MSG_VALID_FLAG, SET_ACL_RULE_ACK, MSG_TYPE_CLI_OCTEON, MSG_CODE_SET_ACL_RULE_ACK, BLOCK_TYPE_START);
+	register_msg_header(MSG_VALID_FLAG, ADD_ACL_RULE, MSG_TYPE_CLI_OCTEON, MSG_CODE_ADD_ACL_RULE, BLOCK_ACL_RULE_TUPLE);
+	register_msg_header(MSG_VALID_FLAG, ADD_ACL_RULE_ACK, MSG_TYPE_CLI_OCTEON, MSG_CODE_ADD_ACL_RULE_ACK, BLOCK_RESULT_CODE);
 
 	
 

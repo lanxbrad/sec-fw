@@ -29,20 +29,20 @@ typedef enum
 	TEST_COMMAND = 0,
 	TEST_COMMAND_ACK,
 
-	SHOW_DP_BUILD_TIME,
+	SHOW_DP_BUILD_TIME,   /*2*/
 	SHOW_DP_BUILD_TIME_ACK,
 
-	SHOW_DP_PKT_STAT,
+	SHOW_DP_PKT_STAT,     /*4*/
 	SHOW_DP_PKT_STAT_ACK,
 
-	SHOW_MEM_POOL,
+	SHOW_MEM_POOL,     /*6*/
 	SHOW_MEM_POOL_ACK,
 
-	SHOW_ACL_RULE,
+	SHOW_ACL_RULE,    /*8*/
 	SHOW_ACL_RULE_ACK,
 
-	SET_ACL_RULE,
-	SET_ACL_RULE_ACK,
+	ADD_ACL_RULE,    /*10*/
+	ADD_ACL_RULE_ACK,
 
 	DEL_ACL_RULE,
 	DEL_ACL_RULE_ACK,
@@ -53,13 +53,33 @@ typedef enum
 	MAX_COMMAND_TYPE,
 }cmd_type_t;
 
+typedef enum tag_RCP_NISAC_RESULT_CODE { 
+	RCP_RESULT_OK = 0x0, 
+	RCP_RESULT_RULE_FULL, 
+	RCP_RESULT_RULE_EXIST, 
+	RCP_RESULT_RULE_NOT_EXIST, 
+	RCP_RESULT_INVALID_FLAG, 
+	RCP_RESULT_INVALID_MSG_TYPE, 
+	RCP_RESULT_INVALID_MSG_CODE, 
+	RCP_RESULT_INVALID_USER, 
+	RCP_RESULT_INVALID_PASSWORD, 
+	RCP_RESULT_QUERY_IN_PROGRESS, 
+	RCP_RESULT_SAVE_IN_PROGRESS, 
+	RCP_RESULT_REQUEST_FORBIDDEN, 
+	RCP_RESULT_CODE_MAX,
+} RCP_NISAC_RESULT_CODE;
+
 
 typedef enum _msg_block_type_e { 
 	BLOCK_TYPE_START = 0x00, 
 	BLOCK_IPV4_FIVE_TUPLE = 0x01,
 	BLOCK_ACL_RULE_TUPLE = 0x02,
+	BLOCK_RESULT_CODE = 0x3,
 }msg_block_type_e;
 
+typedef struct tag_CLI_RESULT {
+	uint32_t result_code;
+} __attribute__ ((__packed__)) CLI_RESULT;
 
 
 
@@ -89,12 +109,18 @@ typedef struct tag_RCP_BLOCK_ACL_RULE_TUPLE{
 	uint16_t action;
 }__attribute__ ((__packed__)) RCP_BLOCK_ACL_RULE_TUPLE;
 
+typedef struct tag_RCP_BLOCK_RESULT {
+	uint32_t result_code;
+} __attribute__ ((__packed__)) RCP_BLOCK_RESULT;
 
 
 typedef struct TAG_RCP_DATA_BLOCK {
 	union {
 		RCP_BLOCK_IPV4_FIVE_TUPLE Ipv4FiveTuple;
 		RCP_BLOCK_ACL_RULE_TUPLE  AclRuleTuple;
+		RCP_BLOCK_RESULT ResultCode;
+
+		CLI_RESULT CliResultCode;
 	};
 }RCP_DATA_BLOCK;
 
@@ -125,10 +151,8 @@ typedef enum _msg_code_e {
 	MSG_CODE_SHOW_ACL_RULE,
 	MSG_CODE_SHOW_ACL_RULE_ACK,
 
-	MSG_CODE_SET_ACL_RULE,
-	MSG_CODE_SET_ACL_RULE_ACK,
-
-	
+	MSG_CODE_ADD_ACL_RULE,
+	MSG_CODE_ADD_ACL_RULE_ACK,
 }msg_code_e;
 
 

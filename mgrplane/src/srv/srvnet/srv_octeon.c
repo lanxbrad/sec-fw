@@ -10,7 +10,7 @@ int octeon_rpccall(uint8_t * from, uint32_t length, uint32_t fd, void *param_p, 
 {
 	int ret;
 	uint8_t recv_buf[MAX_RECV_LEN];
-	uint32_t recv_len;
+	uint32_t recv_len = MAX_RECV_LEN ;
 	uint16_t info_len;
 	uint8_t s_buf[MAX_BUF];
 	rpc_msg_t rpcmsg;

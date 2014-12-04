@@ -92,12 +92,18 @@ int Sec_LowLevel_Init()
 		{
 			return SEC_NO;
 		}
+		printf("Mem_Pool_Init ok\n");
+
+		if(SEC_OK != sos_mem_init())
+		{
+			return SEC_NO;
+		}
+		printf("sos_mem_init ok\n");
 
 		if(SEC_OK != oct_sched_init())
 		{
 			return SEC_NO;
 		}
-		
 		printf("oct_sched_init ok\n");
 
 		if(SEC_OK != oct_rxtx_init())
@@ -124,6 +130,13 @@ int Sec_LowLevel_Init()
 		}
 		printf("mem pool info get ok!\n");
 
+		if(SEC_OK != sos_mem_get())
+		{
+			printf("sos_mem_get failed!\n");
+			return SEC_NO;
+		}
+		printf("sos_mem_get ok!\n");
+		
 		if(SEC_OK != oct_sched_Get())
 		{
 			printf("oct_sched_Get fail\n");

@@ -20,6 +20,9 @@ extern "C" {
 
 #define MSG_VALID_FLAG 0x88
 
+#define ACL_RULE_ACTION_FW 0
+#define ACL_RULE_ACTION_DROP 1
+
 
 typedef enum
 {
@@ -34,6 +37,9 @@ typedef enum
 
 	SHOW_MEM_POOL,
 	SHOW_MEM_POOL_ACK,
+
+	SET_ACL_RULE,
+	SET_ACL_RULE_ACK,
 	
 	MAX_COMMAND_TYPE,
 }cmd_type_t;
@@ -41,8 +47,10 @@ typedef enum
 
 typedef enum _msg_block_type_e { 
 	BLOCK_TYPE_START = 0x00, 
-	BLOCK_IPV4_FIVE_TUPLE = 0x01, 
+	BLOCK_IPV4_FIVE_TUPLE = 0x01,
+	BLOCK_ACL_RULE_TUPLE = 0x02,
 }msg_block_type_e;
+
 
 
 
@@ -56,10 +64,28 @@ typedef struct tag_RCP_BLOCK_IPV4_FIVE_TUPLE {
 }__attribute__ ((__packed__)) RCP_BLOCK_IPV4_FIVE_TUPLE;
 
 
+typedef struct tag_RCP_BLOCK_ACL_RULE_TUPLE{
+	uint8_t smac[6];
+	uint8_t dmac[6];
+	uint32_t sip;
+	uint32_t sip_mask;
+	uint32_t dip;
+	uint32_t dip_mask;
+	uint16_t sport_start;
+	uint16_t sport_end;
+	uint16_t dport_start;
+	uint16_t dport_end;
+	uint8_t protocol_start;
+	uint8_t protocol_end;
+	uint16_t action;
+}__attribute__ ((__packed__)) RCP_BLOCK_ACL_RULE_TUPLE;
+
+
 
 typedef struct TAG_RCP_DATA_BLOCK {
 	union {
 		RCP_BLOCK_IPV4_FIVE_TUPLE Ipv4FiveTuple;
+		RCP_BLOCK_ACL_RULE_TUPLE  AclRuleTuple;
 	};
 }RCP_DATA_BLOCK;
 
@@ -86,8 +112,10 @@ typedef enum _msg_code_e {
 
 	MSG_CODE_SHOW_MEM_POOL,
 	MSG_CODE_SHOW_MEM_POOL_ACK,
-}msg_code_e;
 
+	MSG_CODE_SET_ACL_RULE,
+	MSG_CODE_SET_ACL_RULE_ACK,
+}msg_code_e;
 
 
 

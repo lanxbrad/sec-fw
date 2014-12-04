@@ -7,7 +7,6 @@
 #include "cparser_token.h"
 
 
-#include "common.h"
 #include "message.h"
 #include "cli_trans.h"
 
@@ -20,6 +19,7 @@ cparser_cmd_show_dp_build_time (cparser_context_t *context)
 	int sn;
 	cmd_type_t cmd;
 	struct rcp_msg_params_s rcp_para;
+	memset(&rcp_para, 0, sizeof(struct rcp_msg_params_s));
 
 	memset(send_buf, 0, sizeof(send_buf));
 	memset(recv_buf, 0, sizeof(recv_buf));
@@ -47,6 +47,7 @@ cparser_cmd_show_pkt_stat (cparser_context_t *context)
 	int sn;
 	cmd_type_t cmd;
 	struct rcp_msg_params_s rcp_para;
+	memset(&rcp_para, 0, sizeof(struct rcp_msg_params_s));
 
 	memset(send_buf, 0, sizeof(send_buf));
 	memset(recv_buf, 0, sizeof(recv_buf));
@@ -75,6 +76,7 @@ cparser_cmd_show_mem_pool (cparser_context_t *context)
 	int sn;
 	cmd_type_t cmd;
 	struct rcp_msg_params_s rcp_para;
+	memset(&rcp_para, 0, sizeof(struct rcp_msg_params_s));
 
 	memset(send_buf, 0, sizeof(send_buf));
 	memset(recv_buf, 0, sizeof(recv_buf));
@@ -93,5 +95,8 @@ cparser_cmd_show_mem_pool (cparser_context_t *context)
 
 	return CPARSER_OK;
 }
+
+
+
 
 

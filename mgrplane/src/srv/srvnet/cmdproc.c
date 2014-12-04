@@ -2,6 +2,7 @@
 #include "message.h"
 
 #include <srv_octeon.h>
+#include <srv_rule.h>
 
 static struct rcp_msg_params_s rcp_param;
 
@@ -51,6 +52,20 @@ int process_show_mem_pool(uint8_t * from, uint32_t length, uint32_t fd)
 	return 0;
 }
 
+int process_set_acl_rule(uint8_t * from, uint32_t length, uint32_t fd)
+{
+	memset(&rcp_param, 0, sizeof(struct rcp_msg_params_s));
+
+	LOG("process_show_mem_pool \n");
+
+	Rule_set_acl_rule(from, length, fd, (void *)&rcp_param);
+
+	return 0;
+}
+
+
+
+
 
 int32_t init_cmd_process_handle(void)
 {
@@ -60,6 +75,7 @@ int32_t init_cmd_process_handle(void)
 	register_cmd_process_handle(SHOW_DP_BUILD_TIME, process_show_dp_build_time);
 	register_cmd_process_handle(SHOW_DP_PKT_STAT, process_show_dp_pkt_stat);
 	register_cmd_process_handle(SHOW_MEM_POOL, process_show_mem_pool);
+	register_cmd_process_handle(SET_ACL_RULE, process_set_acl_rule);
 	
 
 

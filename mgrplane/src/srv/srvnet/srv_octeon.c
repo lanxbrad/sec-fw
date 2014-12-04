@@ -80,6 +80,9 @@ int octeon_show_dp_pkt_stat(uint8_t * from, uint32_t length, uint32_t fd, void *
 
 int octeon_show_mem_pool(uint8_t * from, uint32_t length, uint32_t fd, void *param_p)
 {
+
 	LOG("octeon_show_mem_pool\n");
 	return octeon_rpccall(from, length, fd, param_p, SHOW_MEM_POOL_ACK, COMMAND_SHOW_MEM_POOL);
 }
+
+

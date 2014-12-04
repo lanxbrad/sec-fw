@@ -20,6 +20,9 @@ static int __get_data_block_length(int block_type, int *block_length_p)
 	case BLOCK_IPV4_FIVE_TUPLE:
 		*block_length_p = sizeof(RCP_BLOCK_IPV4_FIVE_TUPLE);
 		break;
+	case BLOCK_ACL_RULE_TUPLE:
+		*block_length_p = sizeof(RCP_BLOCK_ACL_RULE_TUPLE);
+		break;
 	default: 
 		*block_length_p = 0;
 	}
@@ -78,25 +81,53 @@ int get_cmd_type(cmd_type_t * cmd_p, MESSAGE_HEAD * header_p)
   *	Function:	fill the message header
   */
 int encap_msg_header(cmd_type_t cmd, struct rcp_msg_params_s *param_p, MESSAGE_HEAD * header_p)
-	{
-		int block_length;
-		header_p->flag = cmd_msg_headers[cmd].flag;
-		header_p->msg_type = cmd_msg_headers[cmd].msg_type;
+{
+	int block_length;
+	header_p->flag = cmd_msg_headers[cmd].flag;
+	header_p->msg_type = cmd_msg_headers[cmd].msg_type;
 
-		header_p->msg_code = cmd_msg_headers[cmd].msg_code;
+	header_p->msg_code = cmd_msg_headers[cmd].msg_code;
 
-		header_p->blocktype = cmd_msg_headers[cmd].msg_block_type;
+	header_p->blocktype = cmd_msg_headers[cmd].msg_block_type;
+
+	header_p->msg_id = param_p->msg_id;
+	header_p->more_flag = param_p->more_flag;
+	header_p->data_block_num = param_p->nparam;
+	__get_data_block_length(header_p->blocktype, &block_length);
+
+	/* number of 4 bytes */
+	header_p->length = ((header_p->data_block_num) * block_length + sizeof(MESSAGE_HEAD)) >> 2;
+	return 0;
+}
+
+int pack_acl_rule(cmd_type_t cmd, void *para_p, void *sbuf, int *len_p)
+{
+	int rv;
 	
-		header_p->msg_id = param_p->msg_id;
-		header_p->more_flag = param_p->more_flag;
-		header_p->data_block_num = param_p->nparam;
-		__get_data_block_length(header_p->blocktype, &block_length);
-	
-		/* number of 4 bytes */
-		header_p->length = ((header_p->data_block_num) * block_length + sizeof(MESSAGE_HEAD)) >> 2;
-		return 0;
-	}
+	char *ptr = (char *)sbuf;
+	MESSAGE_HEAD msg_header;
+	struct rcp_msg_params_s *lpara_p = (struct rcp_msg_params_s *)para_p;
 
+	/* make sure the cmd type is valid */
+	rv = __cmd_is_valid(cmd);
+	if (rv)
+		return rv;
+
+	/* fill the message header */
+	encap_msg_header(cmd, lpara_p, &msg_header);
+
+	/* copy the header to sbuf */
+	memcpy(ptr, &msg_header, MESSAGE_HEADER_LENGTH);
+	*len_p = MESSAGE_HEADER_LENGTH;
+	ptr += MESSAGE_HEADER_LENGTH;
+	LOG("cmd=%d, nparam=%d\n", cmd, lpara_p->nparam);
+
+	
+	/*TODO: add block data here*/
+	printf("there should be put data\n");
+	
+	return 0;
+}
 
 
 int pack_null(cmd_type_t cmd, void *para_p, void *sbuf, int *len_p)
@@ -249,6 +280,9 @@ int init_msg_pack_handle(void)
 	register_msg_pack_handle(SHOW_MEM_POOL, pack_null);
 	register_msg_pack_handle(SHOW_MEM_POOL_ACK, pack_show_info);
 
+	register_msg_pack_handle(SET_ACL_RULE, pack_acl_rule);
+	register_msg_pack_handle(SET_ACL_RULE_ACK, pack_show_info);
+
 	return 0;
 }
 /*
@@ -287,6 +321,12 @@ int init_msg_header(void)
 
 	register_msg_header(MSG_VALID_FLAG, SHOW_DP_PKT_STAT, MSG_TYPE_CLI_OCTEON, MSG_CODE_SHOW_DP_PKT_STAT, BLOCK_TYPE_START);
 	register_msg_header(MSG_VALID_FLAG, SHOW_DP_PKT_STAT_ACK, MSG_TYPE_CLI_OCTEON, MSG_CODE_SHOW_DP_PKT_STAT_ACK, BLOCK_TYPE_START);
+
+	register_msg_header(MSG_VALID_FLAG, SHOW_MEM_POOL, MSG_TYPE_CLI_OCTEON, MSG_CODE_SHOW_MEM_POOL, BLOCK_TYPE_START);
+	register_msg_header(MSG_VALID_FLAG, SHOW_MEM_POOL_ACK, MSG_TYPE_CLI_OCTEON, MSG_CODE_SHOW_MEM_POOL_ACK, BLOCK_TYPE_START);
+
+	register_msg_header(MSG_VALID_FLAG, SET_ACL_RULE, MSG_TYPE_CLI_OCTEON, MSG_CODE_SET_ACL_RULE, BLOCK_ACL_RULE_TUPLE);
+	register_msg_header(MSG_VALID_FLAG, SET_ACL_RULE_ACK, MSG_TYPE_CLI_OCTEON, MSG_CODE_SET_ACL_RULE_ACK, BLOCK_TYPE_START);
 
 	return 0;
 }

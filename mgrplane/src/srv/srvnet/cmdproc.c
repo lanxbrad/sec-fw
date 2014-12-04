@@ -52,13 +52,45 @@ int process_show_mem_pool(uint8_t * from, uint32_t length, uint32_t fd)
 	return 0;
 }
 
+int process_show_acl_rule(uint8_t * from, uint32_t length, uint32_t fd)
+{
+	memset(&rcp_param, 0, sizeof(struct rcp_msg_params_s));
+	LOG("process_show_acl_rule \n");
+
+	Rule_show_acl_rule(from, length, fd, (void *)&rcp_param);
+	
+	return 0;
+}
+
 int process_set_acl_rule(uint8_t * from, uint32_t length, uint32_t fd)
 {
 	memset(&rcp_param, 0, sizeof(struct rcp_msg_params_s));
 
-	LOG("process_show_mem_pool \n");
+	LOG("process_set_acl_rule \n");
 
 	Rule_set_acl_rule(from, length, fd, (void *)&rcp_param);
+
+	return 0;
+}
+
+int process_del_acl_rule(uint8_t * from, uint32_t length, uint32_t fd)
+{
+	memset(&rcp_param, 0, sizeof(struct rcp_msg_params_s));
+
+	LOG("process_set_acl_rule \n");
+
+	Rule_del_acl_rule(from, length, fd, (void *)&rcp_param);
+
+	return 0;
+}
+
+int process_commit_acl_rule(uint8_t * from, uint32_t length, uint32_t fd)
+{
+	memset(&rcp_param, 0, sizeof(struct rcp_msg_params_s));
+
+	LOG("process_set_acl_rule \n");
+
+	Rule_commit_acl_rule(from, length, fd, (void *)&rcp_param);
 
 	return 0;
 }
@@ -75,7 +107,12 @@ int32_t init_cmd_process_handle(void)
 	register_cmd_process_handle(SHOW_DP_BUILD_TIME, process_show_dp_build_time);
 	register_cmd_process_handle(SHOW_DP_PKT_STAT, process_show_dp_pkt_stat);
 	register_cmd_process_handle(SHOW_MEM_POOL, process_show_mem_pool);
+
+	register_cmd_process_handle(SHOW_ACL_RULE, process_show_acl_rule);
 	register_cmd_process_handle(SET_ACL_RULE, process_set_acl_rule);
+	register_cmd_process_handle(DEL_ACL_RULE, process_del_acl_rule);
+	register_cmd_process_handle(COMMIT_ACL_RULE, process_commit_acl_rule);
+	
 	
 
 

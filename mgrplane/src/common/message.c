@@ -280,8 +280,17 @@ int init_msg_pack_handle(void)
 	register_msg_pack_handle(SHOW_MEM_POOL, pack_null);
 	register_msg_pack_handle(SHOW_MEM_POOL_ACK, pack_show_info);
 
+	register_msg_pack_handle(SHOW_ACL_RULE, pack_null);
+	register_msg_pack_handle(SHOW_ACL_RULE_ACK, pack_show_info);
+
 	register_msg_pack_handle(SET_ACL_RULE, pack_acl_rule);
 	register_msg_pack_handle(SET_ACL_RULE_ACK, pack_show_info);
+
+	register_msg_pack_handle(DEL_ACL_RULE, pack_null);
+	register_msg_pack_handle(DEL_ACL_RULE_ACK, pack_show_info);
+
+	register_msg_pack_handle(COMMIT_ACL_RULE, pack_null);
+	register_msg_pack_handle(COMMIT_ACL_RULE_ACK, pack_show_info);
 
 	return 0;
 }
@@ -324,9 +333,14 @@ int init_msg_header(void)
 
 	register_msg_header(MSG_VALID_FLAG, SHOW_MEM_POOL, MSG_TYPE_CLI_OCTEON, MSG_CODE_SHOW_MEM_POOL, BLOCK_TYPE_START);
 	register_msg_header(MSG_VALID_FLAG, SHOW_MEM_POOL_ACK, MSG_TYPE_CLI_OCTEON, MSG_CODE_SHOW_MEM_POOL_ACK, BLOCK_TYPE_START);
-
+	
+	register_msg_header(MSG_VALID_FLAG, SHOW_ACL_RULE, MSG_TYPE_CLI_OCTEON, MSG_CODE_SHOW_ACL_RULE, BLOCK_ACL_RULE_TUPLE);
+	register_msg_header(MSG_VALID_FLAG, SHOW_ACL_RULE_ACK, MSG_TYPE_CLI_OCTEON, MSG_CODE_SHOW_ACL_RULE_ACK, BLOCK_ACL_RULE_TUPLE);
+	
 	register_msg_header(MSG_VALID_FLAG, SET_ACL_RULE, MSG_TYPE_CLI_OCTEON, MSG_CODE_SET_ACL_RULE, BLOCK_ACL_RULE_TUPLE);
 	register_msg_header(MSG_VALID_FLAG, SET_ACL_RULE_ACK, MSG_TYPE_CLI_OCTEON, MSG_CODE_SET_ACL_RULE_ACK, BLOCK_TYPE_START);
+
+	
 
 	return 0;
 }

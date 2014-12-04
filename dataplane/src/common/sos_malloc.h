@@ -73,6 +73,7 @@ typedef struct
 typedef struct
 {
 	int32_t global_index;
+	cvmx_spinlock_t cfg_lock;
 	sos_mem_block_Chain msc[SOS_MEM_CHAIN_INTERNAL_NUM];
 }sos_mem_block_Cfg_t;
 
@@ -83,9 +84,21 @@ typedef struct {
 }sos_mem_block_region_t;
 
 
+
+#define SOS_MEM_BLOCK_MAX 4096
+
+typedef struct {
+	SOS_MEM_SIZE size_type;
+	void *start;
+	uint64_t len;
+}sos_mem_block_t;
+
+
+
 typedef struct {
 	
 }sos_mem_raw_region_t;
+
 
 
 
@@ -96,6 +109,9 @@ typedef struct {
 	uint32_t total_size;
 	uint32_t current_size;
 	void *current_start;
+	cvmx_spinlock_t region_lock;
+	uint32_t block_num;
+	sos_mem_block_t  sos_mem_block[SOS_MEM_BLOCK_MAX];
 	sos_mem_block_region_t sos_mem_block_region;
 	sos_mem_raw_region_t sos_mem_raw_region;
 }sos_mem_pool_region_t;

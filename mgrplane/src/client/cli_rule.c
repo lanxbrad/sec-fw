@@ -12,6 +12,56 @@
 #include "cli_trans.h"
 
 
+cparser_result_t
+cparser_cmd_commit_rule_all(cparser_context_t *context)
+{
+	assert(context);
+
+	int sn;
+	cmd_type_t cmd;
+	struct rcp_msg_params_s rcp_para;
+	memset(&rcp_para, 0, sizeof(struct rcp_msg_params_s));
+
+	memset(send_buf, 0, sizeof(send_buf));
+	memset(recv_buf, 0, sizeof(recv_buf));
+	cmd = COMMIT_ACL_RULE;
+	rcp_para.nparam = 0;
+	rcp_para.more_flag = 0;
+	rcp_para.msg_id = g_msg_id;
+	g_msg_id++;
+	LOG("cmd=%d\n", cmd);
+
+	cmd_msg_handles[cmd].pack(cmd, &rcp_para, send_buf, &sn);
+	LOG("after pack the message\n");
+
+	process_cli_show_cmd(recv_buf, send_buf, sn);
+
+
+	return CPARSER_OK;
+}
+
+
+cparser_result_t
+cparser_cmd_delete_rule(cparser_context_t *context)
+{
+	return CPARSER_OK;
+}
+
+
+cparser_result_t
+cparser_cmd_delete_rule_all(cparser_context_t *context)
+{
+	return CPARSER_OK;
+}
+
+
+
+cparser_result_t
+cparser_cmd_show_rule(cparser_context_t *context)
+{
+	return CPARSER_OK;
+}
+
 
 cparser_result_t
 cparser_cmd_set_rule_smac_smac_dmac_dmac_sip_sip_mask_sip_mask_dip_dip_mask_dip_mask_sport_start_sport_start_sport_end_sport_end_dport_start_dport_start_dport_end_dport_end_proto_start_proto_start_proto_end_proto_end_action
@@ -122,3 +172,7 @@ cparser_cmd_set_rule_smac_smac_dmac_dmac_sip_sip_mask_sip_mask_dip_dip_mask_dip_
 
 	return CPARSER_OK;
 }
+
+
+
+

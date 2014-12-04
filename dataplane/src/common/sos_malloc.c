@@ -50,10 +50,43 @@ void sos_mem_block_ctrl_init(sos_mem_pool_region_t *psosmp, uint32_t size_id, vo
 	}
 }
 
+void sos_mem_block_replenish(sos_mem_pool_region_t *psosmp, uint32_t size_id, void *start, uint32_t size, int init_num)
+{
+	int i,j;
+	int numperchain = init_num/SOS_MEM_CHAIN_INTERNAL_NUM;
+
+	sos_mem_slice_head_t *head;
+	void *begin;
+	sos_mem_block_Chain *bc;
+
+	for(i = 0; i < SOS_MEM_CHAIN_INTERNAL_NUM; i++)
+	{
+		bc = &psosmp->sos_mem_block_region.sos_mem_block_cfg[size_id].msc[i];
+		cvmx_spinlock_lock(&bc->chain_lock);
+
+		bc->totalnum += init_num;
+		bc->freenum += init_num;
+
+		for(j = 0; j < numperchain; j++)
+		{
+			begin = (void *)((uint8_t *)start + i*j*size);
+			head = (sos_mem_slice_head_t *)begin;
+			head->headmagic = SOS_MEM_HEAD_MAGIC;
+			head->subchain_id = i;
+			head->size_type = size_id;
+			*(uint32_t *)((uint8_t *)head + SOS_MEM_SLICE_HEAD_SIZE + sos_mem_size[size_id].size) = SOS_MEM_TAIL_MAGIC;
+			list_add(&head->list, &bc->head);
+		}
+		
+		cvmx_spinlock_unlock(&bc->chain_lock);
+	}
+}
+
 
 int sos_mem_block_init(sos_mem_pool_region_t *psosmp)
 {
 	uint32_t i;
+	int block_used;
 	uint32_t size;
 	uint32_t initnum;
 	uint32_t slicewholesize;
@@ -75,6 +108,12 @@ int sos_mem_block_init(sos_mem_pool_region_t *psosmp)
 		start = psosmp->current_start;		
 
 		sos_mem_block_ctrl_init(psosmp, i, start, slicewholesize, initnum);
+
+		block_used = psosmp->block_num;
+		psosmp->sos_mem_block[block_used].size_type = i;
+		psosmp->sos_mem_block[block_used].start = start;
+		psosmp->sos_mem_block[block_used].len = requestsize;
+		psosmp->block_num = block_used + 1;
 		
 		psosmp->current_size = psosmp->current_size - requestsize;
 		psosmp->current_start = (uint8_t *)psosmp->current_start + requestsize;
@@ -93,6 +132,7 @@ int sos_mem_init(void)
 		return SEC_NO;
 
 	memset(ptr, 0, SOS_MEM_POOL_SIZE);
+
 
 	sos_mem_pool = (sos_mem_pool_region_t *)ptr;
 	sos_mem_pool->start = ptr;
@@ -125,15 +165,60 @@ static inline int get_best_size(uint32_t size)
 }
 
 
-void *sos_mem_alloc(uint32_t size)
+int sos_mem_replenish(int size_type)
+{
+	int initnum;
+	int slicerawsize;
+	int slicewholesize;
+	uint32_t requestsize;
+	int block_used;
+	void *start;
+
+	initnum = sos_mem_size[size_type].init_num;
+	slicerawsize = sos_mem_size[size_type].size;
+
+	slicewholesize = slicerawsize + SOS_MEM_SLICE_HEAD_SIZE + SOS_MEM_TAIL_MAGIC_SIZE;
+	requestsize = slicewholesize * initnum;
+
+	cvmx_spinlock_lock(&sos_mem_pool->region_lock);
+
+	if( SOS_MEM_BLOCK_MAX == sos_mem_pool->block_num )
+	{
+		cvmx_spinlock_unlock(&sos_mem_pool->region_lock);
+		return SEC_NO;
+	}
+
+	if( requestsize > sos_mem_pool->current_size )
+	{
+		cvmx_spinlock_unlock(&sos_mem_pool->region_lock);
+		return SEC_NO;
+	}
+
+	start = sos_mem_pool->current_start;
+
+	block_used = sos_mem_pool->block_num;
+	sos_mem_pool->sos_mem_block[block_used].size_type = size_type;
+	sos_mem_pool->sos_mem_block[block_used].start = start;
+	sos_mem_pool->sos_mem_block[block_used].len = requestsize;
+	sos_mem_pool->block_num = block_used + 1;
+
+	sos_mem_block_replenish(sos_mem_pool, size_type, start, slicewholesize, initnum);
+
+	sos_mem_pool->current_start = (void *)((uint8_t *)start + requestsize);
+	sos_mem_pool->current_size = sos_mem_pool->current_size - requestsize;
+	
+	cvmx_spinlock_unlock(&sos_mem_pool->region_lock);
+
+	return SEC_OK;
+}
+
+
+void *_sos_mem_alloc(uint32_t size_type)
 {
 	sos_mem_block_Cfg_t *dst;
 	struct list_head *l;
 	uint32_t index;
 	sos_mem_slice_head_t *slice;
-	int size_type = get_best_size(size);
-	if(size_type < 0)
-		return NULL;
 	
 	dst = &sos_mem_pool->sos_mem_block_region.sos_mem_block_cfg[size_type];
 
@@ -160,7 +245,30 @@ void *sos_mem_alloc(uint32_t size)
 	}
 	slice->ref = 1;
 	return (void *)((uint8_t *)slice + SOS_MEM_SLICE_HEAD_SIZE);
+}
+
+
+void *sos_mem_alloc(uint32_t size)
+{
+	void *ptr;
+	int size_type = get_best_size(size);
+	if(size_type < 0)
+		return NULL;
 	
+	ptr = (void *)_sos_mem_alloc(size_type);
+	if(NULL == ptr)
+	{
+		if(SEC_OK == sos_mem_replenish(size_type))
+		{
+			return _sos_mem_alloc(size_type);
+		}
+		else
+		{
+			return NULL;
+		}
+	}
+
+	return ptr;
 }
 
 void sos_mem_free(void *p)

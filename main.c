@@ -60,6 +60,7 @@
 #include <oct-sched.h>
 #include <flow.h>
 #include <dp_cmd.h>
+#include <sos_malloc.h>
 
 
 extern flow_item_t *flow_item_alloc();

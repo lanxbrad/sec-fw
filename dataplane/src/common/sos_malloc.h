@@ -130,6 +130,9 @@ typedef struct {
 #define SOS_FREE(p)      sos_mem_free(p)
 #endif
 
+extern int sos_mem_get(void);
+extern int sos_mem_init(void);
+
 
 
 #endif

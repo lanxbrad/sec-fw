@@ -11,7 +11,7 @@ SOURCES+=$(wildcard *.c) cparser_tree.c
 OBJS:=$(addprefix $(BUILD_DIR)/,$(subst .c,.o,$(SOURCES)))
 DEPS:=$(addprefix $(BUILD_DIR)/,$(subst .c,.d,$(SOURCES)))
 
-PROJ_CFLAGS += -I.  -I$(TOP)/src/common
+PROJ_CFLAGS += -I.  -I$(TOP)/src/common  -I$(TOP)/../include
 
 CLI_FLAGS += -D TEST_LABEL1
 

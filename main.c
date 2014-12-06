@@ -167,6 +167,7 @@ int Sec_HighLevel_Init()
 
 	if ( cvmx_is_init_core() )
 	{
+		
 		if(SEC_OK != Decode_PktStat_Init())
 		{
 			printf("Decode_PktStat_Init failed\n");
@@ -217,6 +218,13 @@ int Sec_HighLevel_Init()
 
 		printf("FlowInfoGet ok\n");
 	}
+
+	if(SEC_OK != DP_Acl_Rule_Init())
+	{
+		printf("DP_Acl_Rule_Init failed\n");
+		return SEC_NO;
+	}
+	
 
 	return SEC_OK;
 }

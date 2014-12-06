@@ -6,6 +6,7 @@ extern "C" {
 #endif
 
 #include "common.h"
+#include "rpc-common.h"
 
 #define SERV_LOCAL 0x7f000001
 #define SERV_CLI_PORT  10001
@@ -108,22 +109,6 @@ typedef struct tag_RCP_BLOCK_IPV4_FIVE_TUPLE {
 	uint16_t dst_port;
 }__attribute__ ((__packed__)) RCP_BLOCK_IPV4_FIVE_TUPLE;
 
-
-typedef struct tag_RCP_BLOCK_ACL_RULE_TUPLE{
-	uint8_t smac[6];
-	uint8_t dmac[6];
-	uint32_t sip;
-	uint32_t sip_mask;
-	uint32_t dip;
-	uint32_t dip_mask;
-	uint16_t sport_start;
-	uint16_t sport_end;
-	uint16_t dport_start;
-	uint16_t dport_end;
-	uint8_t protocol_start;
-	uint8_t protocol_end;
-	uint16_t action;
-}__attribute__ ((__packed__)) RCP_BLOCK_ACL_RULE_TUPLE;
 
 
 

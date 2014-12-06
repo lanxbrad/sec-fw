@@ -23,7 +23,10 @@ int main(int argc, char *argv[])
 
 	server_init();
 
-	Rule_list_init();
+	if(Rule_list_init() < 0)
+	{
+		exit(1);
+	}
 
 	printf("server init done.\n");
 

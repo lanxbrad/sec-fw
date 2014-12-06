@@ -3,6 +3,8 @@
 #include <trans.h>
 #include <pow.h>
 #include <rpc-common.h>
+#include <shm.h>
+
 
 
 
@@ -51,7 +53,29 @@ int Rule_duplicate_check(RCP_BLOCK_ACL_RULE_TUPLE *rule)
 int Rule_list_init()
 {
 	/*TODO:alloc rule_list a share mem*/
-	rule_list = (rule_list_t *)malloc(sizeof(rule_list_t));
+	int fd;
+
+	fd = shm_open(SHM_RULE_LIST_NAME, O_RDWR | O_CREAT | O_TRUNC, 0);
+
+	if (fd < 0) {
+		printf("Failed to setup CVMX_SHARED(shm_open)");
+		return -1;
+	}
+
+	//if (shm_unlink(SHM_RULE_LIST_NAME) < 0)
+	//		printf("Failed to shm_unlink shm_name");
+
+	ftruncate(fd, sizeof(rule_list_t));
+		
+	
+	void *ptr = mmap(NULL, sizeof(rule_list_t), PROT_READ | PROT_WRITE, MAP_SHARED, fd, 0);
+	if (ptr == NULL) 
+	{
+		printf("Failed to setup rule list (mmap copy)");
+		return -1;
+	}
+	rule_list = (rule_list_t *)ptr;
+
 	memset((void *)rule_list, 0, sizeof(rule_list_t));
 	
 	rule_list->rule_entry_free = RULE_ENTRY_MAX;

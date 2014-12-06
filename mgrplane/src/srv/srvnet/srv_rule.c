@@ -6,7 +6,7 @@
 
 
 
-rule_List_t *rule_list;
+rule_list_t *rule_list;
 
 
 
@@ -51,6 +51,9 @@ int Rule_duplicate_check(RCP_BLOCK_ACL_RULE_TUPLE *rule)
 int Rule_list_init()
 {
 	/*TODO:alloc rule_list a share mem*/
+	rule_list = (rule_list_t *)malloc(sizeof(rule_list_t));
+	memset((void *)rule_list, 0, sizeof(rule_list_t));
+	
 	rule_list->rule_entry_free = RULE_ENTRY_MAX;
 
 	return 0;
@@ -111,6 +114,8 @@ int Rule_del(RCP_BLOCK_ACL_RULE_TUPLE *rule)
 		if(0 == ret)
 		{
 			rule_list->rule_entry[i].entry_status = RULE_ENTRY_STATUS_FREE;
+			rule_list->rule_entry_free++;
+			rule_list->build_status = RULE_BUILD_UNCOMMIT;
 			return RULE_OK;
 		}
 		else
@@ -120,6 +125,43 @@ int Rule_del(RCP_BLOCK_ACL_RULE_TUPLE *rule)
 	}
 
 	return RULE_NOT_EXIST;
+}
+
+int Rule_del_by_id(RCP_BLOCK_ACL_RULE_ID *id)
+{
+	if(RULE_ENTRY_MAX == rule_list->rule_entry_free)
+	{
+		return RULE_NOT_EXIST;
+	}
+
+	if(RULE_ENTRY_STATUS_FREE == rule_list->rule_entry[id->rule_id].entry_status)
+	{
+		return RULE_NOT_EXIST;
+	}
+	else 
+	{
+		rule_list->rule_entry[id->rule_id].entry_status = RULE_ENTRY_STATUS_FREE;
+		rule_list->rule_entry_free++;
+		rule_list->build_status = RULE_BUILD_UNCOMMIT;
+		return RULE_OK;
+	}
+	
+}
+
+
+
+
+int Rule_del_all()
+{
+	int i;
+	for (i = 0; i < RULE_ENTRY_MAX; i++)
+	{
+		rule_list->rule_entry[i].entry_status = RULE_ENTRY_STATUS_FREE;
+	}
+	rule_list->rule_entry_free = RULE_ENTRY_MAX;
+	rule_list->build_status = RULE_BUILD_UNCOMMIT;
+
+	return RULE_OK;
 }
 
 
@@ -174,11 +216,12 @@ int Rule_show_acl_rule(uint8_t * from, uint32_t length, uint32_t fd, void *param
 	}
 	else
 	{
-		result_code = RCP_RESULT_FAIL;
+		result_code = RCP_RESULT_FILE_ERR;
 	}
 	
 	rcp_param_p->nparam = 1;
 	rcp_param_p->params_list.params[0].CliResultCode.result_code = result_code;
+	
 	send_rcp_res(cmd_ack, from, s_buf, fd, param_p, 0);
 
 	return 0;
@@ -223,9 +266,81 @@ int Rule_add_acl_rule(uint8_t * from, uint32_t length, uint32_t fd, void *param_
 
 int Rule_del_acl_rule(uint8_t * from, uint32_t length, uint32_t fd, void *param_p)
 {
+	int ret;
 	LOG("Rule_del_acl_rule\n");
 
+	uint8_t s_buf[MAX_BUF];
+	cmd_type_t cmd_ack = DEL_ACL_RULE_ACK;
+
+	struct rcp_msg_params_s *rcp_param_p = (struct rcp_msg_params_s *)param_p;
+
+	RCP_BLOCK_ACL_RULE_TUPLE *blocks = (RCP_BLOCK_ACL_RULE_TUPLE *)(from + MESSAGE_HEADER_LENGTH);
+
+	ret = Rule_del(blocks);
+	if( RULE_OK == ret )
+	{
+		rcp_param_p->params_list.params[0].CliResultCode.result_code = RCP_RESULT_OK;
+	}
+	else if( RULE_NOT_EXIST == ret )
+	{	
+		rcp_param_p->params_list.params[0].CliResultCode.result_code = RCP_RESULT_RULE_NOT_EXIST;
+	}
+
+	rcp_param_p->nparam = 1;
 	
+	send_rcp_res(cmd_ack, from, s_buf, fd, param_p, 0);
+
+	return 0;
+}
+
+
+int Rule_del_acl_rule_id(uint8_t * from, uint32_t length, uint32_t fd, void *param_p)
+{
+	int ret;
+	LOG("Rule_del_acl_rule_id\n");
+
+	uint8_t s_buf[MAX_BUF];
+	cmd_type_t cmd_ack = DEL_ACL_RULE_ID_ACK;
+
+	struct rcp_msg_params_s *rcp_param_p = (struct rcp_msg_params_s *)param_p;
+
+	RCP_BLOCK_ACL_RULE_ID *blocks = (RCP_BLOCK_ACL_RULE_ID *)(from + MESSAGE_HEADER_LENGTH);
+
+	ret = Rule_del_by_id(blocks);
+	if( RULE_OK == ret )
+	{
+		rcp_param_p->params_list.params[0].CliResultCode.result_code = RCP_RESULT_OK;
+	}
+	else if( RULE_NOT_EXIST == ret )
+	{	
+		rcp_param_p->params_list.params[0].CliResultCode.result_code = RCP_RESULT_RULE_NOT_EXIST;
+	}
+
+	rcp_param_p->nparam = 1;
+	
+	send_rcp_res(cmd_ack, from, s_buf, fd, param_p, 0);
+
+	return 0;
+}
+
+
+
+int Rule_del_acl_rule_all(uint8_t * from, uint32_t length, uint32_t fd, void *param_p)
+{
+	LOG("Rule_del_acl_rule_all\n");
+	
+	uint8_t s_buf[MAX_BUF];
+	cmd_type_t cmd_ack = DEL_ACL_RULE_ALL_ACK;
+	
+	struct rcp_msg_params_s *rcp_param_p = (struct rcp_msg_params_s *)param_p;
+	
+	Rule_del_all();
+
+	rcp_param_p->params_list.params[0].CliResultCode.result_code = RCP_RESULT_OK;
+
+	rcp_param_p->nparam = 1;
+	
+	send_rcp_res(cmd_ack, from, s_buf, fd, param_p, 0);
 	
 	return 0;
 }
@@ -234,7 +349,19 @@ int Rule_del_acl_rule(uint8_t * from, uint32_t length, uint32_t fd, void *param_
 int Rule_commit_acl_rule(uint8_t * from, uint32_t length, uint32_t fd, void *param_p)
 {
 	LOG("Rule_commit_acl_rule\n");
+
+	uint8_t s_buf[MAX_BUF];
+	cmd_type_t cmd_ack = COMMIT_ACL_RULE_ACK;
+
 	
+	struct rcp_msg_params_s *rcp_param_p = (struct rcp_msg_params_s *)param_p;
+
+	rcp_param_p->params_list.params[0].CliResultCode.result_code = RCP_RESULT_OK;
+	
+	rcp_param_p->nparam = 1;
+		
+	send_rcp_res(cmd_ack, from, s_buf, fd, param_p, 0);
+		
 	return 0;
 }
 

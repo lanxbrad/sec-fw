@@ -78,10 +78,13 @@ add rule smac <MACADDR:smac> dmac <MACADDR:dmac> sip <IPV4ADDR:sip> mask <UINT:s
 show rule
 
 // Commit rule all
-commit rule all
+commit rule
 
 // delete rule
-delete rule
+delete rule smac <MACADDR:smac> dmac <MACADDR:dmac> sip <IPV4ADDR:sip> mask <UINT:sip_mask> dip <IPV4ADDR:dip> mask <UINT:dip_mask> sport_start <UINT:sport_start> sport_end <UINT:sport_end> dport_start <UINT:dport_start> dport_end <UINT:dport_end> proto_start <UINT:proto_start> proto_end <UINT:proto_end> <LIST:fw,drop:action>
 
 // delete rule all
 delete rule all
+
+// delete rule id
+delete rule <UINT:id>

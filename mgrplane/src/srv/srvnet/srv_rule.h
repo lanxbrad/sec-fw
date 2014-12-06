@@ -32,7 +32,7 @@ typedef struct
 	int rule_entry_free;
 	int build_status;
 	rule_entry_t rule_entry[RULE_ENTRY_MAX]; 
-}rule_List_t;
+}rule_list_t;
 
 
 
@@ -40,23 +40,14 @@ typedef struct
 
 
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
+extern int Rule_list_init();
 extern int Rule_add_acl_rule(uint8_t * from, uint32_t length, uint32_t fd, void *param_p);
 extern int Rule_del_acl_rule(uint8_t * from, uint32_t length, uint32_t fd, void *param_p);
 extern int Rule_commit_acl_rule(uint8_t * from, uint32_t length, uint32_t fd, void *param_p);
 extern int Rule_show_acl_rule(uint8_t * from, uint32_t length, uint32_t fd, void *param_p);
+extern int Rule_del_acl_rule_all(uint8_t * from, uint32_t length, uint32_t fd, void *param_p);
+extern int Rule_del_acl_rule_id(uint8_t * from, uint32_t length, uint32_t fd, void *param_p);
+
+
 
 #endif

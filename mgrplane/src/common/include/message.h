@@ -35,19 +35,25 @@ typedef enum
 	SHOW_DP_PKT_STAT,     /*4*/
 	SHOW_DP_PKT_STAT_ACK,
 
-	SHOW_MEM_POOL,     /*6*/
+	SHOW_MEM_POOL,        /*6*/
 	SHOW_MEM_POOL_ACK,
 
-	SHOW_ACL_RULE,    /*8*/
+	SHOW_ACL_RULE,        /*8*/
 	SHOW_ACL_RULE_ACK,
 
-	ADD_ACL_RULE,    /*10*/
+	ADD_ACL_RULE,         /*10*/
 	ADD_ACL_RULE_ACK,
 
-	DEL_ACL_RULE,
+	DEL_ACL_RULE,         /*12*/
 	DEL_ACL_RULE_ACK,
 
-	COMMIT_ACL_RULE,
+	DEL_ACL_RULE_ID,      /*14*/
+	DEL_ACL_RULE_ID_ACK,
+
+	DEL_ACL_RULE_ALL,     /*16*/
+	DEL_ACL_RULE_ALL_ACK,
+
+	COMMIT_ACL_RULE,      /*18*/
 	COMMIT_ACL_RULE_ACK,
 	
 	MAX_COMMAND_TYPE,
@@ -59,6 +65,8 @@ typedef enum tag_RCP_NISAC_RESULT_CODE {
 	RCP_RESULT_RULE_EXIST, 
 	RCP_RESULT_RULE_NOT_EXIST, 
 	RCP_RESULT_FAIL,
+	RCP_RESULT_NO_MEM,
+	RCP_RESULT_FILE_ERR,
 	RCP_RESULT_INVALID_FLAG, 
 	RCP_RESULT_INVALID_MSG_TYPE, 
 	RCP_RESULT_INVALID_MSG_CODE, 
@@ -71,12 +79,19 @@ typedef enum tag_RCP_NISAC_RESULT_CODE {
 } RCP_NISAC_RESULT_CODE;
 
 
+
+
+
 typedef enum _msg_block_type_e { 
 	BLOCK_TYPE_START = 0x00, 
 	BLOCK_IPV4_FIVE_TUPLE = 0x01,
 	BLOCK_ACL_RULE_TUPLE = 0x02,
 	BLOCK_RESULT_CODE = 0x3,
+	BLOCK_ACL_RULE_ID = 0x4,
 }msg_block_type_e;
+
+
+
 
 typedef struct tag_CLI_RESULT {
 	uint32_t result_code;
@@ -110,17 +125,25 @@ typedef struct tag_RCP_BLOCK_ACL_RULE_TUPLE{
 	uint16_t action;
 }__attribute__ ((__packed__)) RCP_BLOCK_ACL_RULE_TUPLE;
 
+
+
 typedef struct tag_RCP_BLOCK_RESULT {
 	uint32_t result_code;
 } __attribute__ ((__packed__)) RCP_BLOCK_RESULT;
+
+
+
+typedef struct tag_RCP_BLOCK_ACL_RULE_ID {
+	uint32_t rule_id;
+} __attribute__ ((__packed__)) RCP_BLOCK_ACL_RULE_ID;
 
 
 typedef struct TAG_RCP_DATA_BLOCK {
 	union {
 		RCP_BLOCK_IPV4_FIVE_TUPLE Ipv4FiveTuple;
 		RCP_BLOCK_ACL_RULE_TUPLE  AclRuleTuple;
+		RCP_BLOCK_ACL_RULE_ID   AclRuleId;
 		RCP_BLOCK_RESULT ResultCode;
-
 		CLI_RESULT CliResultCode;
 	};
 }RCP_DATA_BLOCK;
@@ -154,6 +177,19 @@ typedef enum _msg_code_e {
 
 	MSG_CODE_ADD_ACL_RULE,
 	MSG_CODE_ADD_ACL_RULE_ACK,
+
+	MSG_CODE_DEL_ACL_RULE,
+	MSG_CODE_DEL_ACL_RULE_ACK,
+
+	MSG_CODE_DEL_ACL_RULE_ID,
+	MSG_CODE_DEL_ACL_RULE_ID_ACK,
+
+	MSG_CODE_DEL_ACL_RULE_ALL,
+	MSG_CODE_DEL_ACL_RULE_ALL_ACK,
+
+	MSG_CODE_COMMIT_ACL_RULE,
+	MSG_CODE_COMMIT_ACL_RULE_ACK,
+	
 }msg_code_e;
 
 

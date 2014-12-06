@@ -9,7 +9,7 @@ SOURCES:=$(wildcard *.c)
 OBJS:=$(addprefix $(BUILD_DIR)/,$(subst .c,.o,$(SOURCES)))
 DEPS:=$(addprefix $(BUILD_DIR)/,$(subst .c,.d,$(SOURCES)))
 
-PROJ_CFLAGS += -I.  -I$(TOP)/src/srv/srvpow
+PROJ_CFLAGS += -I.  -I$(TOP)/src/srv/srvpow -I$(TOP)/src/srv/srvnet
 
 .PHONY: all clean
 

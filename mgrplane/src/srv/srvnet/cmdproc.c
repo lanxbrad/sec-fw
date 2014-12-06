@@ -84,6 +84,29 @@ int process_del_acl_rule(uint8_t * from, uint32_t length, uint32_t fd)
 	return 0;
 }
 
+int process_del_acl_rule_id(uint8_t * from, uint32_t length, uint32_t fd)
+{
+	memset(&rcp_param, 0, sizeof(struct rcp_msg_params_s));
+
+	LOG("process_del_acl_rule_id \n");
+
+	Rule_del_acl_rule_id(from, length, fd, (void *)&rcp_param);
+
+	return 0;
+}
+
+int process_del_acl_rule_all(uint8_t * from, uint32_t length, uint32_t fd)
+{
+	memset(&rcp_param, 0, sizeof(struct rcp_msg_params_s));
+
+	LOG("process_del_acl_rule_all \n");
+
+	Rule_del_acl_rule_all(from, length, fd, (void *)&rcp_param);
+
+	return 0;
+}
+
+
 int process_commit_acl_rule(uint8_t * from, uint32_t length, uint32_t fd)
 {
 	memset(&rcp_param, 0, sizeof(struct rcp_msg_params_s));
@@ -111,6 +134,8 @@ int32_t init_cmd_process_handle(void)
 	register_cmd_process_handle(SHOW_ACL_RULE, process_show_acl_rule);
 	register_cmd_process_handle(ADD_ACL_RULE, process_add_acl_rule);
 	register_cmd_process_handle(DEL_ACL_RULE, process_del_acl_rule);
+	register_cmd_process_handle(DEL_ACL_RULE_ID, process_del_acl_rule_id);
+	register_cmd_process_handle(DEL_ACL_RULE_ALL, process_del_acl_rule_all);
 	register_cmd_process_handle(COMMIT_ACL_RULE, process_commit_acl_rule);
 	
 	

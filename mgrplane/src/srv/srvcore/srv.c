@@ -1,6 +1,6 @@
 #include "trans.h"
 #include "common.h"
-
+#include <srv_rule.h>
 
 
 
@@ -22,6 +22,8 @@ int main(int argc, char *argv[])
 
 
 	server_init();
+
+	Rule_list_init();
 
 	printf("server init done.\n");
 

@@ -119,7 +119,17 @@ static char *_sec_error(int errcode, char *buf)
 
 	switch (errcode) {
 	case RCP_RESULT_OK:
-		return ("Ok.");
+		return ("Ok.\n");
+	case RCP_RESULT_RULE_FULL:
+		return ("Rule Full.\n");
+	case RCP_RESULT_RULE_EXIST:
+		return ("Rule already exist.\n");
+	case RCP_RESULT_RULE_NOT_EXIST:
+		return ("Rule not exist.\n");
+	case RCP_RESULT_NO_MEM:
+		return ("Memory out.\n");
+	case RCP_RESULT_FILE_ERR:
+		return ("File error.\n");
 	default:
 		if (errcode < 0 || RCP_RESULT_CODE_MAX <= errcode) {
 			return ("Failed.");

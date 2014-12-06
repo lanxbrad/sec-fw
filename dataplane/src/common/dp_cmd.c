@@ -315,7 +315,17 @@ void dp_show_mem_pool(cvmx_wqe_t *wq, void *data)
 	
 }
 
+void dp_acl_rule_commit(cvmx_wqe_t *wq, void *data)
+{
+	char out[1024];
+	uint32_t len;
+	memset((void *)out, 0, sizeof(out));
 
+	sprintf(out, "%s, %s\n", __DATE__, __TIME__);
+	len = strlen(out);
+
+	oct_send_response(wq, ((rpc_msg_t *)data)->opcode, out, len);
+} 
 
 
 void oct_rx_process_command(cvmx_wqe_t *wq)
@@ -346,6 +356,10 @@ void oct_rx_process_command(cvmx_wqe_t *wq)
 		{
 			dp_show_mem_pool(wq, data);
 			break;
+		}
+		case COMMAND_ACL_RULE_COMMIT:
+		{
+			dp_acl_rule_commit(wq, data);	
 		}
 		default:
 		{

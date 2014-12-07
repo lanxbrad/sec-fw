@@ -1,16 +1,3 @@
-/*****************************************************************************/
-/*            copyright (C) 2014,lanx All rights reserved                    */
-/*****************************************************************************/
-/* Filename   : packetfilter.c                                               */
-/* Version    : V1.0                                                         */
-/* Author     : lanxing                                                      */
-/* CreateTime : 2014/11/9                                                    */
-/* Description: Create by lanxing for process begin                          */
-/*****************************************************************************/
-/* Modifier     :                                                            */
-/* time         :                                                            */
-/* Description  :                                                            */
-/*****************************************************************************/
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -20,6 +7,9 @@
 #include <signal.h>
 #include <sys/time.h>
 #include "hs.h"
+#include <time.h>
+
+#include <acl_rule.h>
 
 
 extern int BuildHSTree(rule_set_t* ruleset, hs_node_t* node, unsigned int depth);
@@ -68,7 +58,7 @@ unsigned int	gNumNonOverlappings[DIM];
 
 struct timeval	gStartTime,gEndTime;
 
-int number_bits;
+uint32_t number_bits;
 unit_tree g_acltree;
 
 
@@ -327,11 +317,11 @@ static inline int SegPointCompare32 (const void * a, const void * b)
 /*****************************************************************************/
 static inline int SegPointCompare_64_128 (const void * a1, const void * b1)
 {
-	int i;
+	uint32_t i;
 	uint32_t* a = (uint32_t*)a1;
 	uint32_t* b = (uint32_t*)b1;
 
-	if((number_bits & 0x1F) !=0 || number_bits < 0){
+	if((number_bits & 0x1F) !=0){
 		printf("\n>>[err]SegPointCompare: number_bits should be multiple of 32 bits!");
 		exit(-1);
 	}
@@ -385,11 +375,11 @@ static inline int SegPointCompare_64_128_nsf (const void * a1, const void * b1,u
 /*****************************************************************************/
 static inline int SegPointCompare128 (const void * a1, const void * b1)
 {
-	int i;
+	uint32_t i;
 	uint32_t* a = (uint32_t*)a1;
 	uint32_t* b = (uint32_t*)b1;
 
-	if((number_bits & 0x1F) !=0 || number_bits < 0){
+	if((number_bits & 0x1F) !=0){
 		printf("\n>>[err]SegPointCompare: number_bits should be multiple of 32 bits!");
 		exit(-1);
 	}
@@ -445,11 +435,11 @@ static inline int SegPointCompare128_nsf (const void * a1, const void * b1,uint3
 /*****************************************************************************/
 static inline int SegPointCompare(const void * a1, const void * b1)
 {
-	int i;
+	uint32_t i;
 	uint32_t* a = (uint32_t*)a1;
 	uint32_t* b = (uint32_t*)b1;
 
-	if((number_bits & 0x1F) !=0 || number_bits < 0){
+	if((number_bits & 0x1F) !=0 ){
 		printf("\n>>[err]SegPointCompare: number_bits should be multiple of 32 bits!");
 		exit(-1);
 	}
@@ -868,7 +858,7 @@ void release_ruleset(rule_set_t* childRuleSet)
 double	Prediction (rule_set_t* ruleset)
 {
 	/* generate segments for input filtset */
-	int i;
+	uint32_t i;
 	uint32_t	dim, num, pos;
 	//uint32_t	if_start_is_end[DIM], if_end_is_start[DIM];
 	uint32_t	diffSegPts = 1; /* at least there are one differnt segment point */
@@ -876,7 +866,7 @@ double	Prediction (rule_set_t* ruleset)
 
 	uint32_t    *segPoints;
 	uint32_t	*tempSegPoints;
-	uint32_t    *SegFlag;//1 represent start, 2 represent end, 3 represent both
+	uint32_t    *SegFlag;
     
     uint32_t    pre_number_bits = 0;
 
@@ -911,7 +901,7 @@ double	Prediction (rule_set_t* ruleset)
         }
 
         for (num=0; num<ruleset->num; num++) {
-			for(i=0;i<(pre_number_bits>>5);i++){
+			for(i=0; i<(pre_number_bits>>5); i++){
 				segPoints[(pre_number_bits>>4)*num + i] = ruleset->ruleList[num].range[dim][0][i];
 				segPoints[(pre_number_bits>>4)*num + i + (pre_number_bits>>5)] = ruleset->ruleList[num].range[dim][1][i];
 			}
@@ -1018,8 +1008,8 @@ double	Prediction (rule_set_t* ruleset)
 }
                                     
 //static time_t start_time;
-static int max_rule_id = 0;
-static uint64_t *build_time = NULL;
+static uint32_t max_rule_id = 0;
+
 /*****************************************************************************/
 /* Function     : PreBuildHSTree                              */
 /* Description  :  pre building hyper-splitting tree via recursion           */
@@ -1034,9 +1024,10 @@ int	PreBuildHSTree (rule_set_t* ruleset, hs_node_t* currNode, uint32_t depth, ti
 	//printf("\nruleset = %p, node = %p, depth = %u\n",ruleset,currNode,depth);
 
     time_t cur_time;
-    int i, worst_rule;
-    uint64_t duration;
-    struct timeval begin, end;
+    uint32_t i; 
+	uint32_t worst_rule;
+    
+    struct timeval end;
 
     if(0 == depth)
     {
@@ -1057,7 +1048,7 @@ int	PreBuildHSTree (rule_set_t* ruleset, hs_node_t* currNode, uint32_t depth, ti
             }
         }
 
-        /*  
+	/*  
         build_time = calloc(max_rule_id + 1, sizeof(*build_time));
         printf("\nBuild time = %p\n",build_time);
         if (build_time == NULL) {
@@ -1072,13 +1063,13 @@ int	PreBuildHSTree (rule_set_t* ruleset, hs_node_t* currNode, uint32_t depth, ti
     {
         printf("\ntime out\n");
         uint32_t i = 0;
-        uint32_t tmp_ruleid = 0;
+       
         
         FILE* fp = NULL;
         char* result_file = "/tmp/fw_rule/result.txt";
         fp = fopen(result_file,"w");
 
-        int a1 = fwrite("2",1,1,fp);
+        fwrite("2",1,1,fp);
 
         for (i = 0, worst_rule = 0; i <= max_rule_id; i++) {
             
@@ -1114,8 +1105,8 @@ int	PreBuildHSTree (rule_set_t* ruleset, hs_node_t* currNode, uint32_t depth, ti
                 char tmp_array[5];
                 memset((void*)tmp_array,0,5);
                 sprintf(tmp_array,"%u",worst_rule);
-                a1 = fwrite(tmp_array,5,1,dir);
-                a1 = fwrite("\r\n",2,1,dir);
+                fwrite(tmp_array,5,1,dir);
+                fwrite("\r\n",2,1,dir);
             }
         /*        
                 tmp_ruleid = ruleset->ruleList[i].rule_id;
@@ -1195,8 +1186,8 @@ int	PreBuildHSTree (rule_set_t* ruleset, hs_node_t* currNode, uint32_t depth, ti
 		currNode->num_rule = ruleset->num;
         currNode->rule = (uint32_t*) malloc(ruleset->num*sizeof(uint32_t));
 
-		int i;
-        for(i=0;i<ruleset->num;i++){
+		uint32_t i;
+        for(i = 0; i<ruleset->num; i++){
             currNode->rule[i] = ruleset->ruleList[i].pri;
         }
 
@@ -1229,8 +1220,8 @@ int	PreBuildHSTree (rule_set_t* ruleset, hs_node_t* currNode, uint32_t depth, ti
 			/* free(ruleset->ruleList[num] */
         gettimeofday(&end, NULL);
 
-        duration = end.tv_sec * 1000000 + end.tv_usec -
-            begin.tv_sec * 1000000 - begin.tv_usec;
+        //duration = end.tv_sec * 1000000 + end.tv_usec -
+        //    begin.tv_sec * 1000000 - begin.tv_usec;
         /*  
         for (i = 0; i < ruleset->num; i++) {
             build_time[ruleset->ruleList[i].rule_id] += duration;
@@ -1255,7 +1246,7 @@ int	PreBuildHSTree (rule_set_t* ruleset, hs_node_t* currNode, uint32_t depth, ti
         //sleep(20);
 		SegFlag = (uint32_t*)malloc((ruleset->num<<1)*sizeof(uint32_t));
 		for (num=0; num<ruleset->num; num++) {
-			for(i=0;i<(number_bits>>5);i++){
+			for(i = 0; i<(number_bits>>5); i++){
 				segPoints[(number_bits>>4)*num + i] = ruleset->ruleList[num].range[dim][0][i];
 				segPoints[(number_bits>>4)*num + i + (number_bits>>5)] = ruleset->ruleList[num].range[dim][1][i];
 			}
@@ -1532,7 +1523,7 @@ int	PreBuildHSTree (rule_set_t* ruleset, hs_node_t* currNode, uint32_t depth, ti
 		currNode->p2s = NULL;
         currNode->num_rule = ruleset->num;
         currNode->rule = (uint32_t*) malloc(ruleset->num*sizeof(uint32_t));
-        int i;
+        uint32_t i;
         for(i=0;i<ruleset->num;i++){
             currNode->rule[i] = ruleset->ruleList[i].pri;
         }
@@ -1566,8 +1557,8 @@ int	PreBuildHSTree (rule_set_t* ruleset, hs_node_t* currNode, uint32_t depth, ti
 			/* free(ruleset->ruleList[num] */
         gettimeofday(&end, NULL);
 
-        duration = end.tv_sec * 1000000 + end.tv_usec -
-            begin.tv_sec * 1000000 - begin.tv_usec;
+        //duration = end.tv_sec * 1000000 + end.tv_usec -
+        //    begin.tv_sec * 1000000 - begin.tv_usec;
         /*
         for (i = 0; i < ruleset->num; i++) {
             build_time[ruleset->ruleList[i].rule_id] += duration;
@@ -1583,8 +1574,9 @@ int	PreBuildHSTree (rule_set_t* ruleset, hs_node_t* currNode, uint32_t depth, ti
 	currNode->depth = (uint8_t) depth;
 	currNode->p2s = (uint32_t*) malloc(number_bits/32 * sizeof(uint32_t));
 	//printf("\nmalloc4 = %p\n",currNode->p2s);
-    for(i=number_bits/32-1; i >= 0; i--){
-		currNode->p2s[i] = p2s[i+4-number_bits/32];
+	int j;
+    for(j=number_bits/32-1; j >= 0; j--){
+		currNode->p2s[j] = p2s[i+4-number_bits/32];
 	}
 
 	currNode->num_rule = 0;
@@ -1651,8 +1643,8 @@ int	PreBuildHSTree (rule_set_t* ruleset, hs_node_t* currNode, uint32_t depth, ti
 #endif
     gettimeofday(&end, NULL);
 
-    duration = end.tv_sec * 1000000 + end.tv_usec -
-        begin.tv_sec * 1000000 - begin.tv_usec;
+    //duration = end.tv_sec * 1000000 + end.tv_usec -
+    //    begin.tv_sec * 1000000 - begin.tv_usec;
     /*  
     for (i = 0; i < ruleset->num; i++) {
         build_time[ruleset->ruleList[i].rule_id] += duration;
@@ -1744,7 +1736,7 @@ int	BuildHSTree (rule_set_t* ruleset, hs_node_t* currNode, uint32_t depth)
     }
     /* generate segments for input filtset */
 	//printf("\nBuild tree\n");
-    int i;
+    uint32_t i;
 	uint32_t	dim, num, pos;
 	uint32_t	maxDiffSegPts = 1;	/* maximum different segment points */
 	uint32_t    maxDiffSegPts_All = 1;
@@ -1787,7 +1779,7 @@ int	BuildHSTree (rule_set_t* ruleset, hs_node_t* currNode, uint32_t depth)
 		currNode->num_rule = ruleset->num;
         currNode->rule = (uint32_t*) malloc(ruleset->num*sizeof(uint32_t));
 
-		int i;
+		uint32_t i;
         for(i=0;i<ruleset->num;i++){
             currNode->rule[i] = ruleset->ruleList[i].pri;
         }
@@ -2097,7 +2089,7 @@ int	BuildHSTree (rule_set_t* ruleset, hs_node_t* currNode, uint32_t depth)
 		currNode->p2s = NULL;
         currNode->num_rule = ruleset->num;
         currNode->rule = (uint32_t*) malloc(ruleset->num*sizeof(uint32_t));
-        int i;
+        uint32_t i;
         for(i=0;i<ruleset->num;i++){
             currNode->rule[i] = ruleset->ruleList[i].pri;
         }
@@ -2139,8 +2131,9 @@ int	BuildHSTree (rule_set_t* ruleset, hs_node_t* currNode, uint32_t depth)
 	currNode->depth = (uint8_t) depth;
 	currNode->p2s = (uint32_t*) malloc(number_bits/32 * sizeof(uint32_t));
     //printf("\nmalloc4 = %p\n",currNode->p2s);
-    for(i=number_bits/32-1; i >= 0; i--){
-		currNode->p2s[i] = p2s[i+4-number_bits/32];
+    int j;
+    for(j=number_bits/32-1; j >= 0; j--){
+		currNode->p2s[j] = p2s[j+4-number_bits/32];
 	}
 
 	currNode->num_rule = 0;
@@ -2287,10 +2280,10 @@ int	BuildHSTree (rule_set_t* ruleset, hs_node_t* currNode, uint32_t depth)
 /* others       :                                                            */
 /*****************************************************************************/  
 int LinearSearch(rule_set_t* ruleset, uint32_t num_rule, uint32_t* rule_pri, uint32_t packet[DIM][4], uint32_t* num_matched, uint32_t* matched_rule_pri){
-    int i;
+    uint32_t i;
     *num_matched = 0;
     int flag = 0;
-    for(i=0; i<num_rule;i++){
+    for(i = 0; i < num_rule; i++){
         if(Matched(ruleset->ruleList[rule_pri[i]], packet) == 1){
             matched_rule_pri[*num_matched] = rule_pri[i];
             *num_matched = (*num_matched)+1;
@@ -2393,18 +2386,7 @@ int	LookupHSTree(unsigned int packet[DIM][4] ,rule_set_t* ruleset, hs_node_t* ro
 		
 	return	HS_SUCCESS;
 }
-/*****************************************************************************/
-/* Function     : prefetch_1                                             */
-/* Description  :          */
-/* Input        :                                                            */
-/* Output       :                                                            */
-/* return       :                                                            */
-/* others       :                                                            */
-/*****************************************************************************/ 
-static inline prefetch_1(void* p)
-{
-    asm volatile ("prefetcht1 %[p]" :[p]"+m"(*(char*)p));
-}
+
 
 /*****************************************************************************/
 /* Function     : LookupPacket                                             */
@@ -2496,7 +2478,7 @@ static int _FreeRootNode(hs_node_t *rootnode, int depth);
 int FreeRuleset(rule_set_t * ruleset) 
 {
     //return HS_SUCCESS;
-    int i,j;
+    uint32_t i,j;
     printf("\nfree ruleset = %p, ruleList add = %p\n",ruleset,ruleset->ruleList);
     if(ruleset && ruleset->ruleList) {
         //printf("\nenter\n");
@@ -2546,7 +2528,7 @@ static int _FreeRootNode(hs_node_t *rootnode, int depth)
         return HS_SUCCESS;
     }
 
-    int i=0;
+    uint32_t i=0;
     for(; i<sizeof(rootnode->child)/sizeof(hs_node_t*); i++) {
         //printf("\ntesti = %u\n",i);
         if(rootnode->child[i] != 0) {
@@ -2589,7 +2571,6 @@ void ReadIPRange(uint32_t ipnet, uint32_t ipmask, unsigned int* IPrange, unsigne
 	/*temporary variables to store IP range */
 	unsigned int trange[4];	
 	unsigned int mask;
-	char validslash;
 	int masklit1;
 	unsigned int masklit2,masklit3;
 	unsigned int ptrange[4];
@@ -2650,7 +2631,7 @@ void ReadIPRange(uint32_t ipnet, uint32_t ipmask, unsigned int* IPrange, unsigne
 
 bool load_rule(rule_list_t *rule_list,rule_set_t* ruleset, hs_node_t* node)
 {
-	int i = 0;
+	uint32_t i = 0;
 	int count = 0;
 	unsigned int v = 0;
 	
@@ -2685,24 +2666,23 @@ bool load_rule(rule_list_t *rule_list,rule_set_t* ruleset, hs_node_t* node)
 			continue;
 		}
 
-		
 		count++;
 		tempfilt->action = (unsigned int)rule_list->rule_entry[i].rule_tuple.action;
 		tempfilt->id = i;
 		tempfilt->rule_id = i;
 
-		tempfilt->dim[0][0] = rule_list->rule_entry[i].rule_tuple.smac[0] * 256 + rule_list->rule_entry[i].rule_tuple.smac[1];
-		tempfilt->dim[0][1] = rule_list->rule_entry[i].rule_tuple.smac[2]*16777216 + rule_list->rule_entry[i].rule_tuple.smac[3] * 65536 + rule_list->rule_entry[i].rule_tuple.smac[4] * 256 + rule_list->rule_entry[i].rule_tuple.smac[5];
-		tempfilt->dim[1][0] = rule_list->rule_entry[i].rule_tuple.dmac[0] * 256 + rule_list->rule_entry[i].rule_tuple.dmac[1];
-		tempfilt->dim[1][1] = rule_list->rule_entry[i].rule_tuple.dmac[2]*16777216 + rule_list->rule_entry[i].rule_tuple.dmac[3] * 65536 + rule_list->rule_entry[i].rule_tuple.dmac[4] * 256 + rule_list->rule_entry[i].rule_tuple.dmac[5];
+		*tempfilt->dim[0][0] = rule_list->rule_entry[i].rule_tuple.smac[0] * 256 + rule_list->rule_entry[i].rule_tuple.smac[1];
+		*tempfilt->dim[0][1] = rule_list->rule_entry[i].rule_tuple.smac[2]*16777216 + rule_list->rule_entry[i].rule_tuple.smac[3] * 65536 + rule_list->rule_entry[i].rule_tuple.smac[4] * 256 + rule_list->rule_entry[i].rule_tuple.smac[5];
+		*tempfilt->dim[1][0] = rule_list->rule_entry[i].rule_tuple.dmac[0] * 256 + rule_list->rule_entry[i].rule_tuple.dmac[1];
+		*tempfilt->dim[1][1] = rule_list->rule_entry[i].rule_tuple.dmac[2]*16777216 + rule_list->rule_entry[i].rule_tuple.dmac[3] * 65536 + rule_list->rule_entry[i].rule_tuple.dmac[4] * 256 + rule_list->rule_entry[i].rule_tuple.dmac[5];
 		
-		tempfilt->dim[4][0] = rule_list->rule_entry[i].rule_tuple.sport_start;
-		tempfilt->dim[4][1] = rule_list->rule_entry[i].rule_tuple.sport_end;
-		tempfilt->dim[5][0] = rule_list->rule_entry[i].rule_tuple.dport_start;
-		tempfilt->dim[5][1] = rule_list->rule_entry[i].rule_tuple.dport_end;
+		*tempfilt->dim[4][0] = rule_list->rule_entry[i].rule_tuple.sport_start;
+		*tempfilt->dim[4][1] = rule_list->rule_entry[i].rule_tuple.sport_end;
+		*tempfilt->dim[5][0] = rule_list->rule_entry[i].rule_tuple.dport_start;
+		*tempfilt->dim[5][1] = rule_list->rule_entry[i].rule_tuple.dport_end;
 
-		tempfilt->dim[8][0] = rule_list->rule_entry[i].rule_tuple.protocol_start;
-		tempfilt->dim[8][1] = rule_list->rule_entry[i].rule_tuple.protocol_end;
+		*tempfilt->dim[8][0] = rule_list->rule_entry[i].rule_tuple.protocol_start;
+		*tempfilt->dim[8][1] = rule_list->rule_entry[i].rule_tuple.protocol_end;
 
 		ReadIPRange(rule_list->rule_entry[i].rule_tuple.sip,rule_list->rule_entry[i].rule_tuple.sip_mask, tempfilt->dim[9][0], tempfilt->dim[9][1]);
 		ReadIPRange(rule_list->rule_entry[i].rule_tuple.dip,rule_list->rule_entry[i].rule_tuple.dip_mask, tempfilt->dim[10][0], tempfilt->dim[10][1]);	
